@@ -7,6 +7,7 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var fire_rate: float = 0.2  # seconds between shots
 @export var damage: float = 10.0
 @export var bullet_speed: float = 400.0
+@export var knockback_force: float = 150.0
 @export var bullet_range: float = 0.0  # world units; 0 = infinite
 @export var bullet_range_fx: ImpactFXData
 @export var hud_icon: Texture2D
@@ -58,6 +59,7 @@ func _spawn_bullet(muzzle: Marker2D, direction: Vector2, behind_player: bool) ->
 	bullet.direction = direction
 	bullet.damage = damage
 	bullet.speed = bullet_speed
+	bullet.knockback_force = knockback_force
 	bullet.range = bullet_range
 	bullet.range_fx = bullet_range_fx
 	bullet.owner_node = muzzle.get_parent()

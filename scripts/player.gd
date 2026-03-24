@@ -5,6 +5,15 @@ const SPEED = 100.0
 @export var laser_length: float = 100
 @export var anim_data: PlayerAnimation
 @export var weapons: Array[Weapon]
+@export var max_health: float = 100.0
+@export var hurt_sound: AudioStream
+@export var death_sound: AudioStream
+@export var invulnerability_duration: float = 1.0
+@export var hit_duration: float = 0.3
+@export var knockback_force: float = 200.0
+
+signal weapon_changed(weapon: Weapon)
+signal health_changed(current: float, maximum: float)
 
 var weapon: Weapon:
 	get: return weapons[_weapon_index] if weapons.size() > 0 else null
@@ -17,14 +26,25 @@ var crosshair: Node2D
 var facingDirection: int
 var _currentAnimEntry: AnimationEntry
 
+var _health: float
+var _is_dead: bool = false
+var _flash_tween: Tween
+var _invulnerable: bool = false
+var _invulnerable_timer: float = 0.0
+var _is_hit: bool = false
+var _hit_timer: float = 0.0
+var _knockback_velocity: Vector2 = Vector2.ZERO
+
 func _ready() -> void:
 	crosshair = get_tree().get_first_node_in_group("crosshair")
 	assert(crosshair != null, "Player requires a node in the 'crosshair' group")
 	_laser = $LaserSight
+	_health = max_health
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	_on_input_mode_changed(InputManager.is_gamepad)
 	_setup_camera_limits()
 	weapon_changed.emit(weapon)
+	health_changed.emit(_health, max_health)
 
 func _setup_camera_limits() -> void:
 	var ground = get_tree().get_first_node_in_group("ground_tilemap")
@@ -37,8 +57,9 @@ func _setup_camera_limits() -> void:
 	cam.limit_top = rect.position.y * tile_size.y
 	cam.limit_right = (rect.position.x + rect.size.x) * tile_size.x
 	cam.limit_bottom = (rect.position.y + rect.size.y) * tile_size.y
-	
+
 func _physics_process(delta: float) -> void:
+	_tick_hit_state(delta)
 	_update_aim()
 	_update_crosshair()
 	player_movement(delta)
@@ -47,9 +68,13 @@ func _physics_process(delta: float) -> void:
 	_update_laser()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if OS.is_debug_build() and event.is_action_pressed("ui_end"):  # End key
+		take_damage(10.0, Vector2.from_angle(randf() * TAU))
+		return
+
 	if event.is_action("shoot"):
 		var pressed = event.get_action_strength("shoot") > 0.5
-		if pressed and not _fire_held:
+		if pressed and not _fire_held and not _is_hit:
 			_fire_held = true
 			if weapon and weapon.fire_mode == Weapon.FireMode.SINGLE:
 				weapon.fire(_get_current_muzzle(), _aim_direction, _currentAnimEntry.bullet_behind_player)
@@ -64,7 +89,42 @@ func _unhandled_input(event: InputEvent) -> void:
 		_fire_held = false
 		weapon_changed.emit(weapon)
 
-signal weapon_changed(weapon: Weapon)
+func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO) -> void:
+	if _invulnerable:
+		return
+	_health = maxf(_health - amount, 0.0)
+	print("Player health: %.0f / %.0f" % [_health, max_health])
+	health_changed.emit(_health, max_health)
+	if _health <= 0.0:
+		die()
+		return
+	if hurt_sound:
+		AudioPool.play(hurt_sound, global_position)
+
+	_knockback_velocity = knockback_direction
+	_is_hit = true
+	_hit_timer = hit_duration
+	_invulnerable = true
+	_invulnerable_timer = invulnerability_duration
+	var sprite := $AnimatedSprite2D as CanvasItem
+	if is_instance_valid(_flash_tween):
+		_flash_tween.kill()
+	sprite.modulate = Color(5.0, 5.0, 5.0)
+	_flash_tween = create_tween()
+	_flash_tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
+
+func _tick_hit_state(delta: float) -> void:
+	if _is_hit:
+		_hit_timer -= delta
+		if _hit_timer <= 0.0:
+			_is_hit = false
+	if _invulnerable:
+		_invulnerable_timer -= delta
+		var sprite := $AnimatedSprite2D
+		sprite.visible = fmod(_invulnerable_timer * 10.0, 1.0) >= 0.5
+		if _invulnerable_timer <= 0.0:
+			_invulnerable = false
+			sprite.visible = true
 
 func _update_aim() -> void:
 	if InputManager.is_gamepad:
@@ -96,22 +156,38 @@ func _update_laser() -> void:
 		mat.set_shader_parameter("laser_length", laser_length)
 
 func _tick_weapon(delta: float) -> void:
-	if weapon == null:
+	if weapon == null or _is_hit:
 		return
 	weapon.tick(delta)
 	if _fire_held and weapon.fire_mode == Weapon.FireMode.AUTO:
 		weapon.fire(_get_current_muzzle(), _aim_direction, _currentAnimEntry.bullet_behind_player)
 
 func player_movement(_delta: float) -> void:
-	velocity = Input.get_vector("move_left", "move_right", "move_up", "move_down") * SPEED
+	if _is_hit:
+		velocity = _knockback_velocity
+		_knockback_velocity = lerp(_knockback_velocity, Vector2.ZERO, 0.2)
+	else:
+		velocity = Input.get_vector("move_left", "move_right", "move_up", "move_down") * SPEED
 	move_and_slide()
-	
+	for i in get_slide_collision_count():
+		var collider = get_slide_collision(i).get_collider()
+		if collider is Enemy and collider.contact_damage > 0.0:
+			var knockback: Vector2 = (global_position - collider.global_position).normalized() * knockback_force
+			take_damage(collider.contact_damage, knockback)
+			break
+
 func _update_crosshair() -> void:
 	crosshair.position = get_viewport().get_mouse_position()
 
 func player_animation(_delta: float) -> void:
-	var anim = $AnimatedSprite2D
-	var state = "walk" if velocity.length() > 0.01 else "idle"
+	if _is_dead:
+		return
+	var anim := $AnimatedSprite2D
+	var state: String
+	if _is_hit and anim_data.has_state("hit"):
+		state = "hit"
+	else:
+		state = "walk" if velocity.length() > 0.01 else "idle"
 	facingDirection = PlayerAnimation.direction_to_index(_aim_direction)
 
 	_currentAnimEntry = anim_data.get_entry(state, facingDirection)
@@ -124,6 +200,20 @@ func player_animation(_delta: float) -> void:
 		if _laser.get_parent() != target_muzzle:
 			_laser.reparent(target_muzzle)
 			_laser.position = Vector2.ZERO
+
+func die() -> void:
+	_is_dead = true
+	set_physics_process(false)
+	set_process_unhandled_input(false)
+	$WallCollision.set_deferred("disabled", true)
+	if death_sound:
+		AudioPool.play(death_sound, global_position)
+	if anim_data.has_state("death"):
+		var entry := anim_data.get_entry("death", facingDirection)
+		if entry:
+			var anim := $AnimatedSprite2D
+			anim.flip_h = entry.flip
+			anim.play(entry.animationIndex)
 
 func _get_current_muzzle() -> Marker2D:
 	assert(_currentAnimEntry != null, "Player: no AnimationEntry for current state/direction — check anim_data is fully populated")

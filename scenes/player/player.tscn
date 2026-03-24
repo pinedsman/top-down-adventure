@@ -8,6 +8,8 @@
 [ext_resource type="Resource" uid="uid://c0h63vebtpiqg" path="res://resources/weapons/weapon_default.tres" id="3_v42im"]
 [ext_resource type="Resource" uid="uid://jheygwiu804r" path="res://resources/weapons/weapon_slow.tres" id="4_je7p5"]
 [ext_resource type="Texture2D" uid="uid://dfjggm4jqbonb" path="res://assets/Characters/Temp/Walk/walk.png" id="4_npwbq"]
+[ext_resource type="AudioStream" uid="uid://bi1px5q0h0fkw" path="res://assets/Sounds/hurt.mp3" id="6_je7p5"]
+[ext_resource type="AudioStream" uid="uid://jbmf8l3laeu7" path="res://assets/Sounds/death.mp3" id="7_fm80t"]
 [ext_resource type="Shader" uid="uid://cto4s1uiaaekg" path="res://assets/laser_sight.gdshader" id="8_pn6s4"]
 [ext_resource type="Texture2D" uid="uid://u1dfsf8qt0la" path="res://assets/Art/laser.png" id="8_v42im"]
 
@@ -614,7 +616,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_rn7t0")
 }],
-"loop": true,
+"loop": false,
 "name": &"death_down",
 "speed": 8.0
 }, {
@@ -643,7 +645,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_ro0t8")
 }],
-"loop": true,
+"loop": false,
 "name": &"death_left",
 "speed": 8.0
 }, {
@@ -672,7 +674,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_geaob")
 }],
-"loop": true,
+"loop": false,
 "name": &"death_right",
 "speed": 8.0
 }, {
@@ -701,7 +703,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_a4b0l")
 }],
-"loop": true,
+"loop": false,
 "name": &"death_up",
 "speed": 8.0
 }, {
@@ -730,7 +732,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_lf4f6")
 }],
-"loop": true,
+"loop": false,
 "name": &"death_up_left",
 "speed": 8.0
 }, {
@@ -759,7 +761,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_udvyq")
 }],
-"loop": true,
+"loop": false,
 "name": &"death_up_right",
 "speed": 8.0
 }, {
@@ -1125,6 +1127,8 @@ shader_parameter/texture_width = 32.0
 script = ExtResource("1_524rm")
 anim_data = ExtResource("2_npwbq")
 weapons = Array[ExtResource("3_h17s1")]([ExtResource("4_je7p5"), ExtResource("3_v42im")])
+hurt_sound = ExtResource("6_je7p5")
+death_sound = ExtResource("7_fm80t")
 
 [node name="MuzzleBehind" type="Marker2D" parent="." unique_id=983779752]
 
@@ -1133,15 +1137,14 @@ y_sort_enabled = true
 position = Vector2(0, -13)
 scale = Vector2(1.5, 1.5)
 sprite_frames = SubResource("SpriteFrames_o8nba")
-animation = &"walk_left"
-frame_progress = 0.7443463
+animation = &"death_up_right"
 
 [node name="WallCollision" type="CollisionShape2D" parent="." unique_id=879554385]
 position = Vector2(0, -2)
 shape = SubResource("CircleShape2D_px040")
 
 [node name="Muzzle" type="Marker2D" parent="." unique_id=2131727827]
-position = Vector2(-2.5, -7)
+position = Vector2(-2, -10)
 gizmo_extents = 22.8
 
 [node name="LaserSight" type="Line2D" parent="." unique_id=1485961410]

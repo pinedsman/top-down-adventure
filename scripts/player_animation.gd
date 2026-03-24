@@ -24,6 +24,11 @@ func get_entry(state_name: String, direction: int) -> AnimationEntry:
 		"PlayerAnimation: state '%s' has no entry for direction %d" % [state_name, direction])
 	return state.directions[direction]
 
+func has_state(state_name: String) -> bool:
+	if _cache.is_empty() and not states.is_empty():
+		_rebuild_cache()
+	return _cache.has(state_name)
+
 func get_entry_for_state(state_name: String) -> AnimationEntry:
 	for state in states:
 		if state.state_name == state_name:

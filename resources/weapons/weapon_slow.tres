@@ -15,6 +15,7 @@ script = ExtResource("1_y2hbt")
 fire_mode = 1
 fire_rate = 0.5
 bullet_speed = 800.0
+knockback_force = 10.0
 bullet_range = 300.0
 hud_icon = SubResource("AtlasTexture_wsjwr")
 bullet_scene = ExtResource("1_1b1mp")
