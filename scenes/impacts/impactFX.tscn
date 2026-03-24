@@ -170,7 +170,7 @@ script = ExtResource("1_4eftc")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=840162872]
 y_sort_enabled = true
 sprite_frames = SubResource("SpriteFrames_i4vs8")
-animation = &"impact_rock"
+animation = &"impact_flesh"
 
-[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]
 [connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animation_finished"]
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]

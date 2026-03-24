@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="Weapon" format=3 uid="uid://c0h63vebtpiqg"]
+[gd_resource type="Resource" script_class="Weapon" format=3 uid="uid://weapon_slow"]
 
 [ext_resource type="PackedScene" uid="uid://bps1yhxgkp7on" path="res://scenes/player/bullet.tscn" id="1_1b1mp"]
 [ext_resource type="Script" uid="uid://c8injxos6i6xd" path="res://scripts/weapons/weapon.gd" id="1_y2hbt"]
@@ -8,7 +8,7 @@
 [resource]
 script = ExtResource("1_y2hbt")
 fire_mode = 1
-fire_rate = 0.1
+fire_rate = 0.5
 bullet_speed = 800.0
 bullet_range = 300.0
 bullet_scene = ExtResource("1_1b1mp")

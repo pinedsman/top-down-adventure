@@ -4,9 +4,7 @@
 [ext_resource type="Resource" uid="uid://de862j2p2s401" path="res://resources/anim_data/player_anim_data.tres" id="2_npwbq"]
 [ext_resource type="Texture2D" uid="uid://dk5jdtjmyauay" path="res://assets/Characters/Temp/Death/death.png" id="2_tpg5x"]
 [ext_resource type="Texture2D" uid="uid://bl7d3rf1oyiaq" path="res://assets/Characters/Temp/Idle/Idle.png" id="3_c3xxp"]
-[ext_resource type="Script" uid="uid://c8injxos6i6xd" path="res://scripts/weapons/weapon.gd" id="3_h17s1"]
 [ext_resource type="Resource" uid="uid://c0h63vebtpiqg" path="res://resources/weapons/weapon_default.tres" id="3_v42im"]
-[ext_resource type="Resource" path="res://resources/weapons/weapon_slow.tres" id="4_je7p5"]
 [ext_resource type="Texture2D" uid="uid://dfjggm4jqbonb" path="res://assets/Characters/Temp/Walk/walk.png" id="4_npwbq"]
 [ext_resource type="Shader" uid="uid://cto4s1uiaaekg" path="res://assets/laser_sight.gdshader" id="8_pn6s4"]
 [ext_resource type="Texture2D" uid="uid://u1dfsf8qt0la" path="res://assets/Art/laser.png" id="8_v42im"]
@@ -1124,7 +1122,7 @@ shader_parameter/texture_width = 32.0
 [node name="Player" type="CharacterBody2D" unique_id=425293825]
 script = ExtResource("1_524rm")
 anim_data = ExtResource("2_npwbq")
-weapons = Array[ExtResource("3_h17s1")]([ExtResource("4_je7p5"), ExtResource("3_v42im")])
+weapon = ExtResource("3_v42im")
 
 [node name="MuzzleBehind" type="Marker2D" parent="." unique_id=983779752]
 

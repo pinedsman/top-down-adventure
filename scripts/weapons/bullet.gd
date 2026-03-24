@@ -9,6 +9,8 @@ static var debug: bool = false
 
 var direction: Vector2 = Vector2.RIGHT
 var damage: float = 10.0
+var range: float = 0.0  # 0 = infinite
+var range_fx: ImpactFXData = null
 var owner_node: Node = null:
 	set(value):
 		owner_node = value
@@ -17,6 +19,7 @@ var owner_node: Node = null:
 		_rest_query.exclude = exclude
 		_hit_query.exclude = exclude
 
+var _distance_travelled: float = 0.0
 var _shape: CircleShape2D
 var _cast_query: PhysicsShapeQueryParameters2D
 var _rest_query: PhysicsShapeQueryParameters2D
@@ -41,6 +44,13 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	var space = get_world_2d().direct_space_state
 	var motion := direction * speed * delta
+
+	var range_reached := false
+	if range > 0.0:
+		var remaining := range - _distance_travelled
+		if motion.length() >= remaining:
+			motion = direction * remaining
+			range_reached = true
 
 	_cast_query.transform = Transform2D(0.0, global_position)
 	_cast_query.motion = motion
@@ -70,6 +80,12 @@ func _physics_process(delta: float) -> void:
 		return
 
 	global_position += motion
+	_distance_travelled += motion.length()
+
+	if range_reached:
+		if range_fx:
+			_spawn_impact(range_fx, global_position)
+		queue_free()
 
 func _on_impact(impact_pos: Vector2, impact_normal: Vector2, body: Node) -> void:
 	if body == owner_node:

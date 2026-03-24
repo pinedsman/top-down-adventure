@@ -4,12 +4,15 @@ const SPEED = 100.0
 
 @export var laser_length: float = 100
 @export var anim_data: PlayerAnimation
-@export var weapon: Weapon
+@export var weapons: Array[Weapon]
 
+var weapon: Weapon:
+	get: return weapons[_weapon_index] if weapons.size() > 0 else null
+
+var _weapon_index: int = 0
 var _aim_direction: Vector2 = Vector2.RIGHT
+var _laser: Line2D
 var _fire_held: bool = false
-var _last_mouse_pos: Vector2 = Vector2.ZERO
-var _is_gamepad: bool = false
 var crosshair: Node2D
 var facingDirection: int
 var _currentAnimEntry: AnimationEntry
@@ -17,7 +20,9 @@ var _currentAnimEntry: AnimationEntry
 func _ready() -> void:
 	crosshair = get_tree().get_first_node_in_group("crosshair")
 	assert(crosshair != null, "Player requires a node in the 'crosshair' group")
-	on_input_changed()
+	_laser = $LaserSight
+	InputManager.input_mode_changed.connect(_on_input_mode_changed)
+	_on_input_mode_changed(InputManager.is_gamepad)
 	_setup_camera_limits()
 
 func _setup_camera_limits() -> void:
@@ -34,11 +39,11 @@ func _setup_camera_limits() -> void:
 	
 func _physics_process(delta: float) -> void:
 	_update_aim()
-	_update_laser()
 	_update_crosshair()
 	player_movement(delta)
 	player_animation(delta)
 	_tick_weapon(delta)
+	_update_laser()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action("shoot"):
@@ -49,42 +54,38 @@ func _unhandled_input(event: InputEvent) -> void:
 				weapon.fire(_get_current_muzzle(), _aim_direction, _currentAnimEntry.bullet_behind_player)
 		elif not pressed:
 			_fire_held = false
+	elif event.is_action_pressed("weapon_next"):
+		_weapon_index = (_weapon_index + 1) % weapons.size()
+		_fire_held = false
+	elif event.is_action_pressed("weapon_prev"):
+		_weapon_index = (_weapon_index - 1 + weapons.size()) % weapons.size()
+		_fire_held = false
 
 func _update_aim() -> void:
-	var stick = Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
-	var last_is_gamepad = _is_gamepad
-	var mouse_pos = get_global_mouse_position()
-
-	if stick.length() > 0.2:
-		_is_gamepad = true
-		_aim_direction = stick.normalized()
-	elif mouse_pos != _last_mouse_pos:
-		_is_gamepad = false
-		var mouse = mouse_pos - global_position
+	if InputManager.is_gamepad:
+		var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+		if stick.length() > 0.0:
+			_aim_direction = stick.normalized()
+	else:
+		var mouse := get_global_mouse_position() - global_position
 		if mouse.length() > 1.0:
 			_aim_direction = mouse.normalized()
 
-	if _is_gamepad != last_is_gamepad:
-		on_input_changed()
-
-	_last_mouse_pos = mouse_pos
-
-func on_input_changed() -> void:
-	if (_is_gamepad):
+func _on_input_mode_changed(is_gamepad: bool) -> void:
+	if is_gamepad:
 		crosshair.hide()
-		$LaserSight.show()
+		_laser.show()
 	else:
 		crosshair.show()
-		$LaserSight.hide()
+		_laser.hide()
 
 func _update_laser() -> void:
-	var laser = $LaserSight
+	var laser = _laser
 	laser.clear_points()
-	var start = to_local($Muzzle.global_position)
-	var end = to_local($Muzzle.global_position + _aim_direction * laser_length)
-	
-	laser.add_point(start)
-	laser.add_point(end)
+	var parent := laser.get_parent() as Node2D
+	var muzzle_pos: Vector2 = parent.global_position
+	laser.add_point(parent.to_local(muzzle_pos))
+	laser.add_point(parent.to_local(muzzle_pos + _aim_direction * laser_length))
 	var mat = laser.material as ShaderMaterial
 	if mat:
 		mat.set_shader_parameter("laser_length", laser_length)
@@ -114,6 +115,10 @@ func player_animation(_delta: float) -> void:
 		anim.play(_currentAnimEntry.animationIndex)
 		$Muzzle.position = _currentAnimEntry.muzzle_offset
 		$MuzzleBehind.position = _currentAnimEntry.muzzle_offset
+		var target_muzzle = _get_current_muzzle()
+		if _laser.get_parent() != target_muzzle:
+			_laser.reparent(target_muzzle)
+			_laser.position = Vector2.ZERO
 
 func _get_current_muzzle() -> Marker2D:
 	return $MuzzleBehind if _currentAnimEntry.bullet_behind_player else $Muzzle
