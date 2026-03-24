@@ -1,0 +1,133 @@
+[gd_resource type="Resource" script_class="PlayerAnimation" format=3 uid="uid://de862j2p2s401"]
+
+[ext_resource type="Script" uid="uid://qmab47jacxxh" path="res://scripts/player_animation.gd" id="1_m3uxx"]
+[ext_resource type="Script" uid="uid://djcw251nrn5n6" path="res://scripts/animation_state.gd" id="2_k2d22"]
+[ext_resource type="Script" uid="uid://bhs5efw3yntip" path="res://scripts/animation_entry.gd" id="3_pdrkw"]
+
+[sub_resource type="Resource" id="Resource_w4u43"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = true
+animationIndex = "idle_up"
+muzzle_offset = Vector2(0, -10)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_17yhw"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = true
+animationIndex = "idle_up_right"
+muzzle_offset = Vector2(3, -10)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_vvgpa"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = null
+animationIndex = "idle_right"
+muzzle_offset = Vector2(4, -9)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_uu1ld"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = null
+animationIndex = "idle_right"
+muzzle_offset = Vector2(4, -9)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_gjwo6"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = null
+animationIndex = "idle_down"
+muzzle_offset = Vector2(2, -5)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_qpuu6"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = null
+animationIndex = "idle_left"
+muzzle_offset = Vector2(-2, -8)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_68kav"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = null
+animationIndex = "idle_left"
+muzzle_offset = Vector2(-2, -8)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_sbwft"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = true
+animationIndex = "idle_up_left"
+muzzle_offset = Vector2(-2.5, -12)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_dymrr"]
+script = ExtResource("2_k2d22")
+state_name = "idle"
+directions = Array[ExtResource("3_pdrkw")]([SubResource("Resource_w4u43"), SubResource("Resource_17yhw"), SubResource("Resource_vvgpa"), SubResource("Resource_uu1ld"), SubResource("Resource_gjwo6"), SubResource("Resource_qpuu6"), SubResource("Resource_68kav"), SubResource("Resource_sbwft")])
+metadata/_custom_type_script = "uid://djcw251nrn5n6"
+
+[sub_resource type="Resource" id="Resource_hc7tj"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = true
+animationIndex = "walk_up"
+muzzle_offset = Vector2(0, -10)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_10cfx"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = true
+animationIndex = "walk_up_right"
+muzzle_offset = Vector2(3, -10)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_wi1wx"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = null
+animationIndex = "walk_right"
+muzzle_offset = Vector2(3, -7)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_ht8kj"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = null
+animationIndex = "walk_right"
+muzzle_offset = Vector2(3, -7)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_8hfa5"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = null
+animationIndex = "walk_down"
+muzzle_offset = Vector2(0, -5)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_x3f0g"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = null
+animationIndex = "walk_left"
+muzzle_offset = Vector2(-2.5, -7)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_ckkfd"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = null
+animationIndex = "walk_left"
+muzzle_offset = Vector2(-2.5, -7)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_a311e"]
+script = ExtResource("3_pdrkw")
+bullet_behind_player = true
+animationIndex = "walk_up_left"
+muzzle_offset = Vector2(-2, -10)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_3b1ps"]
+script = ExtResource("2_k2d22")
+state_name = "walk"
+directions = Array[ExtResource("3_pdrkw")]([SubResource("Resource_hc7tj"), SubResource("Resource_10cfx"), SubResource("Resource_wi1wx"), SubResource("Resource_ht8kj"), SubResource("Resource_8hfa5"), SubResource("Resource_x3f0g"), SubResource("Resource_ckkfd"), SubResource("Resource_a311e")])
+metadata/_custom_type_script = "uid://djcw251nrn5n6"
+
+[resource]
+script = ExtResource("1_m3uxx")
+states = Array[ExtResource("2_k2d22")]([SubResource("Resource_dymrr"), SubResource("Resource_3b1ps")])

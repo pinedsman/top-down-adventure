@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://bpxmf2n0kjgd2"]
+
+[ext_resource type="Texture2D" uid="uid://dxj3ga5dvt0es" path="res://assets/Art/muzzleflash.png" id="1_6jt1q"]
+[ext_resource type="Script" uid="uid://r8qii61cnvss" path="res://scripts/muzzleflash.gd" id="2_1fcrt"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1fcrt"]
+atlas = ExtResource("1_6jt1q")
+region = Rect2(0, 192, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fypma"]
+atlas = ExtResource("1_6jt1q")
+region = Rect2(192, 192, 192, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tfxhp"]
+atlas = ExtResource("1_6jt1q")
+region = Rect2(384, 192, 192, 192)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_x3ydy"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1fcrt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fypma")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tfxhp")
+}],
+"loop": false,
+"name": &"flash",
+"speed": 20.0
+}]
+
+[node name="Root" type="Node2D" unique_id=758315896]
+script = ExtResource("2_1fcrt")
+
+[node name="Muzzleflash" type="AnimatedSprite2D" parent="." unique_id=1138995163]
+position = Vector2(15, -1)
+scale = Vector2(0.25, 0.25)
+sprite_frames = SubResource("SpriteFrames_x3ydy")
+animation = &"flash"
+frame = 2
+frame_progress = 1.0
+
+[connection signal="animation_finished" from="Muzzleflash" to="." method="_on_animation_finished"]

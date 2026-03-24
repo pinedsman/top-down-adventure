@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ImpactFXData" format=3 uid="uid://b40m7csgktey6"]
+
+[ext_resource type="Script" uid="uid://dun2vs8xtoxos" path="res://scripts/impact_fx_data.gd" id="1_u348c"]
+[ext_resource type="AudioStream" uid="uid://drmkbk3vntkef" path="res://assets/Sounds/rock_impact.mp3" id="2_pmx44"]
+
+[resource]
+script = ExtResource("1_u348c")
+animation_name = "impact_rock"
+sound = ExtResource("2_pmx44")
+metadata/_custom_type_script = "uid://dun2vs8xtoxos"

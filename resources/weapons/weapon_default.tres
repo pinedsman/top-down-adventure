@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="Weapon" format=3 uid="uid://c0h63vebtpiqg"]
+
+[ext_resource type="PackedScene" uid="uid://bps1yhxgkp7on" path="res://scenes/player/bullet.tscn" id="1_1b1mp"]
+[ext_resource type="Script" uid="uid://c8injxos6i6xd" path="res://scripts/weapons/weapon.gd" id="1_y2hbt"]
+[ext_resource type="PackedScene" uid="uid://bpxmf2n0kjgd2" path="res://scenes/player/muzzleflash.tscn" id="2_2keq5"]
+[ext_resource type="AudioStream" uid="uid://chong44bh2h5" path="res://assets/Sounds/handgun_shoot.mp3" id="3_w70tn"]
+
+[resource]
+script = ExtResource("1_y2hbt")
+fire_mode = 1
+fire_rate = 0.1
+bullet_speed = 800.0
+bullet_scene = ExtResource("1_1b1mp")
+shoot_sound = ExtResource("3_w70tn")
+muzzle_flash_scene = ExtResource("2_2keq5")
+metadata/_custom_type_script = "uid://c8injxos6i6xd"
