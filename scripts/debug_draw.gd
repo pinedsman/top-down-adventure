@@ -27,6 +27,8 @@ func _draw() -> void:
 			draw_arc(ct * entry.pos, entry.radius, 0, TAU, 16, color, 1.0)
 
 func _process(delta: float) -> void:
+	if _entries.is_empty():
+		return
 	for entry in _entries:
 		entry.ttl -= delta
 	_entries = _entries.filter(func(e): return e.ttl > 0.0)

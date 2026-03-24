@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://c55pbs8b28i2l"]
+
+[ext_resource type="Texture2D" uid="uid://bgjwca5r81jfy" path="res://assets/Art/crosshair.png" id="1_0mwgc"]
+[ext_resource type="Script" uid="uid://c2x7a5o0fyyvk" path="res://scripts/hud.gd" id="1_hqnrr"]
+[ext_resource type="PackedScene" uid="uid://cirdt7ede0hqi" path="res://scenes/ui/weaponDisplay.tscn" id="3_bo48s"]
+
+[node name="HUD" type="CanvasLayer" unique_id=2071458643 groups=["hud"]]
+script = ExtResource("1_hqnrr")
+
+[node name="Crosshair" type="Node2D" parent="." unique_id=266691284 groups=["crosshair"]]
+position = Vector2(2, -7)
+
+[node name="Sprite2D" type="Sprite2D" parent="Crosshair" unique_id=1065255568]
+scale = Vector2(0.05, 0.05)
+texture = ExtResource("1_0mwgc")
+
+[node name="WeaponDisplay" parent="." unique_id=16408162 instance=ExtResource("3_bo48s")]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+grow_vertical = 0

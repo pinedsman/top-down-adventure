@@ -9,6 +9,7 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var bullet_speed: float = 400.0
 @export var bullet_range: float = 0.0  # world units; 0 = infinite
 @export var bullet_range_fx: ImpactFXData
+@export var hud_icon: Texture2D
 @export var bullet_scene: PackedScene
 @export var shoot_sound: AudioStream
 @export var muzzle_flash_scene: PackedScene
@@ -50,7 +51,8 @@ func _spawn_bullet(muzzle: Marker2D, direction: Vector2, behind_player: bool) ->
 	if bullet_scene == null:
 		return
 	var bullet = bullet_scene.instantiate()
-	var ysort = muzzle.get_tree().current_scene.get_node("ySort")
+	var ysort = muzzle.get_tree().get_first_node_in_group("ysort")
+	assert(ysort != null, "Weapon: no node in group 'ysort' — add the YSort node to the 'ysort' group")
 	ysort.add_child(bullet)
 	bullet.global_position = muzzle.global_position
 	bullet.direction = direction

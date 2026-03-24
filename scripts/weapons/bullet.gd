@@ -114,6 +114,8 @@ func _get_impact_data(body: Node, impact_pos: Vector2, impact_normal: Vector2) -
 			var data = tile_data.get_custom_data("impact_fx_data")
 			if data is ImpactFXData:
 				return data
+	elif body.get("impact_fx_data") is ImpactFXData:
+		return body.impact_fx_data
 	return impact_fx_data
 
 

@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://cirdt7ede0hqi"]
+
+[ext_resource type="Script" uid="uid://ckclj4m4bt8ef" path="res://scripts/weapon_display.gd" id="1_2koif"]
+
+[node name="Control" type="Control" unique_id=16408162]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_2koif")
+
+[node name="WeaponIcon" type="TextureRect" parent="." unique_id=678618166]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -40.0
+offset_right = 40.0
+grow_vertical = 0

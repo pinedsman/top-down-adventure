@@ -24,6 +24,7 @@ func _ready() -> void:
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	_on_input_mode_changed(InputManager.is_gamepad)
 	_setup_camera_limits()
+	weapon_changed.emit(weapon)
 
 func _setup_camera_limits() -> void:
 	var ground = get_tree().get_first_node_in_group("ground_tilemap")
@@ -57,9 +58,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("weapon_next"):
 		_weapon_index = (_weapon_index + 1) % weapons.size()
 		_fire_held = false
+		weapon_changed.emit(weapon)
 	elif event.is_action_pressed("weapon_prev"):
 		_weapon_index = (_weapon_index - 1 + weapons.size()) % weapons.size()
 		_fire_held = false
+		weapon_changed.emit(weapon)
+
+signal weapon_changed(weapon: Weapon)
 
 func _update_aim() -> void:
 	if InputManager.is_gamepad:
@@ -107,7 +112,7 @@ func _update_crosshair() -> void:
 func player_animation(_delta: float) -> void:
 	var anim = $AnimatedSprite2D
 	var state = "walk" if velocity.length() > 0.01 else "idle"
-	facingDirection = get_index_for_normalized_vector(_aim_direction)
+	facingDirection = PlayerAnimation.direction_to_index(_aim_direction)
 
 	_currentAnimEntry = anim_data.get_entry(state, facingDirection)
 	if _currentAnimEntry:
@@ -121,12 +126,5 @@ func player_animation(_delta: float) -> void:
 			_laser.position = Vector2.ZERO
 
 func _get_current_muzzle() -> Marker2D:
+	assert(_currentAnimEntry != null, "Player: no AnimationEntry for current state/direction — check anim_data is fully populated")
 	return $MuzzleBehind if _currentAnimEntry.bullet_behind_player else $Muzzle
-
-func get_index_for_normalized_vector(in_vector: Vector2) -> int:
-	var angle_deg = fmod(rad_to_deg(atan2(in_vector.x, -in_vector.y)) + 360.0, 360.0)
-	var per_slice = 360.0 / 8
-	for i in range(7):
-		if angle_deg >= per_slice * (i + 0.5) and angle_deg < per_slice * (i + 1.5):
-			return i + 1
-	return 0
