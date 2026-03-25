@@ -16,6 +16,7 @@ var _flash_visible: bool = true
 var _squash_tween: Tween
 
 @onready var _sprite: Node2D = $Sprite2D
+@onready var _sprite_scale: Vector2 = _sprite.scale
 
 
 func init(grenade_data: GrenadeData, direction: Vector2, speed: float, thrower: Node, grenade_shot_id: int) -> void:
@@ -45,9 +46,12 @@ func _physics_process(delta: float) -> void:
 	if _stuck:
 		return
 
-	# what's a better way to decay velocity?
-	velocity *= 0.9
+	if ( velocity.length() < 50 ):
+		_stuck = true
+		velocity = Vector2.ZERO
+		return
 
+	velocity *= exp(-data.velocity_decay * delta)
 	var collision := move_and_collide(velocity * delta)
 	if collision == null:
 		return
@@ -72,6 +76,7 @@ func _physics_process(delta: float) -> void:
 	velocity = velocity.bounce(collision.get_normal()) * data.bounce_friction
 	_bounce_count += 1
 	_on_bounce(collision.get_position())
+
 
 
 func _tick_pre_explode(delta: float) -> void:
@@ -100,8 +105,8 @@ func _on_bounce(bounce_pos: Vector2) -> void:
 	if is_instance_valid(_squash_tween):
 		_squash_tween.kill()
 	_squash_tween = create_tween()
-	_squash_tween.tween_property(_sprite, "scale", Vector2(1.3, 0.7), 0.04)
-	_squash_tween.tween_property(_sprite, "scale", Vector2.ONE, 0.08).set_ease(Tween.EASE_OUT)
+	_squash_tween.tween_property(_sprite, "scale", _sprite_scale * Vector2(1.3, 0.7), 0.04)
+	_squash_tween.tween_property(_sprite, "scale", _sprite_scale, 0.1).set_ease(Tween.EASE_OUT)
 
 
 func _explode() -> void:
