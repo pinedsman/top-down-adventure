@@ -92,7 +92,7 @@ func _on_impact(impact_pos: Vector2, impact_normal: Vector2, body: Node) -> void
 	if body == owner_node:
 		return
 	if body.has_method("take_damage"):
-		body.take_damage(damage, direction * knockback_force)
+		body.take_damage(damage, direction * knockback_force, impact_pos)
 	if debug: DebugDraw.add_circle(impact_pos, 2, Color.GREEN)
 	_spawn_impact(_get_impact_data(body, impact_pos, impact_normal), impact_pos)
 	queue_free()

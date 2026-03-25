@@ -22,7 +22,7 @@ func _physics_process(_delta: float) -> void:
 			_knockback_velocity = Vector2.ZERO
 		move_and_slide()
 
-func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO) -> void:
+func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, _impact_position: Vector2 = global_position) -> void:
 	_health -= amount
 	_knockback_velocity = knockback_direction * knockback_scale
 	var sprite := $AnimatedSprite2D as CanvasItem

@@ -1136,8 +1136,7 @@ invulnerability_duration = 0.5
 hit_stop_duration = 0.2
 hit_impact_fx_scene = ExtResource("9_fcs02")
 hit_impact_fx = ExtResource("10_myrg7")
-hit_shake_strength = 10.0
-hit_zoom_amount = 1.05
+hit_shake_strength = 2.0
 
 [node name="MuzzleBehind" type="Marker2D" parent="." unique_id=983779752]
 

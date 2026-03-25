@@ -13,6 +13,15 @@ const SPEED = 100.0
 @export var hit_duration: float = 0.3
 @export var knockback_force: float = 200.0
 @export var hit_stop_duration: float = 0.1
+@export var hit_impact_fx_scene: PackedScene
+@export var hit_impact_fx: ImpactFXData
+@export var hit_shake_strength: float = 5.0
+@export var hit_shake_damping: float = 0.55
+@export var hit_shake_randomness: float = 0.3
+@export var hit_shake_step_time: float = 0.06
+@export var hit_zoom_amount: float = 1.15
+@export var hit_zoom_in_duration: float = 0.05
+@export var hit_zoom_out_duration: float = 0.25
 
 signal weapon_changed(weapon: Weapon)
 signal health_changed(current: float, maximum: float)
@@ -31,6 +40,8 @@ var _currentAnimEntry: AnimationEntry
 var _health: float
 var _is_dead: bool = false
 var _flash_tween: Tween
+var _shake_tween: Tween
+var _zoom_tween: Tween
 var _invulnerable: bool = false
 var _invulnerable_timer: float = 0.0
 var _is_hit: bool = false
@@ -44,6 +55,7 @@ func _ready() -> void:
 	_health = max_health
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	_on_input_mode_changed(InputManager.is_gamepad)
+	HitStop.ended.connect(_on_hit_stop_ended)
 	_setup_camera_limits()
 	weapon_changed.emit(weapon)
 	health_changed.emit(_health, max_health)
@@ -91,13 +103,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		_fire_held = false
 		weapon_changed.emit(weapon)
 
-func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO) -> void:
+func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, impact_position: Vector2 = global_position) -> void:
 	if _invulnerable:
 		return
 	_health = maxf(_health - amount, 0.0)
-	print("Player health: %.0f / %.0f" % [_health, max_health])
+
 	health_changed.emit(_health, max_health)
-	AudioPool.play(pre_hurt_sound, global_position, true)
+
 	AudioPool.play(hurt_sound, global_position)
 
 	_knockback_velocity = knockback_direction
@@ -112,8 +124,11 @@ func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO) -> 
 	_flash_tween = create_tween()
 	_flash_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	_flash_tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
-	
-	_apply_hit_stop()
+
+	_spawn_hit_impact(impact_position)
+	_shake_camera(knockback_direction.normalized())
+	_zoom_camera()
+	HitStop.request(hit_stop_duration)
 
 func _tick_hit_state(delta: float) -> void:
 	if _is_hit:
@@ -175,10 +190,11 @@ func player_movement(_delta: float) -> void:
 		velocity = Input.get_vector("move_left", "move_right", "move_up", "move_down") * SPEED
 	move_and_slide()
 	for i in get_slide_collision_count():
-		var collider = get_slide_collision(i).get_collider()
+		var collision = get_slide_collision(i)
+		var collider = collision.get_collider()
 		if collider is Enemy and collider.contact_damage > 0.0:
 			var knockback: Vector2 = (global_position - collider.global_position).normalized() * knockback_force
-			take_damage(collider.contact_damage, knockback)
+			take_damage(collider.contact_damage, knockback, collision.get_position())
 			break
 
 func _update_crosshair() -> void:
@@ -206,10 +222,45 @@ func player_animation(_delta: float) -> void:
 			_laser.reparent(target_muzzle)
 			_laser.position = Vector2.ZERO
 
-func _apply_hit_stop() -> void:
-	get_tree().paused = true
-	await get_tree().create_timer(hit_stop_duration, true, false, true).timeout
-	get_tree().paused = false
+func _spawn_hit_impact(impact_position: Vector2) -> void:
+	if hit_impact_fx_scene == null or hit_impact_fx == null:
+		return
+	var fx: Node2D = hit_impact_fx_scene.instantiate()
+	fx.process_mode = Node.PROCESS_MODE_ALWAYS
+	get_tree().current_scene.add_child(fx)
+	fx.global_position = impact_position
+	fx.play_impact(hit_impact_fx)
+
+func _shake_camera(impact_direction: Vector2) -> void:
+	if hit_shake_strength <= 0.0:
+		return
+	if is_instance_valid(_shake_tween):
+		_shake_tween.kill()
+	var cam := $Camera2D
+	_shake_tween = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	var dir := impact_direction * -1 if impact_direction.length_squared() > 0.0 else Vector2.RIGHT
+	var amplitude := hit_shake_strength
+	var flip := 1.0
+	while amplitude >= 0.5:
+		var noise := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * amplitude * hit_shake_randomness
+		var offset := dir * amplitude * flip + noise
+		_shake_tween.tween_property(cam, "offset", offset, hit_shake_step_time).set_trans(Tween.TRANS_SINE)
+		amplitude *= hit_shake_damping
+		flip = -flip
+	_shake_tween.tween_property(cam, "offset", Vector2.ZERO, hit_shake_step_time).set_trans(Tween.TRANS_SINE)
+
+func _zoom_camera() -> void:
+	if hit_zoom_amount <= 1.0:
+		return
+	if is_instance_valid(_zoom_tween):
+		_zoom_tween.kill()
+	var cam := $Camera2D
+	var target := Vector2.ONE * hit_zoom_amount
+	_zoom_tween = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_zoom_tween.tween_property(cam, "zoom", target, hit_zoom_in_duration).set_trans(Tween.TRANS_SINE)
+	_zoom_tween.tween_property(cam, "zoom", Vector2.ONE, hit_zoom_out_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _on_hit_stop_ended() -> void:
 	if not Input.is_action_pressed("shoot"):
 		_fire_held = false
 
