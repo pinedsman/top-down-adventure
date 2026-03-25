@@ -1,11 +1,12 @@
 [gd_resource type="Resource" script_class="ImpactFXData" format=3 uid="uid://dngp84241gpk"]
 
+[ext_resource type="PackedScene" uid="uid://dnqkl2susuf2w" path="res://scenes/impacts/impactFX.tscn" id="1_8k0o6"]
 [ext_resource type="Script" uid="uid://dun2vs8xtoxos" path="res://scripts/impact_fx_data.gd" id="1_frluk"]
 [ext_resource type="AudioStream" uid="uid://61ef7kksn0p6" path="res://assets/Sounds/player_impact.mp3" id="2_frluk"]
 
 [resource]
 script = ExtResource("1_frluk")
+scene = ExtResource("1_8k0o6")
 animation_name = "impact_rock"
 sound = ExtResource("2_frluk")
-scale = Vector2(0.6, 0.6)
 metadata/_custom_type_script = "uid://dun2vs8xtoxos"

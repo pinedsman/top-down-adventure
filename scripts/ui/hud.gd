@@ -22,12 +22,7 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 func _update_hp(health:int):
 	var i=0
 	for heart in hbox.get_children():
-		if (i<health):
-			heart.value = 2
-		else:
-			heart.value = 0
-
-		print(i, " ", heart.value, " ", (i>health))
+		heart.value = 2 if (i<health) else 0
 		i+=1
 
 func _update_max_hp(max:int):

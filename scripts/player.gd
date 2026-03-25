@@ -13,7 +13,6 @@ const SPEED = 100.0
 @export var hit_duration: float = 0.3
 @export var knockback_force: float = 200.0
 @export var hit_stop_duration: float = 0.1
-@export var hit_impact_fx_scene: PackedScene
 @export var hit_impact_fx: ImpactFXData
 @export var hit_shake_strength: float = 5.0
 @export var hit_shake_damping: float = 0.55
@@ -79,7 +78,7 @@ func _physics_process(delta: float) -> void:
 	player_movement(delta)
 	player_animation(delta)
 	_tick_weapon(delta)
-	_update_laser()
+	_update_laser() 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if OS.is_debug_build() and event.is_action_pressed("ui_end"):  # End key
@@ -223,13 +222,9 @@ func player_animation(_delta: float) -> void:
 			_laser.position = Vector2.ZERO
 
 func _spawn_hit_impact(impact_position: Vector2) -> void:
-	if hit_impact_fx_scene == null or hit_impact_fx == null:
+	if hit_impact_fx == null:
 		return
-	var fx: Node2D = hit_impact_fx_scene.instantiate()
-	fx.process_mode = Node.PROCESS_MODE_ALWAYS
-	get_tree().current_scene.add_child(fx)
-	fx.global_position = impact_position
-	fx.play_impact(hit_impact_fx)
+	hit_impact_fx.spawn(impact_position, Node.PROCESS_MODE_ALWAYS)
 
 func _shake_camera(impact_direction: Vector2) -> void:
 	if hit_shake_strength <= 0.0:

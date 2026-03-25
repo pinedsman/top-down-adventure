@@ -1,10 +1,12 @@
 [gd_resource type="Resource" script_class="ImpactFXData" format=3 uid="uid://bxcm5qlojcoen"]
 
 [ext_resource type="Script" uid="uid://dun2vs8xtoxos" path="res://scripts/impact_fx_data.gd" id="1_88uq2"]
+[ext_resource type="PackedScene" uid="uid://dnqkl2susuf2w" path="res://scenes/impacts/impactFX.tscn" id="1_a0cfo"]
 [ext_resource type="AudioStream" uid="uid://djrnldlx1qrgs" path="res://assets/Sounds/impact.mp3" id="2_a0cfo"]
 
 [resource]
 script = ExtResource("1_88uq2")
+scene = ExtResource("1_a0cfo")
 animation_name = "impact_flesh"
 sound = ExtResource("2_a0cfo")
 offset = Vector2(0, 3)

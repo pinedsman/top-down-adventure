@@ -2,7 +2,6 @@ extends Area2D
 class_name Bullet
 
 @export var speed: float = 400.0
-@export var impact_fx_scene: PackedScene
 @export var impact_fx_data: ImpactFXData
 
 static var debug: bool = false
@@ -98,12 +97,9 @@ func _on_impact(impact_pos: Vector2, impact_normal: Vector2, body: Node) -> void
 	queue_free()
 
 func _spawn_impact(data: ImpactFXData, impact_pos: Vector2) -> void:
-	if impact_fx_scene == null or data == null:
+	if data == null:
 		return
-	var fx = impact_fx_scene.instantiate()
-	get_tree().current_scene.add_child(fx)
-	fx.global_position = impact_pos
-	fx.play_impact(data)
+	data.spawn(impact_pos)
 
 func _get_impact_data(body: Node, impact_pos: Vector2, impact_normal: Vector2) -> ImpactFXData:
 	if debug: DebugDraw.add_circle(impact_pos, 1, Color.RED)
