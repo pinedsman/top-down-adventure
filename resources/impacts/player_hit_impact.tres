@@ -9,4 +9,5 @@ script = ExtResource("1_frluk")
 scene = ExtResource("1_8k0o6")
 animation_name = "impact_player"
 sound = ExtResource("2_frluk")
+scale = Vector2(2, 2)
 metadata/_custom_type_script = "uid://dun2vs8xtoxos"

@@ -38,6 +38,7 @@ var _invulnerable_timer: float = 0.0
 var _is_hit: bool = false
 var _hit_timer: float = 0.0
 var _knockback_velocity: Vector2 = Vector2.ZERO
+var _last_shot_id: int = -1
 
 func _ready() -> void:
 	crosshair = get_tree().get_first_node_in_group("crosshair")
@@ -48,12 +49,14 @@ func _ready() -> void:
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	_on_input_mode_changed(InputManager.is_gamepad)
 	HitStop.ended.connect(_on_hit_stop_ended)
+	_connect_weapon(weapon)
 	weapon_changed.emit(weapon)
 	health_changed.emit(_health, max_health)
 
 func _physics_process(delta: float) -> void:
 	_tick_hit_state(delta)
 	_update_aim()
+	_apply_aim_assist(delta)
 	_update_crosshair()
 	player_movement(delta)
 	player_animation(delta)
@@ -76,20 +79,27 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("weapon_next"):
 		_weapon_index = (_weapon_index + 1) % weapons.size()
 		_fire_held = false
+		_connect_weapon(weapon)
 		weapon_changed.emit(weapon)
 	elif event.is_action_pressed("weapon_prev"):
 		_weapon_index = (_weapon_index - 1 + weapons.size()) % weapons.size()
 		_fire_held = false
+		_connect_weapon(weapon)
 		weapon_changed.emit(weapon)
 
-func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, impact_position: Vector2 = global_position) -> void:
-	if _invulnerable:
+func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, impact_position: Vector2 = global_position, shot_id: int = -1) -> void:
+	var same_shot := shot_id >= 0 and shot_id == _last_shot_id
+	if _invulnerable and not same_shot:
 		return
+	_last_shot_id = shot_id
 	_health = maxf(_health - amount, 0.0)
-
 	health_changed.emit(_health, max_health)
-	AudioPool.play(hurt_sound, global_position)
 
+	if same_shot:
+		_knockback_velocity += knockback_direction
+		return
+
+	AudioPool.play(hurt_sound, global_position)
 	_knockback_velocity = knockback_direction
 	_is_hit = true
 	_hit_timer = hit_duration
@@ -134,6 +144,24 @@ func _update_aim() -> void:
 		var mouse := get_global_mouse_position() - global_position
 		if mouse.length() > 1.0:
 			_aim_direction = mouse.normalized()
+
+func _apply_aim_assist(delta: float) -> void:
+	if not InputManager.is_gamepad or weapon == null or weapon.aim_assist_angle <= 0.0:
+		return
+	var threshold := deg_to_rad(weapon.aim_assist_angle)
+	var best_dir := Vector2.ZERO
+	var best_angle := threshold
+	for enemy: Node2D in get_tree().get_nodes_in_group("enemies"):
+		var to_enemy := enemy.global_position - global_position
+		if to_enemy.length_squared() > weapon.aim_assist_range * weapon.aim_assist_range:
+			continue
+		var angle := absf(_aim_direction.angle_to(to_enemy.normalized()))
+		if angle < best_angle:
+			best_angle = angle
+			best_dir = to_enemy.normalized()
+	if best_dir != Vector2.ZERO:
+		var t := 1.0 - pow(1.0 - weapon.aim_assist_strength, delta * 60.0)
+		_aim_direction = _aim_direction.lerp(best_dir, t).normalized()
 
 func _on_input_mode_changed(is_gamepad: bool) -> void:
 	if is_gamepad:
@@ -205,6 +233,16 @@ func _spawn_hit_impact(impact_position: Vector2) -> void:
 	if hit_impact_fx == null:
 		return
 	hit_impact_fx.spawn(impact_position, Node.PROCESS_MODE_ALWAYS)
+
+func _connect_weapon(w: Weapon) -> void:
+	if w == null:
+		return
+	if not w.fired.is_connected(_on_weapon_fired):
+		w.fired.connect(_on_weapon_fired)
+
+func _on_weapon_fired(direction: Vector2) -> void:
+	if weapon and weapon.fire_shake_strength > 0.0:
+		_camera.shake(-direction, weapon.fire_shake_strength)
 
 func _on_hit_stop_ended() -> void:
 	if not Input.is_action_pressed("shoot"):

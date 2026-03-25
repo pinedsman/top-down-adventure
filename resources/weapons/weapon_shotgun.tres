@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="Weapon" format=3 uid="uid://d3wgakbrx0nfv"]
+
+[ext_resource type="PackedScene" uid="uid://bngfpdb57nk35" path="res://scenes/weapons/bullet_shotgun.tscn" id="1_wilxg"]
+[ext_resource type="Texture2D" uid="uid://t1c2ywi6w6sj" path="res://assets/Art/weapons/weapons.png" id="2_wilxg"]
+[ext_resource type="PackedScene" uid="uid://blkfaiyno38d7" path="res://scenes/weapons/muzzleflash_shotgun.tscn" id="3_wilxg"]
+[ext_resource type="AudioStream" uid="uid://ci12v40kguvqx" path="res://assets/Sounds/shotgun_rechamber.mp3" id="4_00iu1"]
+[ext_resource type="Script" uid="uid://c8injxos6i6xd" path="res://scripts/weapons/weapon.gd" id="4_nb0ha"]
+[ext_resource type="AudioStream" uid="uid://bf8nb3e6e0al4" path="res://assets/Sounds/shotgun_fire.mp3" id="6_nb0ha"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uehe1"]
+atlas = ExtResource("2_wilxg")
+region = Rect2(122.04, 156.065, 128, 64)
+
+[resource]
+script = ExtResource("4_nb0ha")
+fire_rate = 0.5
+damage = 20.0
+knockback_force = 100.0
+bullet_range = 100.0
+hud_icon = SubResource("AtlasTexture_uehe1")
+bullet_scene = ExtResource("1_wilxg")
+shoot_sound = ExtResource("6_nb0ha")
+muzzle_flash_scene = ExtResource("3_wilxg")
+pellet_count = 8
+spread_angle = 25.0
+spread_randomness = 0.75
+rechamber_sound = ExtResource("4_00iu1")
+fire_shake_strength = 15.0
+suppress_wall_impacts = true
+metadata/_custom_type_script = "uid://c8injxos6i6xd"

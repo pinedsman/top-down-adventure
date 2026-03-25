@@ -17,14 +17,14 @@ func _ready() -> void:
 	_setup_limits()
 
 
-func shake(impact_direction: Vector2) -> void:
-	if shake_strength <= 0.0:
+func shake(impact_direction: Vector2, strength_override: float = -1.0) -> void:
+	var amplitude := strength_override if strength_override >= 0.0 else shake_strength
+	if amplitude <= 0.0:
 		return
 	if is_instance_valid(_shake_tween):
 		_shake_tween.kill()
 	_shake_tween = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	var dir := impact_direction * -1.0 if impact_direction.length_squared() > 0.0 else Vector2.RIGHT
-	var amplitude := shake_strength
 	var flip := 1.0
 	while amplitude >= 0.5:
 		var noise := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * amplitude * shake_randomness

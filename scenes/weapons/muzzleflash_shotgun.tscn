@@ -1,0 +1,116 @@
+[gd_scene format=3 uid="uid://blkfaiyno38d7"]
+
+[ext_resource type="Script" uid="uid://r8qii61cnvss" path="res://scripts/muzzleflash.gd" id="1_7xuvn"]
+[ext_resource type="Texture2D" uid="uid://ngnxrsbwgqmq" path="res://assets/Art/shotgun_muzzleflash.png" id="2_7xuvn"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tia3r"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(0, 0, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7vts4"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(195, 0, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yiers"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(390, 0, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k3nxl"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(585, 0, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4ke1l"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(780, 0, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m02gk"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(975, 0, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_js4yx"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(0, 135, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ydkkx"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(195, 135, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4h2av"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(390, 135, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e3nlk"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(585, 135, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ukb4o"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(780, 135, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_avnls"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(975, 135, 195, 135)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ds0h2"]
+atlas = ExtResource("2_7xuvn")
+region = Rect2(0, 270, 195, 135)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_x3ydy"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tia3r")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7vts4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yiers")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k3nxl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4ke1l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m02gk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_js4yx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ydkkx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4h2av")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e3nlk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ukb4o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_avnls")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ds0h2")
+}],
+"loop": false,
+"name": &"flash",
+"speed": 30.0
+}]
+
+[node name="Root" type="Node2D" unique_id=758315896]
+script = ExtResource("1_7xuvn")
+
+[node name="Muzzleflash" type="AnimatedSprite2D" parent="." unique_id=1138995163]
+position = Vector2(30, 0)
+scale = Vector2(0.3, 0.3)
+sprite_frames = SubResource("SpriteFrames_x3ydy")
+animation = &"flash"
+frame = 12
+frame_progress = 1.0
+
+[connection signal="animation_finished" from="Muzzleflash" to="." method="_on_animation_finished"]

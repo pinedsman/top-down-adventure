@@ -234,23 +234,23 @@ tile_set = ExtResource("1_sugp2")
 [node name="Player" parent="ySort" unique_id=425293825 groups=["player"] instance=ExtResource("1_o5qli")]
 position = Vector2(324, 201)
 
-[node name="Enemy" parent="ySort" unique_id=1949769439 instance=ExtResource("2_0wfyh")]
+[node name="Enemy" parent="ySort" unique_id=1949769439 groups=["enemies"] instance=ExtResource("2_0wfyh")]
 y_sort_enabled = false
 position = Vector2(49, 89)
 
-[node name="Enemy2" parent="ySort" unique_id=1054829595 instance=ExtResource("2_0wfyh")]
+[node name="Enemy2" parent="ySort" unique_id=1054829595 groups=["enemies"] instance=ExtResource("2_0wfyh")]
 y_sort_enabled = false
 position = Vector2(132, 99)
 
-[node name="Enemy3" parent="ySort" unique_id=308769029 instance=ExtResource("2_0wfyh")]
+[node name="Enemy3" parent="ySort" unique_id=308769029 groups=["enemies"] instance=ExtResource("2_0wfyh")]
 y_sort_enabled = false
 position = Vector2(327, 57)
 
-[node name="Enemy4" parent="ySort" unique_id=606084107 instance=ExtResource("2_0wfyh")]
+[node name="Enemy4" parent="ySort" unique_id=606084107 groups=["enemies"] instance=ExtResource("2_0wfyh")]
 y_sort_enabled = false
 position = Vector2(358, 197)
 
-[node name="Enemy5" parent="ySort" unique_id=299410486 instance=ExtResource("2_0wfyh")]
+[node name="Enemy5" parent="ySort" unique_id=299410486 groups=["enemies"] instance=ExtResource("2_0wfyh")]
 y_sort_enabled = false
 position = Vector2(136, 201)
 

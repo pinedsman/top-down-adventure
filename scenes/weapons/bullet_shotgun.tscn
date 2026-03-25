@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://bngfpdb57nk35"]
+
+[ext_resource type="Script" uid="uid://dmge2s1mgvp0y" path="res://scripts/weapons/bullet.gd" id="1_e12wh"]
+[ext_resource type="Resource" uid="uid://bxcm5qlojcoen" path="res://resources/impacts/flesh_impact.tres" id="3_wqxy3"]
+[ext_resource type="Texture2D" uid="uid://iilfci7nliqt" path="res://assets/Art/bullet.png" id="4_7g8dg"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_w51ky"]
+radius = 6.0
+
+[node name="Bullet" type="Area2D" unique_id=815070411]
+script = ExtResource("1_e12wh")
+speed = 800.0
+impact_fx_data = ExtResource("3_wqxy3")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="." unique_id=1113279675]
+y_sort_enabled = true
+position = Vector2(-3.9999998, 0)
+scale = Vector2(0.99, 0.3)
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=716549948]
+modulate = Color(1, 0, 1, 0.09019608)
+position = Vector2(-4, 0)
+scale = Vector2(5, 1)
+texture = ExtResource("4_7g8dg")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=903743210]
+rotation = 1.4961396
+scale = Vector2(0.5, 0.5)
+shape = SubResource("CircleShape2D_w51ky")
+
+[connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_visible_on_screen_notifier_2d_screen_exited"]

@@ -11,6 +11,7 @@ var _is_dead: bool = false
 var _knockback_velocity: Vector2 = Vector2.ZERO
 var _facing: Vector2 = Vector2.DOWN
 var _flash_tween: Tween
+var _last_shot_id: int = -1
 
 func _ready() -> void:
 	$AnimatedSprite2D.play("idle_down")
@@ -24,20 +25,25 @@ func _physics_process(_delta: float) -> void:
 			_knockback_velocity = Vector2.ZERO
 		move_and_slide()
 
-func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, _impact_position: Vector2 = global_position) -> void:
+func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, _impact_position: Vector2 = global_position, shot_id: int = -1) -> void:
 	if _is_dead:
 		return
 	_health = maxf(_health - amount, 0.0)
-	if knockback_direction != Vector2.ZERO:
-		_facing = knockback_direction * -1.0
-	_knockback_velocity = knockback_direction * knockback_scale
-	var sprite := $AnimatedSprite2D as CanvasItem
-	if is_instance_valid(_flash_tween):
-		_flash_tween.kill()
-	sprite.modulate = Color(5.0, 5.0, 5.0)
-	_flash_tween = create_tween()
-	_flash_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	_flash_tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
+	var same_shot := shot_id >= 0 and shot_id == _last_shot_id
+	_last_shot_id = shot_id
+	if same_shot:
+		_knockback_velocity += knockback_direction * knockback_scale
+	else:
+		if knockback_direction != Vector2.ZERO:
+			_facing = knockback_direction * -1.0
+		_knockback_velocity = knockback_direction * knockback_scale
+		var sprite := $AnimatedSprite2D as CanvasItem
+		if is_instance_valid(_flash_tween):
+			_flash_tween.kill()
+		sprite.modulate = Color(5.0, 5.0, 5.0)
+		_flash_tween = create_tween()
+		_flash_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		_flash_tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
 	if _health <= 0.0:
 		die()
 

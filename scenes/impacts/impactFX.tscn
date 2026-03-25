@@ -192,5 +192,5 @@ y_sort_enabled = true
 sprite_frames = SubResource("SpriteFrames_i4vs8")
 animation = &"impact_player"
 
-[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]
 [connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animation_finished"]
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]

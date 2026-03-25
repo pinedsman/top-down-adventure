@@ -6,9 +6,14 @@ class_name Bullet
 
 static var debug: bool = false
 
-var direction: Vector2 = Vector2.RIGHT
+var direction: Vector2 = Vector2.RIGHT:
+	set(value):
+		direction = value
+		rotation = value.angle()
 var damage: float = 10.0
 var knockback_force: float = 0.0
+var shot_id: int = -1
+var suppress_wall_impacts: bool = false
 var range: float = 0.0  # 0 = infinite
 var range_fx: ImpactFXData = null
 var owner_node: Node = null:
@@ -90,10 +95,12 @@ func _physics_process(delta: float) -> void:
 func _on_impact(impact_pos: Vector2, impact_normal: Vector2, body: Node) -> void:
 	if body == owner_node:
 		return
+	var same_shot: bool = shot_id >= 0 and body.get("_last_shot_id") == shot_id
 	if body.has_method("take_damage"):
-		body.take_damage(damage, direction * knockback_force, impact_pos)
+		body.take_damage(damage, direction * knockback_force, impact_pos, shot_id)
 	if debug: DebugDraw.add_circle(impact_pos, 2, Color.GREEN)
-	_spawn_impact(_get_impact_data(body, impact_pos, impact_normal), impact_pos)
+	if not same_shot:
+		_spawn_impact(_get_impact_data(body, impact_pos, impact_normal), impact_pos)
 	queue_free()
 
 func _spawn_impact(data: ImpactFXData, impact_pos: Vector2) -> void:
@@ -104,6 +111,8 @@ func _spawn_impact(data: ImpactFXData, impact_pos: Vector2) -> void:
 func _get_impact_data(body: Node, impact_pos: Vector2, impact_normal: Vector2) -> ImpactFXData:
 	if debug: DebugDraw.add_circle(impact_pos, 1, Color.RED)
 	if body is TileMapLayer:
+		if suppress_wall_impacts:
+			return null
 		var probe_pos = impact_pos - impact_normal * 8.0
 		var tile_pos = body.local_to_map(body.to_local(probe_pos))
 		var tile_data = body.get_cell_tile_data(tile_pos)
