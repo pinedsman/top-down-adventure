@@ -6,11 +6,13 @@ const SPEED = 100.0
 @export var anim_data: PlayerAnimation
 @export var weapons: Array[Weapon]
 @export var max_health: float = 100.0
+@export var pre_hurt_sound: AudioStream
 @export var hurt_sound: AudioStream
 @export var death_sound: AudioStream
 @export var invulnerability_duration: float = 1.0
 @export var hit_duration: float = 0.3
 @export var knockback_force: float = 200.0
+@export var hit_stop_duration: float = 0.1
 
 signal weapon_changed(weapon: Weapon)
 signal health_changed(current: float, maximum: float)
@@ -95,11 +97,8 @@ func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO) -> 
 	_health = maxf(_health - amount, 0.0)
 	print("Player health: %.0f / %.0f" % [_health, max_health])
 	health_changed.emit(_health, max_health)
-	if _health <= 0.0:
-		die()
-		return
-	if hurt_sound:
-		AudioPool.play(hurt_sound, global_position)
+	AudioPool.play(pre_hurt_sound, global_position, true)
+	AudioPool.play(hurt_sound, global_position)
 
 	_knockback_velocity = knockback_direction
 	_is_hit = true
@@ -111,13 +110,19 @@ func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO) -> 
 		_flash_tween.kill()
 	sprite.modulate = Color(5.0, 5.0, 5.0)
 	_flash_tween = create_tween()
+	_flash_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	_flash_tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
+	
+	_apply_hit_stop()
 
 func _tick_hit_state(delta: float) -> void:
 	if _is_hit:
 		_hit_timer -= delta
 		if _hit_timer <= 0.0:
 			_is_hit = false
+			if _health <= 0.0:
+				die()
+				return
 	if _invulnerable:
 		_invulnerable_timer -= delta
 		var sprite := $AnimatedSprite2D
@@ -201,8 +206,18 @@ func player_animation(_delta: float) -> void:
 			_laser.reparent(target_muzzle)
 			_laser.position = Vector2.ZERO
 
+func _apply_hit_stop() -> void:
+	get_tree().paused = true
+	await get_tree().create_timer(hit_stop_duration, true, false, true).timeout
+	get_tree().paused = false
+	if not Input.is_action_pressed("shoot"):
+		_fire_held = false
+
 func die() -> void:
 	_is_dead = true
+	_invulnerable = false
+	$AnimatedSprite2D.visible = true
+	$AnimatedSprite2D.modulate = Color.WHITE
 	set_physics_process(false)
 	set_process_unhandled_input(false)
 	$WallCollision.set_deferred("disabled", true)

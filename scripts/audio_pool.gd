@@ -24,10 +24,11 @@ func _ready() -> void:
 		_players.append(p)
 
 
-func play(stream: AudioStream, position: Vector2) -> void:
+func play(stream: AudioStream, position: Vector2, ignore_pause: bool = false) -> void:
 	assert(stream != null, "AudioPool.play: stream is null")
 	var player := _players[_index]
 	_index = (_index + 1) % _players.size()
+	player.process_mode = Node.PROCESS_MODE_ALWAYS if ignore_pause else Node.PROCESS_MODE_INHERIT
 	player.stream = stream
 	player.global_position = position
 	player.play()

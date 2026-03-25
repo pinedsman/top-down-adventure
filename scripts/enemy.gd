@@ -30,6 +30,7 @@ func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO) -> 
 		_flash_tween.kill()
 	sprite.modulate = Color(5.0, 5.0, 5.0)
 	_flash_tween = create_tween()
+	_flash_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	_flash_tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
 	if _health <= 0.0:
 		die()
