@@ -8,6 +8,8 @@
 [resource]
 script = ExtResource("1_apoam")
 grenade_scene = ExtResource("3_o07sb")
+inner_damage = 200.0
+outer_damage = 75.0
 self_damage_override = 1.0
 explosion_fx = ExtResource("2_jdpy4")
 bounce_sound = ExtResource("1_jdpy4")

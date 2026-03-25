@@ -1,8 +1,13 @@
 [gd_resource type="Resource" script_class="Weapon" format=3 uid="uid://bam6vkjb46yeg"]
 
 [ext_resource type="Resource" uid="uid://cahuulrv1vnag" path="res://resources/weapons/grenade_default.tres" id="1_8a8aj"]
-[ext_resource type="Texture2D" uid="uid://qggmrqjj06yw" path="res://assets/Art/weapons/grenade.png" id="1_ubhum"]
+[ext_resource type="Texture2D" uid="uid://b0l1wayb0u4al" path="res://assets/Art/weapons/grenade_hud.png" id="2_c2reh"]
+[ext_resource type="AudioStream" uid="uid://dyynxafm0kfck" path="res://assets/Sounds/throw.mp3" id="4_c2reh"]
 [ext_resource type="Script" uid="uid://c8injxos6i6xd" path="res://scripts/weapons/weapon.gd" id="5_ybq0i"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_il7m6"]
+atlas = ExtResource("2_c2reh")
+region = Rect2(-14.58, 37, 128, 64)
 
 [resource]
 script = ExtResource("5_ybq0i")
@@ -11,7 +16,8 @@ damage = 25.0
 bullet_speed = 800.0
 knockback_force = 50.0
 bullet_range = 400.0
-hud_icon = ExtResource("1_ubhum")
+hud_icon = SubResource("AtlasTexture_il7m6")
+shoot_sound = ExtResource("4_c2reh")
 fire_shake_strength = 3.0
 aim_assist_angle = 20.0
 aim_assist_range = 350.0
