@@ -2,7 +2,6 @@ extends Area2D
 class_name Bullet
 
 @export var speed: float = 400.0
-@export var impact_fx_data: ImpactFXData
 
 static var debug: bool = false
 
@@ -134,7 +133,7 @@ func _get_impact_data(body: Node, impact_pos: Vector2, impact_normal: Vector2) -
 				return data
 	elif body.get("impact_fx_data") is ImpactFXData:
 		return body.impact_fx_data
-	return impact_fx_data
+	return null
 
 
 func _on_visible_on_screen_notifier_2d_screen_exited() -> void:

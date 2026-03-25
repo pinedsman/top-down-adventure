@@ -8,7 +8,7 @@
 script = ExtResource("5_ybq0i")
 fire_rate = 0.3
 damage = 25.0
-bullet_speed = 100.0
+bullet_speed = 800.0
 knockback_force = 50.0
 bullet_range = 400.0
 hud_icon = ExtResource("1_ubhum")

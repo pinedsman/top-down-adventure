@@ -45,6 +45,9 @@ func _physics_process(delta: float) -> void:
 	if _stuck:
 		return
 
+	# what's a better way to decay velocity?
+	velocity *= 0.9
+
 	var collision := move_and_collide(velocity * delta)
 	if collision == null:
 		return
@@ -151,8 +154,21 @@ func _apply_explosion_damage() -> void:
 			final_damage = data.self_damage_override
 			final_knockback = data.self_knockback_override
 
+		var impact_pos = body.global_position
+		_spawn_impact(_get_impact_data(body), impact_pos)
 		body.take_damage(final_damage, knockback_dir * final_knockback, body.global_position)
 
 
 func _on_visible_on_screen_notifier_2d_screen_exited() -> void:
 	queue_free()
+
+
+func _spawn_impact(impact_data: ImpactFXData, impact_pos: Vector2) -> void:
+	if impact_data == null:
+		return
+	impact_data.spawn(impact_pos)
+
+func _get_impact_data(body: Node) -> ImpactFXData:
+	if body.get("impact_fx_data") is ImpactFXData:
+		return body.impact_fx_data
+	return null

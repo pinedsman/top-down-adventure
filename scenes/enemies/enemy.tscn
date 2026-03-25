@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://by3uttemcyqg0" path="res://scripts/enemy.gd" id="1_7p1mj"]
 [ext_resource type="Texture2D" uid="uid://blr4708nnvgpq" path="res://assets/Characters/Slime1/Death/Slime1_Death_body.png" id="2_4ra3w"]
 [ext_resource type="AudioStream" uid="uid://cnuufge2tgvq2" path="res://assets/Sounds/slime_death.mp3" id="2_5uy6h"]
+[ext_resource type="Resource" uid="uid://bxcm5qlojcoen" path="res://resources/impacts/flesh_impact.tres" id="2_lu5c6"]
 [ext_resource type="Texture2D" uid="uid://cothicckobe84" path="res://assets/Characters/Slime1/Idle/Slime1_Idle_body.png" id="2_md0e3"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_t3vcr"]
@@ -382,6 +383,7 @@ animations = [{
 y_sort_enabled = true
 script = ExtResource("1_7p1mj")
 contact_damage = 1.0
+impact_fx_data = ExtResource("2_lu5c6")
 death_sound = ExtResource("2_5uy6h")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=223704639]
