@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ngnxrsbwgqmq"
-path="res://.godot/imported/shotgun_muzzleflash.png-83c3b8cd9aa7c861bcc547cfab5bf755.ctex"
+uid="uid://dxj3ga5dvt0es"
+path="res://.godot/imported/muzzleflash.png-0624934f93abd5adf0fa115e29d4329b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Art/shotgun_muzzleflash.png"
-dest_files=["res://.godot/imported/shotgun_muzzleflash.png-83c3b8cd9aa7c861bcc547cfab5bf755.ctex"]
+source_file="res://assets/Art/weapons/muzzleflash.png"
+dest_files=["res://.godot/imported/muzzleflash.png-0624934f93abd5adf0fa115e29d4329b.ctex"]
 
 [params]
 

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Weapon" format=3 uid="uid://bam6vkjb46yeg"]
+
+[ext_resource type="Resource" uid="uid://cahuulrv1vnag" path="res://resources/weapons/grenade_default.tres" id="1_8a8aj"]
+[ext_resource type="Texture2D" uid="uid://qggmrqjj06yw" path="res://assets/Art/weapons/grenade.png" id="1_ubhum"]
+[ext_resource type="Script" uid="uid://c8injxos6i6xd" path="res://scripts/weapons/weapon.gd" id="5_ybq0i"]
+
+[resource]
+script = ExtResource("5_ybq0i")
+fire_rate = 0.3
+damage = 25.0
+bullet_speed = 100.0
+knockback_force = 50.0
+bullet_range = 400.0
+hud_icon = ExtResource("1_ubhum")
+fire_shake_strength = 3.0
+aim_assist_angle = 20.0
+aim_assist_range = 350.0
+aim_assist_strength = 0.5
+grenade_data = ExtResource("1_8a8aj")
+metadata/_custom_type_script = "uid://c8injxos6i6xd"

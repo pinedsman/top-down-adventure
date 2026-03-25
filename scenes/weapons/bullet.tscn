@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://dmge2s1mgvp0y" path="res://scripts/weapons/bullet.gd" id="1_mkf8s"]
 [ext_resource type="PackedScene" uid="uid://dnqkl2susuf2w" path="res://scenes/impacts/impactFX.tscn" id="2_y25gk"]
 [ext_resource type="Resource" uid="uid://bxcm5qlojcoen" path="res://resources/impacts/flesh_impact.tres" id="3_l5glv"]
-[ext_resource type="Texture2D" uid="uid://iilfci7nliqt" path="res://assets/Art/bullet.png" id="4_oklhc"]
+[ext_resource type="Texture2D" uid="uid://iilfci7nliqt" path="res://assets/Art/weapons/bullet.png" id="4_oklhc"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_mkf8s"]
 radius = 6.3245554

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://blkfaiyno38d7"]
 
 [ext_resource type="Script" uid="uid://r8qii61cnvss" path="res://scripts/muzzleflash.gd" id="1_7xuvn"]
-[ext_resource type="Texture2D" uid="uid://ngnxrsbwgqmq" path="res://assets/Art/shotgun_muzzleflash.png" id="2_7xuvn"]
+[ext_resource type="Texture2D" uid="uid://ngnxrsbwgqmq" path="res://assets/Art/weapons/shotgun_muzzleflash.png" id="2_7xuvn"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tia3r"]
 atlas = ExtResource("2_7xuvn")
