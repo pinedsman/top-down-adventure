@@ -1,6 +1,11 @@
 [gd_scene format=3 uid="uid://cirdt7ede0hqi"]
 
-[ext_resource type="Script" uid="uid://ckclj4m4bt8ef" path="res://scripts/weapon_display.gd" id="1_2koif"]
+[ext_resource type="Script" uid="uid://ckclj4m4bt8ef" path="res://scripts/ui/weapon_display.gd" id="1_2koif"]
+[ext_resource type="Texture2D" uid="uid://t1c2ywi6w6sj" path="res://assets/Art/weapons/weapons.png" id="2_8syoe"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_i4es4"]
+atlas = ExtResource("2_8syoe")
+region = Rect2(315.455, 430, 128, 48)
 
 [node name="Control" type="Control" unique_id=16408162]
 layout_mode = 3
@@ -15,3 +20,4 @@ anchor_bottom = 1.0
 offset_top = -40.0
 offset_right = 40.0
 grow_vertical = 0
+texture = SubResource("AtlasTexture_i4es4")

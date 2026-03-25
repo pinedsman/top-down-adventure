@@ -2,12 +2,10 @@
 
 [ext_resource type="Texture2D" uid="uid://bgjwca5r81jfy" path="res://assets/Art/crosshair.png" id="1_0mwgc"]
 [ext_resource type="Script" uid="uid://c2x7a5o0fyyvk" path="res://scripts/ui/hud.gd" id="1_hqnrr"]
-[ext_resource type="PackedScene" uid="uid://cn4bjmxispeip" path="res://scenes/ui/heart.tscn" id="2_8qguk"]
 [ext_resource type="PackedScene" uid="uid://cirdt7ede0hqi" path="res://scenes/ui/weaponDisplay.tscn" id="3_bo48s"]
 
 [node name="HUD" type="CanvasLayer" unique_id=2071458643 groups=["hud"]]
 script = ExtResource("1_hqnrr")
-heart_ui_scene = ExtResource("2_8qguk")
 
 [node name="Crosshair" type="Node2D" parent="." unique_id=266691284 groups=["crosshair"]]
 position = Vector2(2, -7)
@@ -20,13 +18,11 @@ texture = ExtResource("1_0mwgc")
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
+offset_top = -40.0
+offset_bottom = -40.0
 grow_vertical = 0
 
 [node name="HBoxContainer" type="HFlowContainer" parent="." unique_id=102675290]
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = 20.0
-offset_bottom = 20.0
 grow_horizontal = 2

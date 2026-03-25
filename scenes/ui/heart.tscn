@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://cn4bjmxispeip"]
+
+[ext_resource type="Texture2D" uid="uid://q45q8e46fmuf" path="res://resources/ui/heart_full.tres" id="1_86inv"]
+[ext_resource type="Script" uid="uid://h5l10w60uk4l" path="res://scripts/ui/heart.gd" id="1_gwnj5"]
+[ext_resource type="Texture2D" uid="uid://vin5vejmiifn" path="res://resources/ui/heart_empty.tres" id="2_5po15"]
+[ext_resource type="Texture2D" uid="uid://bcx6ao6asse11" path="res://resources/ui/heart_half.tres" id="3_tw7u6"]
+
+[node name="Control" type="Control" unique_id=722438570]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_gwnj5")
+heartImages = Array[Texture2D]([ExtResource("2_5po15"), ExtResource("3_tw7u6"), ExtResource("1_86inv")])
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=795347003]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_86inv")
+expand_mode = 3

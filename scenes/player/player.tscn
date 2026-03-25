@@ -1128,6 +1128,7 @@ shader_parameter/texture_width = 32.0
 script = ExtResource("1_524rm")
 anim_data = ExtResource("2_npwbq")
 weapons = Array[ExtResource("3_h17s1")]([ExtResource("4_je7p5"), ExtResource("3_v42im")])
+max_health = 3.0
 pre_hurt_sound = ExtResource("6_gx1jg")
 hurt_sound = ExtResource("6_je7p5")
 death_sound = ExtResource("7_fm80t")

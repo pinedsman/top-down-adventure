@@ -276,6 +276,7 @@ animations = [{
 [node name="Enemy" type="CharacterBody2D" unique_id=1949769439]
 y_sort_enabled = true
 script = ExtResource("1_7p1mj")
+contact_damage = 1.0
 death_sound = ExtResource("2_5uy6h")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=223704639]
