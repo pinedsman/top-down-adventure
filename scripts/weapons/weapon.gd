@@ -23,24 +23,21 @@ func tick(delta: float) -> void:
 func can_fire() -> bool:
 	return _cooldown <= 0.0
 
-func fire(muzzle: Marker2D, direction: Vector2, behind_player: bool = false) -> void:
+func fire(muzzle: Marker2D, direction: Vector2) -> void:
 	if not can_fire():
 		return
 	_cooldown = fire_rate
 	_play_sound(muzzle)
-	_spawn_muzzle_flash(muzzle, direction, behind_player)
-	_spawn_bullet(muzzle, direction, behind_player)
+	_spawn_muzzle_flash(muzzle, direction)
+	_spawn_bullet(muzzle, direction)
 
-func _spawn_muzzle_flash(muzzle: Marker2D, direction: Vector2, behind_player: bool) -> void:
+func _spawn_muzzle_flash(muzzle: Marker2D, direction: Vector2) -> void:
 	if muzzle_flash_scene == null:
 		return
 	var flash = muzzle_flash_scene.instantiate()
 	muzzle.add_child(flash)
 	flash.position = Vector2.ZERO
 	flash.rotation = direction.angle()
-	if behind_player:
-		flash.z_as_relative = true
-		flash.z_index = -1
 	flash.flash()
 
 func _play_sound(muzzle: Marker2D) -> void:
@@ -48,7 +45,7 @@ func _play_sound(muzzle: Marker2D) -> void:
 		return
 	AudioPool.play(shoot_sound, muzzle.global_position)
 
-func _spawn_bullet(muzzle: Marker2D, direction: Vector2, behind_player: bool) -> void:
+func _spawn_bullet(muzzle: Marker2D, direction: Vector2) -> void:
 	if bullet_scene == null:
 		return
 	var bullet = bullet_scene.instantiate()

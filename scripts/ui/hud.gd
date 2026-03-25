@@ -25,16 +25,13 @@ func _update_hp(health:int):
 		heart.value = 2 if (i<health) else 0
 		i+=1
 
-func _update_max_hp(max:int):
-	var allHearts = hbox.get_children()
-	var i=allHearts.size()-1
-	while (hbox.get_children().size() > max):
-		hbox.remove_child(allHearts[i])
-		i -= 1
-		
-	while (hbox.get_children().size() < max):
-		var newHeart = heart_ui_scene.instantiate()
-		hbox.add_child(newHeart)
+func _update_max_hp(max_hp: int) -> void:
+	while hbox.get_child_count() > max_hp:
+		var heart = hbox.get_child(hbox.get_child_count() - 1)
+		hbox.remove_child(heart)
+		heart.queue_free()
+	while hbox.get_child_count() < max_hp:
+		hbox.add_child(heart_ui_scene.instantiate())
 		
 	
 	

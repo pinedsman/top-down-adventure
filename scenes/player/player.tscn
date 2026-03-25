@@ -12,8 +12,8 @@
 [ext_resource type="AudioStream" uid="uid://jbmf8l3laeu7" path="res://assets/Sounds/death.mp3" id="7_fm80t"]
 [ext_resource type="Shader" uid="uid://cto4s1uiaaekg" path="res://assets/laser_sight.gdshader" id="8_pn6s4"]
 [ext_resource type="Texture2D" uid="uid://u1dfsf8qt0la" path="res://assets/Art/laser.png" id="8_v42im"]
-[ext_resource type="PackedScene" uid="uid://dnqkl2susuf2w" path="res://scenes/impacts/impactFX.tscn" id="9_fcs02"]
 [ext_resource type="Resource" uid="uid://dngp84241gpk" path="res://resources/impacts/player_hit_impact.tres" id="10_myrg7"]
+[ext_resource type="Script" uid="uid://dcol5whqb0c85" path="res://scripts/camera_controller.gd" id="14_ugbui"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_v42im"]
 atlas = ExtResource("2_tpg5x")
@@ -1134,10 +1134,7 @@ hurt_sound = ExtResource("6_je7p5")
 death_sound = ExtResource("7_fm80t")
 invulnerability_duration = 0.5
 hit_stop_duration = 0.2
-hit_impact_fx_scene = ExtResource("9_fcs02")
 hit_impact_fx = ExtResource("10_myrg7")
-hit_shake_strength = 10.0
-hit_zoom_amount = 1.05
 
 [node name="MuzzleBehind" type="Marker2D" parent="." unique_id=983779752]
 
@@ -1165,3 +1162,5 @@ texture = ExtResource("8_v42im")
 texture_mode = 2
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=954518763]
+script = ExtResource("14_ugbui")
+zoom_amount = 1.05

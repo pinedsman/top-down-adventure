@@ -7,6 +7,6 @@
 [resource]
 script = ExtResource("1_frluk")
 scene = ExtResource("1_8k0o6")
-animation_name = "impact_rock"
+animation_name = "impact_player"
 sound = ExtResource("2_frluk")
 metadata/_custom_type_script = "uid://dun2vs8xtoxos"

@@ -7,7 +7,9 @@ class_name Enemy
 @export var impact_fx_data: ImpactFXData
 @export var death_sound: AudioStream
 var _health: float
+var _is_dead: bool = false
 var _knockback_velocity: Vector2 = Vector2.ZERO
+var _facing: Vector2 = Vector2.DOWN
 var _flash_tween: Tween
 
 func _ready() -> void:
@@ -23,7 +25,11 @@ func _physics_process(_delta: float) -> void:
 		move_and_slide()
 
 func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, _impact_position: Vector2 = global_position) -> void:
-	_health -= amount
+	if _is_dead:
+		return
+	_health = maxf(_health - amount, 0.0)
+	if knockback_direction != Vector2.ZERO:
+		_facing = knockback_direction * -1.0
 	_knockback_velocity = knockback_direction * knockback_scale
 	var sprite := $AnimatedSprite2D as CanvasItem
 	if is_instance_valid(_flash_tween):
@@ -36,9 +42,12 @@ func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, _im
 		die()
 
 func die() -> void:
+	_is_dead = true
 	if death_sound:
 		AudioPool.play(death_sound, global_position)
 	$CollisionShape2D.set_deferred("disabled", true)
 	set_physics_process(false)
-	$AnimatedSprite2D.play("death_down")
+	var dir_index := PlayerAnimation.direction_to_index(_facing)
+	var dir_names := ["up", "up", "right", "down", "down", "down", "left", "up"]
+	$AnimatedSprite2D.play("death_" + dir_names[dir_index])
 	$AnimatedSprite2D.animation_finished.connect(queue_free)

@@ -64,10 +64,6 @@ region = Rect2(512, 1536, 512, 512)
 atlas = ExtResource("2_r13lu")
 region = Rect2(1024, 1536, 512, 512)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_4eftc"]
-atlas = ExtResource("3_73nka")
-region = Rect2(130, 2, 64, 64)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_r13lu"]
 atlas = ExtResource("3_73nka")
 region = Rect2(322, 2, 64, 64)
@@ -87,6 +83,10 @@ region = Rect2(2, 66, 64, 64)
 [sub_resource type="AtlasTexture" id="AtlasTexture_uiqql"]
 atlas = ExtResource("3_73nka")
 region = Rect2(66, 66, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4eftc"]
+atlas = ExtResource("3_73nka")
+region = Rect2(130, 2, 64, 64)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_i4vs8"]
 animations = [{
@@ -142,6 +142,26 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_r13lu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_73nka")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_44s8y")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nmk1v")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uiqql")
+}],
+"loop": false,
+"name": &"impact_player",
+"speed": 15.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_4eftc")
 }, {
 "duration": 1.0,
@@ -170,7 +190,7 @@ script = ExtResource("1_4eftc")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=840162872]
 y_sort_enabled = true
 sprite_frames = SubResource("SpriteFrames_i4vs8")
-animation = &"impact_flesh"
+animation = &"impact_player"
 
-[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animation_finished"]
 [connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animation_finished"]
