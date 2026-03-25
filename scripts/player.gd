@@ -6,7 +6,6 @@ const SPEED = 100.0
 @export var anim_data: PlayerAnimation
 @export var weapons: Array[Weapon]
 @export var max_health: float = 100.0
-@export var pre_hurt_sound: AudioStream
 @export var hurt_sound: AudioStream
 @export var death_sound: AudioStream
 @export var invulnerability_duration: float = 1.0
@@ -72,7 +71,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var pressed = event.get_action_strength("shoot") > 0.5
 		if pressed and not _fire_held and not _is_hit:
 			_fire_held = true
-			if weapon and weapon.fire_mode == Weapon.FireMode.SINGLE:
+			if weapon and weapon.fire_mode in [Weapon.FireMode.SINGLE, Weapon.FireMode.BURST]:
 				weapon.fire(_get_current_muzzle(), _aim_direction)
 		elif not pressed:
 			_fire_held = false
@@ -256,6 +255,8 @@ func die() -> void:
 	set_physics_process(false)
 	set_process_unhandled_input(false)
 	$WallCollision.set_deferred("disabled", true)
+	_laser.hide()
+	crosshair.hide()
 	if death_sound:
 		AudioPool.play(death_sound, global_position)
 	if anim_data.has_state("death"):

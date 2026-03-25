@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://cnsro8f0k7ab1"]
+
+[ext_resource type="Script" uid="uid://capxxix88jomo" path="res://scripts/weapons/bullet_trail.gd" id="1_f4jy7"]
+
+[sub_resource type="Curve" id="Curve_k5nj8"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[node name="BulletTrail" type="Line2D" unique_id=2141907701]
+width = 2.0
+width_curve = SubResource("Curve_k5nj8")
+default_color = Color(0.6421665, 0.25030932, 0, 0.28300002)
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
+script = ExtResource("1_f4jy7")
+detach_interval = 0.01

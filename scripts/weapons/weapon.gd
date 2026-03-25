@@ -12,6 +12,7 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var bullet_range_fx: ImpactFXData
 @export var hud_icon: Texture2D
 @export var bullet_scene: PackedScene
+@export var bullet_trail_scene: PackedScene
 @export var shoot_sound: AudioStream
 @export var muzzle_flash_scene: PackedScene
 @export var pellet_count: int = 1
@@ -19,6 +20,8 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var spread_randomness: float = 0.5  # 0 = evenly spaced, 1 = fully random
 @export var rechamber_sound: AudioStream
 @export var rechamber_sound_delay: float = 0.15
+@export var burst_count: int = 3      # pellets per burst (BURST mode only)
+@export var burst_delay: float = 0.08 # seconds between burst shots
 @export var fire_shake_strength: float = 0.0  # 0 = no shake
 @export var suppress_wall_impacts: bool = false
 @export var aim_assist_angle: float = 0.0    # degrees, half-cone; 0 = disabled
@@ -29,6 +32,7 @@ signal fired(direction: Vector2)
 
 var _cooldown: float = 0.0
 var _shot_counter: int = 0
+var _burst_remaining: int = 0
 
 func tick(delta: float) -> void:
 	_cooldown = maxf(_cooldown - delta, 0.0)
@@ -40,6 +44,12 @@ func fire(muzzle: Marker2D, direction: Vector2) -> void:
 	if not can_fire():
 		return
 	_cooldown = fire_rate
+	_fire_single(muzzle, direction)
+	if fire_mode == FireMode.BURST and burst_count > 1:
+		_burst_remaining = burst_count - 1
+		_fire_burst(muzzle, direction)
+
+func _fire_single(muzzle: Marker2D, direction: Vector2) -> void:
 	_shot_counter += 1
 	var shot_id := _shot_counter
 	fired.emit(direction)
@@ -49,6 +59,14 @@ func fire(muzzle: Marker2D, direction: Vector2) -> void:
 		_spawn_bullet(muzzle, pellet_dir, shot_id)
 	if rechamber_sound:
 		_play_rechamber_sound(muzzle)
+
+func _fire_burst(muzzle: Marker2D, direction: Vector2) -> void:
+	while _burst_remaining > 0:
+		await muzzle.get_tree().create_timer(burst_delay, true, false, true).timeout
+		if not is_instance_valid(muzzle):
+			return
+		_burst_remaining -= 1
+		_fire_single(muzzle, direction)
 
 func _spawn_muzzle_flash(muzzle: Marker2D, direction: Vector2) -> void:
 	if muzzle_flash_scene == null:
@@ -78,7 +96,7 @@ func _get_spread_directions(base_dir: Vector2) -> Array[Vector2]:
 	return dirs
 
 func _play_rechamber_sound(muzzle: Marker2D) -> void:
-	await muzzle.get_tree().create_timer(rechamber_sound_delay).timeout
+	await muzzle.get_tree().create_timer(rechamber_sound_delay, true, false, true).timeout
 	if is_instance_valid(muzzle):
 		AudioPool.play(rechamber_sound, muzzle.global_position)
 
@@ -86,6 +104,8 @@ func _spawn_bullet(muzzle: Marker2D, direction: Vector2, shot_id: int = -1) -> v
 	if bullet_scene == null:
 		return
 	var bullet = bullet_scene.instantiate()
+	# Set properties that are read in _ready before adding to tree
+	bullet.trail_scene = bullet_trail_scene
 	var ysort = muzzle.get_tree().get_first_node_in_group("ysort")
 	assert(ysort != null, "Weapon: no node in group 'ysort' — add the YSort node to the 'ysort' group")
 	ysort.add_child(bullet)

@@ -14,6 +14,7 @@ var damage: float = 10.0
 var knockback_force: float = 0.0
 var shot_id: int = -1
 var suppress_wall_impacts: bool = false
+var trail_scene: PackedScene = null
 var range: float = 0.0  # 0 = infinite
 var range_fx: ImpactFXData = null
 var owner_node: Node = null:
@@ -25,12 +26,17 @@ var owner_node: Node = null:
 		_hit_query.exclude = exclude
 
 var _distance_travelled: float = 0.0
+var _trail: BulletTrail = null
 var _shape: CircleShape2D
 var _cast_query: PhysicsShapeQueryParameters2D
 var _rest_query: PhysicsShapeQueryParameters2D
 var _hit_query: PhysicsShapeQueryParameters2D
 
 func _ready() -> void:
+	if trail_scene:
+		_trail = trail_scene.instantiate()
+		add_child(_trail)
+		_trail.follow(self)
 	_shape = CircleShape2D.new()
 	_shape.radius = ($CollisionShape2D.shape as CircleShape2D).radius
 
@@ -90,7 +96,12 @@ func _physics_process(delta: float) -> void:
 	if range_reached:
 		if range_fx:
 			_spawn_impact(range_fx, global_position)
+		_detach_trail(global_position)
 		queue_free()
+
+func _detach_trail(final_point: Vector2 = global_position) -> void:
+	if is_instance_valid(_trail):
+		_trail.detach(get_tree().current_scene, final_point)
 
 func _on_impact(impact_pos: Vector2, impact_normal: Vector2, body: Node) -> void:
 	if body == owner_node:
@@ -101,6 +112,7 @@ func _on_impact(impact_pos: Vector2, impact_normal: Vector2, body: Node) -> void
 	if debug: DebugDraw.add_circle(impact_pos, 2, Color.GREEN)
 	if not same_shot:
 		_spawn_impact(_get_impact_data(body, impact_pos, impact_normal), impact_pos)
+	_detach_trail(impact_pos)
 	queue_free()
 
 func _spawn_impact(data: ImpactFXData, impact_pos: Vector2) -> void:
@@ -126,4 +138,5 @@ func _get_impact_data(body: Node, impact_pos: Vector2, impact_normal: Vector2) -
 
 
 func _on_visible_on_screen_notifier_2d_screen_exited() -> void:
+	_detach_trail()
 	queue_free()
