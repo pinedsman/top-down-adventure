@@ -1138,6 +1138,7 @@ death_sound = ExtResource("7_fm80t")
 invulnerability_duration = 0.5
 hit_stop_duration = 0.2
 hit_impact_fx = ExtResource("10_myrg7")
+aim_assist_mask = 2
 fire_buffer_window = 0.4
 
 [node name="MuzzleBehind" type="Marker2D" parent="." unique_id=983779752]

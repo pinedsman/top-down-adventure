@@ -381,6 +381,7 @@ animations = [{
 
 [node name="Enemy" type="CharacterBody2D" unique_id=1949769439]
 y_sort_enabled = true
+collision_layer = 3
 script = ExtResource("1_7p1mj")
 contact_damage = 1.0
 impact_fx_data = ExtResource("2_lu5c6")

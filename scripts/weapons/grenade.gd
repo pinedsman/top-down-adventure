@@ -37,8 +37,8 @@ func init(grenade_data: GrenadeData, direction: Vector2, speed: float, thrower: 
 func _ready() -> void:
 	assert(data != null, "Grenade: data not set — call init() before adding to tree")
 	assert(_sprite != null, "Grenade: scene must have a Sprite2D child node")
-	var player = get_tree().get_first_node_in_group("player")
-	_camera = player.find_child("Camera2D")
+	_camera = owner_node.get_node("Camera2D") as CameraController
+	assert(_camera != null, "Grenade: owner_node has no Camera2D child named 'Camera2D'")
 	_fuse_timer = data.fuse_time
 	_build_settle_thresholds()
 	if is_instance_valid(owner_node) and owner_node is PhysicsBody2D:
@@ -82,7 +82,7 @@ func _physics_process(delta: float) -> void:
 		_explode()
 		return
 
-	if data.stick_to_walls and not (collider is Enemy):
+	if data.stick_to_walls and not collider.is_in_group("enemies"):
 		_stuck = true
 		velocity = Vector2.ZERO
 		return
@@ -191,6 +191,8 @@ func _apply_explosion_damage() -> void:
 			continue
 		if body == owner_node and not data.self_damage:
 			continue
+		if not _has_los(body as Node2D):
+			continue
 
 		var dist := global_position.distance_to(body.global_position)
 		var t := clampf(
@@ -205,9 +207,6 @@ func _apply_explosion_damage() -> void:
 		if body == owner_node:
 			final_damage = data.self_damage_override
 			final_knockback = data.self_knockback_override
-
-		if not _has_los(body as Node2D):
-			continue
 
 		var impact_pos = body.global_position
 		_spawn_impact(_get_impact_data(body), impact_pos)

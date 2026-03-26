@@ -13,6 +13,7 @@ const SPEED = 100.0
 @export var knockback_force: float = 200.0
 @export var hit_stop_duration: float = 0.1
 @export var hit_impact_fx: ImpactFXData
+@export_flags_2d_physics var aim_assist_mask: int = 0
 
 signal weapon_changed(weapon: Weapon)
 signal health_changed(current: float, maximum: float)
@@ -43,6 +44,9 @@ var _hit_timer: float = 0.0
 var _knockback_velocity: Vector2 = Vector2.ZERO
 var _last_shot_id: int = -1
 var _ammo: Dictionary = {}  # AmmoType -> int
+var _aim_assist_area: Area2D
+var _aim_assist_shape: CircleShape2D
+var _aim_assist_enemies: Array[Node2D] = []
 
 func _ready() -> void:
 	crosshair = get_tree().get_first_node_in_group("crosshair")
@@ -56,6 +60,7 @@ func _ready() -> void:
 	for w in weapons:
 		if w.ammo_type != null and not _ammo.has(w.ammo_type):
 			_ammo[w.ammo_type] = w.ammo_type.max_capacity
+	_setup_aim_assist_area()
 	_connect_weapon(weapon)
 	weapon_changed.emit(weapon)
 	health_changed.emit(_health, max_health)
@@ -96,6 +101,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_fire_held = false
 		_fire_buffer = 0.0
 		_connect_weapon(weapon)
+		_update_aim_assist_collider()
 		weapon_changed.emit(weapon)
 	elif event.is_action_pressed("weapon_prev"):
 		weapon.cancel_burst()
@@ -103,6 +109,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_fire_held = false
 		_fire_buffer = 0.0
 		_connect_weapon(weapon)
+		_update_aim_assist_collider()
 		weapon_changed.emit(weapon)
 
 func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, impact_position: Vector2 = global_position, shot_id: int = -1) -> void:
@@ -163,18 +170,45 @@ func _update_aim() -> void:
 		if mouse.length() > 1.0:
 			_aim_direction = mouse.normalized()
 
+func _setup_aim_assist_area() -> void:
+	_aim_assist_shape = CircleShape2D.new()
+	var col := CollisionShape2D.new()
+	col.shape = _aim_assist_shape
+	_aim_assist_area = Area2D.new()
+	_aim_assist_area.collision_layer = 0
+	_aim_assist_area.collision_mask = aim_assist_mask
+	_aim_assist_area.add_child(col)
+	add_child(_aim_assist_area)
+	_aim_assist_area.body_entered.connect(_on_aim_assist_body_entered)
+	_aim_assist_area.body_exited.connect(_on_aim_assist_body_exited)
+	_update_aim_assist_collider()
+
+func _update_aim_assist_collider() -> void:
+	if _aim_assist_area == null:
+		return
+	var enabled := weapon != null and weapon.aim_assist_angle > 0.0
+	_aim_assist_area.monitoring = enabled
+	if enabled:
+		_aim_assist_shape.radius = weapon.aim_assist_range
+	if not enabled:
+		_aim_assist_enemies.clear()
+
+func _on_aim_assist_body_entered(body: Node2D) -> void:
+	_aim_assist_enemies.append(body)
+
+func _on_aim_assist_body_exited(body: Node2D) -> void:
+	_aim_assist_enemies.erase(body)
+
 func _apply_aim_assist(delta: float) -> void:
 	if not InputManager.is_gamepad or weapon == null or weapon.aim_assist_angle <= 0.0:
 		return
 	var threshold := deg_to_rad(weapon.aim_assist_angle)
 	var best_dir := Vector2.ZERO
 	var best_angle := threshold
-	for enemy: Node2D in get_tree().get_nodes_in_group("enemies"):
-		if enemy.get("_is_dead"):
+	for enemy: Node2D in _aim_assist_enemies:
+		if not is_instance_valid(enemy) or enemy.get("_is_dead"):
 			continue
 		var to_enemy := enemy.global_position - global_position
-		if to_enemy.length_squared() > weapon.aim_assist_range * weapon.aim_assist_range:
-			continue
 		var angle := absf(_aim_direction.angle_to(to_enemy.normalized()))
 		if angle < best_angle:
 			best_angle = angle

@@ -92,6 +92,11 @@ weapon_prev={
 ]
 }
 
+[layer_names]
+
+2d_physics/layer_1="walls"
+2d_physics/layer_2="enemies"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"
