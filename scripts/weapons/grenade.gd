@@ -20,6 +20,7 @@ var _radius_indicator: GrenadeRadius
 
 var _settle_thresholds: Array[float] = []
 var _settle_index: int = 0
+var _spin_dir: float = 1.0
 
 @onready var _sprite: Node2D = $Sprite2D
 @onready var _sprite_scale: Vector2 = _sprite.scale
@@ -30,6 +31,7 @@ func init(grenade_data: GrenadeData, direction: Vector2, speed: float, thrower: 
 	owner_node = thrower
 	shot_id = grenade_shot_id
 	velocity = direction * speed
+	_spin_dir = signf(direction.x) if absf(direction.x) > 0.1 else 1.0
 
 
 func _ready() -> void:
@@ -67,6 +69,7 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO
 		return
 
+	_sprite.rotation += data.spin_rate * velocity.length() * _spin_dir * delta
 	_radius_indicator.global_position = global_position
 	_tick_settle_clinks()
 	var collision := move_and_collide(velocity * delta)

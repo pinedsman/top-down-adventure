@@ -26,6 +26,7 @@ class_name GrenadeData
 @export_group("Bounce")
 @export var velocity_decay: float = 8.0  # speed loss per second (exponential)
 @export var bounce_friction: float = 0.6  # speed multiplier per bounce
+@export var spin_rate: float = 0.008     # radians per pixel/second of speed
 @export var max_bounces: int = 0          # 0 = unlimited
 @export var bounce_sound: AudioStream
 @export var explode_on_impact: bool = false
