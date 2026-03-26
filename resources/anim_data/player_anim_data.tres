@@ -232,6 +232,52 @@ state_name = "death"
 directions = Array[ExtResource("3_pdrkw")]([SubResource("Resource_nim0p"), SubResource("Resource_386sx"), SubResource("Resource_71y7p"), SubResource("Resource_c1l55"), SubResource("Resource_1ftq7"), SubResource("Resource_ptul3"), SubResource("Resource_2a5ki"), SubResource("Resource_3g04c")])
 metadata/_custom_type_script = "uid://djcw251nrn5n6"
 
+[sub_resource type="Resource" id="Resource_7ev7g"]
+script = ExtResource("3_pdrkw")
+animationIndex = "dash_up"
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_6qeib"]
+script = ExtResource("3_pdrkw")
+animationIndex = "dash_up_right"
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_rntkm"]
+script = ExtResource("3_pdrkw")
+animationIndex = "dash_right"
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_ayuhw"]
+script = ExtResource("3_pdrkw")
+animationIndex = "dash_right"
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_j0srv"]
+script = ExtResource("3_pdrkw")
+animationIndex = "dash_down"
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_yiro0"]
+script = ExtResource("3_pdrkw")
+animationIndex = "dash_left"
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_cmtnx"]
+script = ExtResource("3_pdrkw")
+animationIndex = "dash_left"
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_caqcw"]
+script = ExtResource("3_pdrkw")
+animationIndex = "dash_up_left"
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_ikfkk"]
+script = ExtResource("2_k2d22")
+state_name = "dash"
+directions = Array[ExtResource("3_pdrkw")]([SubResource("Resource_7ev7g"), SubResource("Resource_6qeib"), SubResource("Resource_rntkm"), SubResource("Resource_ayuhw"), SubResource("Resource_j0srv"), SubResource("Resource_yiro0"), SubResource("Resource_cmtnx"), SubResource("Resource_caqcw")])
+metadata/_custom_type_script = "uid://djcw251nrn5n6"
+
 [resource]
 script = ExtResource("1_m3uxx")
-states = Array[ExtResource("2_k2d22")]([SubResource("Resource_dymrr"), SubResource("Resource_m3uxx"), SubResource("Resource_tco4h"), SubResource("Resource_34xbq")])
+states = Array[ExtResource("2_k2d22")]([SubResource("Resource_dymrr"), SubResource("Resource_m3uxx"), SubResource("Resource_tco4h"), SubResource("Resource_34xbq"), SubResource("Resource_ikfkk")])

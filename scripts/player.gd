@@ -8,6 +8,7 @@ const SPEED = 100.0
 @export var hit_duration: float = 0.3
 @export var knockback_force: float = 200.0
 @export_flags_2d_physics var aim_assist_mask: int = 0
+@export var dash_data: DashData
 
 signal weapon_changed(weapon: Weapon)
 signal ammo_changed(ammo_type: AmmoType, current: int)
@@ -29,10 +30,16 @@ var _hit_timer: float = 0.0
 var _invulnerable: bool = false
 var _invulnerable_timer: float = 0.0
 var _ammo: Dictionary = {}  # AmmoType -> int
+var _is_dashing: bool = false
+var _dash_timer: float = 0.0
+var _dash_cooldown_timer: float = 0.0
+var _dash_velocity: Vector2 = Vector2.ZERO
+var _saved_collision_layer: int = 0
 var _aim_assist_area: Area2D
 var _aim_assist_shape: CircleShape2D
 var _aim_assist_enemies: Array[Node2D] = []
 
+@onready var dash_particle = $DashParticle
 
 func _ready() -> void:
 	super._ready()
@@ -58,13 +65,15 @@ func _connect_weapon(w: Weapon) -> void:
 
 func _physics_process(delta: float) -> void:
 	_tick_hit_state(delta)
-	_update_aim(delta)
-	_apply_aim_assist(delta)
-	_update_crosshair()
+	_tick_dash(delta)
+	if not _is_dashing:
+		_update_aim(delta)
+		_apply_aim_assist(delta)
+		_update_crosshair()
+		_update_laser()
 	player_movement(delta)
 	player_animation(delta)
 	_tick_weapon(delta)
-	_update_laser()
 	if weapon is MeleeWeapon and weapon.debug_draw_arc:
 		queue_redraw()
 
@@ -88,6 +97,9 @@ func _unhandled_input(event: InputEvent) -> void:
 						_fire_buffer = fire_buffer_window
 		elif not pressed:
 			_fire_held = false
+	elif event.is_action_pressed("dash"):
+		if not _is_dashing and _dash_cooldown_timer <= 0.0 and dash_data != null and not _is_hit:
+			_start_dash()
 	elif event.is_action_pressed("weapon_next"):
 		if weapon != null and weapon.can_switch() and _weapon_instances.size() > 1:
 			weapon.cancel_burst()
@@ -111,7 +123,11 @@ func _unhandled_input(event: InputEvent) -> void:
 # — CharacterBase overrides —
 
 func _can_take_damage() -> bool:
-	return not _invulnerable
+	if _invulnerable:
+		return false
+	if _is_dashing and dash_data != null and dash_data.invincible_during_dash:
+		return false
+	return true
 
 
 func _on_take_damage(same_shot: bool, knockback_direction: Vector2, _impact_position: Vector2) -> void:
@@ -243,6 +259,52 @@ func _apply_aim_assist(delta: float) -> void:
 		_aim_direction = _aim_direction.lerp(best_dir, t).normalized()
 
 
+# — Dash —
+
+func _start_dash() -> void:
+	var move_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var dash_dir := move_input.normalized() if move_input.length() > 0.01 else _aim_direction
+	_is_dashing = true
+	dash_particle.emitting = true
+	_facing = dash_dir
+	
+	#HACK to match direction index since we are directly accessing the PNG
+	var dash_indexes: Array[int] = [ 3, 4, 5, 5, 0, 1, 1, 2 ]
+	var i := DirectionalAnimData.direction_to_index(_facing, anim_data.direction_count)
+	
+	AudioPool.play(dash_data.dash_sound,global_position)
+	
+	dash_particle.material.set_shader_parameter("particles_anim_row", dash_indexes[i])
+	_dash_timer = dash_data.dash_duration
+	_dash_velocity = dash_dir * dash_data.dash_speed
+	_fire_held = false
+	_fire_buffer = 0.0
+	if dash_data.invincible_during_dash:
+		_saved_collision_layer = collision_layer
+		collision_layer = 0
+	_laser.hide()
+	if InputManager.is_gamepad:
+		crosshair.hide()
+
+
+func _tick_dash(delta: float) -> void:
+	_dash_cooldown_timer = maxf(_dash_cooldown_timer - delta, 0.0)
+	if not _is_dashing:
+		return
+	_dash_timer -= delta
+	if _dash_timer <= 0.0:
+		_end_dash()
+
+
+func _end_dash() -> void:
+	_is_dashing = false
+	dash_particle.emitting = false
+	_dash_cooldown_timer = dash_data.dash_cooldown
+	if dash_data.invincible_during_dash:
+		collision_layer = _saved_collision_layer
+	_on_input_mode_changed(InputManager.is_gamepad)
+
+
 func _on_input_mode_changed(is_gamepad: bool) -> void:
 	if _is_dead:
 		return
@@ -312,6 +374,10 @@ func _on_hit_stop_ended() -> void:
 # — Movement —
 
 func player_movement(_delta: float) -> void:
+	if _is_dashing:
+		velocity = _dash_velocity
+		move_and_slide()
+		return
 	if _is_hit:
 		velocity = _knockback_velocity
 		_knockback_velocity = lerp(_knockback_velocity, Vector2.ZERO, 0.2)
@@ -335,13 +401,16 @@ func player_animation(_delta: float) -> void:
 		return
 	var anim := $AnimatedSprite2D
 	var state: String
-	if _is_hit and anim_data.has_state("hit"):
+	if _is_dashing and anim_data.has_state("dash"):
+		state = "dash"
+	elif _is_hit and anim_data.has_state("hit"):
 		state = "hit"
 	elif weapon is MeleeWeapon and weapon.is_swinging() and anim_data.has_state("swipe"):
 		state = "swipe"
 	else:
 		state = "walk" if velocity.length() > 0.01 else "idle"
-	_facing = _aim_direction
+	if not _is_dashing:
+		_facing = _aim_direction
 
 	_current_anim_entry = anim_data.get_entry(state, DirectionalAnimData.direction_to_index(_facing, anim_data.direction_count))
 	if _current_anim_entry:
