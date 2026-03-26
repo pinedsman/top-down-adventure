@@ -29,6 +29,7 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var aim_assist_strength: float = 0.15
 @export var grenade_data: GrenadeData        # if set, fire() throws a grenade instead of bullets
 @export var ammo_type: AmmoType              # null = infinite ammo
+@export var show_laser: bool = true
 
 signal fired(direction: Vector2)
 

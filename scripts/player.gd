@@ -38,6 +38,7 @@ func _ready() -> void:
 	crosshair = get_tree().get_first_node_in_group("crosshair")
 	assert(crosshair != null, "Player requires a node in the 'crosshair' group")
 	_laser = $LaserSight
+	_laser.hide()
 	_camera = $Camera2D
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	_on_input_mode_changed(InputManager.is_gamepad)
@@ -50,6 +51,9 @@ func _ready() -> void:
 	weapon_changed.emit(weapon)
 	health_changed.emit(_health, max_health)
 
+func _connect_weapon(w: Weapon) -> void:
+	super(w)
+	_on_input_mode_changed(InputManager.is_gamepad)
 
 func _physics_process(delta: float) -> void:
 	_tick_hit_state(delta)
@@ -240,13 +244,21 @@ func _apply_aim_assist(delta: float) -> void:
 
 
 func _on_input_mode_changed(is_gamepad: bool) -> void:
+	if _is_dead:
+		return
+		
 	if is_gamepad:
 		crosshair.hide()
-		_laser.show()
+		update_laser_visibility()
 	else:
 		crosshair.show()
 		_laser.hide()
 
+func update_laser_visibility() -> void:
+	if (weapon != null && weapon.show_laser):
+		_laser.show()
+	else:
+		_laser.hide()
 
 # — Laser —
 
