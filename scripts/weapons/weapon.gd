@@ -36,6 +36,7 @@ var _cooldown: float = 0.0
 var _shot_counter: int = 0
 var _burst_remaining: int = 0
 var owner_node: Node  # set by player on equip; used for ammo checks
+var _ysort: Node      # cached on first use
 
 func tick(delta: float) -> void:
 	_cooldown = maxf(_cooldown - delta, 0.0)
@@ -118,13 +119,17 @@ func _play_rechamber_sound(muzzle: Marker2D) -> void:
 	if is_instance_valid(muzzle):
 		AudioPool.play(rechamber_sound, muzzle.global_position)
 
+func _get_ysort(muzzle: Marker2D) -> Node:
+	if not is_instance_valid(_ysort):
+		_ysort = muzzle.get_tree().get_first_node_in_group("ysort")
+		assert(_ysort != null, "Weapon: no node in group 'ysort'")
+	return _ysort
+
 func _spawn_grenade(muzzle: Marker2D, direction: Vector2, shot_id: int) -> void:
 	assert(grenade_data.grenade_scene != null, "Weapon: grenade_data.grenade_scene not set")
 	var grenade = grenade_data.grenade_scene.instantiate()
-	var ysort = muzzle.get_tree().get_first_node_in_group("ysort")
-	assert(ysort != null, "Weapon: no node in group 'ysort'")
 	grenade.init(grenade_data, direction, bullet_speed, muzzle.get_parent(), shot_id)
-	ysort.add_child(grenade)
+	_get_ysort(muzzle).add_child(grenade)
 	grenade.global_position = muzzle.global_position
 
 func _spawn_bullet(muzzle: Marker2D, direction: Vector2, shot_id: int = -1) -> void:
@@ -133,9 +138,7 @@ func _spawn_bullet(muzzle: Marker2D, direction: Vector2, shot_id: int = -1) -> v
 	var bullet = bullet_scene.instantiate()
 	# Set properties that are read in _ready before adding to tree
 	bullet.trail_scene = bullet_trail_scene
-	var ysort = muzzle.get_tree().get_first_node_in_group("ysort")
-	assert(ysort != null, "Weapon: no node in group 'ysort' — add the YSort node to the 'ysort' group")
-	ysort.add_child(bullet)
+	_get_ysort(muzzle).add_child(bullet)
 	bullet.global_position = muzzle.global_position
 	bullet.direction = direction
 	bullet.damage = damage

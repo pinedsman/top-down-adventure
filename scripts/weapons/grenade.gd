@@ -64,7 +64,7 @@ func _physics_process(delta: float) -> void:
 
 	velocity *= exp(-data.velocity_decay * delta)
 
-	if velocity.length() < 50.0:
+	if velocity.length() < data.stop_speed:
 		_stuck = true
 		velocity = Vector2.ZERO
 		return
@@ -141,7 +141,7 @@ func _build_settle_thresholds() -> void:
 	# excluding the endpoints (stop clink is handled separately).
 	for i in range(count):
 		var t := float(i + 1) / float(count + 1)
-		_settle_thresholds.append(lerpf(data.settle_speed, 50.0, t))
+		_settle_thresholds.append(lerpf(data.settle_speed, data.stop_speed, t))
 	_settle_thresholds.sort()
 	_settle_thresholds.reverse()  # check highest first
 
@@ -191,7 +191,8 @@ func _apply_explosion_damage() -> void:
 			continue
 		if body == owner_node and not data.self_damage:
 			continue
-		if not _has_los(body as Node2D):
+		var surface_pos = _los_hit_pos(body as Node2D)
+		if surface_pos == null:
 			continue
 
 		var dist := global_position.distance_to(body.global_position)
@@ -208,20 +209,23 @@ func _apply_explosion_damage() -> void:
 			final_damage = data.self_damage_override
 			final_knockback = data.self_knockback_override
 
-		var impact_pos = body.global_position
-		_spawn_impact(_get_impact_data(body), impact_pos)
-		body.take_damage(final_damage, knockback_dir * final_knockback, body.global_position)
+		_spawn_impact(_get_impact_data(body), surface_pos)
+		body.take_damage(final_damage, knockback_dir * final_knockback, surface_pos)
 
 
 func _on_visible_on_screen_notifier_2d_screen_exited() -> void:
 	queue_free()
 
 
-func _has_los(target: Node2D) -> bool:
+## Returns the surface contact point if target has line-of-sight, or null if blocked.
+func _los_hit_pos(target: Node2D) -> Variant:
 	var query := PhysicsRayQueryParameters2D.create(global_position, target.global_position)
 	query.exclude = [self, target]
 	query.collision_mask = data.los_mask
-	return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
+	if not get_world_2d().direct_space_state.intersect_ray(query).is_empty():
+		return null  # blocked
+	var to_target: Vector2 = target.global_position - global_position
+	return global_position + to_target.normalized() * (to_target.length() - 1.0)
 
 
 func _spawn_impact(impact_data: ImpactFXData, impact_pos: Vector2) -> void:
