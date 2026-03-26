@@ -1,4 +1,5 @@
 extends CharacterBase
+class_name Player
 
 const SPEED = 100.0
 

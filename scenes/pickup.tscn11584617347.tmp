@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://cfekublly24p0"]
+
+[ext_resource type="Script" uid="uid://c3slbaatb64uc" path="res://scripts/pickup.gd" id="1_7cqbe"]
+[ext_resource type="Texture2D" uid="uid://mytqh05f0t6s" path="res://assets/Art/weapons/ammo_rifle.png" id="1_pg2rt"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_7cqbe"]
+
+[node name="Pickup" type="Area2D" unique_id=908505312]
+script = ExtResource("1_7cqbe")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1092919313]
+shape = SubResource("CircleShape2D_7cqbe")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1301572191]
+scale = Vector2(0.1, 0.1)
+texture = ExtResource("1_pg2rt")

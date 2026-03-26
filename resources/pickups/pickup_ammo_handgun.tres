@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PickupData" format=3 uid="uid://bq186y06fmwjg"]
+
+[ext_resource type="Resource" uid="uid://l0ohb1sped8b" path="res://resources/weapons/ammo/ammo_hangun.tres" id="1_5p1vo"]
+[ext_resource type="Script" uid="uid://clim6eo0n8c6d" path="res://scripts/pickup_data.gd" id="1_hlaw5"]
+[ext_resource type="AudioStream" uid="uid://ci12v40kguvqx" path="res://assets/Sounds/shotgun_rechamber.mp3" id="2_8n4dk"]
+[ext_resource type="PackedScene" uid="uid://cfekublly24p0" path="res://scenes/pickup.tscn" id="3_72ng4"]
+
+[resource]
+script = ExtResource("1_hlaw5")
+scene = ExtResource("3_72ng4")
+ammo_type = ExtResource("1_5p1vo")
+pickup_sound = ExtResource("2_8n4dk")
+scale = Vector2(0.1, 0.1)
+metadata/_custom_type_script = "uid://clim6eo0n8c6d"

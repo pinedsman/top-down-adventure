@@ -5,6 +5,8 @@
 [ext_resource type="PackedScene" uid="uid://2a6shr2pkidq" path="res://scenes/enemies/enemy.tscn" id="2_0wfyh"]
 [ext_resource type="Texture2D" uid="uid://bnmxmp05l7eon" path="res://assets/Art/Tileset/TX Tileset Stone Ground.png" id="2_jyhfs"]
 [ext_resource type="PackedScene" uid="uid://c55pbs8b28i2l" path="res://scenes/ui/hud.tscn" id="5_tbgi4"]
+[ext_resource type="PackedScene" uid="uid://cfekublly24p0" path="res://scenes/pickup.tscn" id="6_o6xl0"]
+[ext_resource type="Resource" uid="uid://bq186y06fmwjg" path="res://resources/pickups/pickup_ammo_handgun.tres" id="7_tipki"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_tbgi4"]
 vertices = PackedVector2Array(18, 25.929688, 1262, 18.0625, 1262, 246, 490, 214, 490, 246, 310, 214, 18, 630, 310, 362, 1262, 630, 1262, 362)
@@ -224,6 +226,7 @@ tile_map_data = PackedByteArray("AAAAAAAAAAAEAAAAAAAAAAEAAAAHAAMAAAAAAAIAAAAAAAE
 tile_set = ExtResource("1_sugp2")
 
 [node name="NavigationRegion2D" type="NavigationRegion2D" parent="." unique_id=718229168]
+visible = false
 navigation_polygon = SubResource("NavigationPolygon_tbgi4")
 
 [node name="ySort" type="Node2D" parent="." unique_id=946984235 groups=["ysort"]]
@@ -261,5 +264,9 @@ position = Vector2(424, 184)
 [node name="Enemy5" parent="ySort" unique_id=336949229 groups=["enemies"] instance=ExtResource("2_0wfyh")]
 y_sort_enabled = false
 position = Vector2(256, 296)
+
+[node name="Pickup" parent="ySort" unique_id=908505312 instance=ExtResource("6_o6xl0")]
+position = Vector2(272, 128)
+preset_pickup_data = ExtResource("7_tipki")
 
 [node name="HUD" parent="." unique_id=2071458643 instance=ExtResource("5_tbgi4")]
