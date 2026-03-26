@@ -1,6 +1,8 @@
 extends CharacterBody2D
 class_name Grenade
 
+var _camera: CameraController
+
 var data: GrenadeData = null
 var owner_node: Node = null
 var shot_id: int = -1
@@ -14,6 +16,10 @@ var _pre_explode_active: bool = false
 var _flash_timer: float = 0.0
 var _flash_visible: bool = true
 var _squash_tween: Tween
+var _radius_indicator: GrenadeRadius
+
+var _settle_thresholds: Array[float] = []
+var _settle_index: int = 0
 
 @onready var _sprite: Node2D = $Sprite2D
 @onready var _sprite_scale: Vector2 = _sprite.scale
@@ -29,7 +35,15 @@ func init(grenade_data: GrenadeData, direction: Vector2, speed: float, thrower: 
 func _ready() -> void:
 	assert(data != null, "Grenade: data not set — call init() before adding to tree")
 	assert(_sprite != null, "Grenade: scene must have a Sprite2D child node")
+	var player = get_tree().get_first_node_in_group("player")
+	_camera = player.find_child("Camera2D")
 	_fuse_timer = data.fuse_time
+	_build_settle_thresholds()
+	if is_instance_valid(owner_node) and owner_node is PhysicsBody2D:
+		add_collision_exception_with(owner_node)
+	_radius_indicator = GrenadeRadius.new()
+	add_child(_radius_indicator)
+	_radius_indicator.setup(self)
 
 
 func _physics_process(delta: float) -> void:
@@ -46,19 +60,20 @@ func _physics_process(delta: float) -> void:
 	if _stuck:
 		return
 
-	if ( velocity.length() < 50 ):
+	velocity *= exp(-data.velocity_decay * delta)
+
+	if velocity.length() < 50.0:
 		_stuck = true
 		velocity = Vector2.ZERO
 		return
 
-	velocity *= exp(-data.velocity_decay * delta)
+	_radius_indicator.global_position = global_position
+	_tick_settle_clinks()
 	var collision := move_and_collide(velocity * delta)
 	if collision == null:
 		return
 
 	var collider := collision.get_collider()
-	if collider == owner_node:
-		return
 
 	if data.explode_on_impact:
 		_explode()
@@ -75,6 +90,7 @@ func _physics_process(delta: float) -> void:
 
 	velocity = velocity.bounce(collision.get_normal()) * data.bounce_friction
 	_bounce_count += 1
+	_settle_index = 0  # reset so settle clinks re-arm after each wall bounce
 	_on_bounce(collision.get_position())
 
 
@@ -86,6 +102,7 @@ func _tick_pre_explode(delta: float) -> void:
 	if not _pre_explode_active:
 		_pre_explode_active = true
 		_flash_timer = 0.0
+		_radius_indicator.queue_redraw()
 
 	var progress := 1.0 - (_fuse_timer / data.pre_explode_start_time)
 	var flash_rate := lerpf(data.pre_explode_flash_rate_start, data.pre_explode_flash_rate_end, progress)
@@ -95,18 +112,44 @@ func _tick_pre_explode(delta: float) -> void:
 		_flash_timer = fmod(_flash_timer, 1.0 / flash_rate)
 		_flash_visible = not _flash_visible
 		_sprite.visible = _flash_visible
+		_radius_indicator.queue_redraw()
 		if data.pre_explode_sound:
 			AudioPool.play(data.pre_explode_sound, global_position)
 
 
-func _on_bounce(bounce_pos: Vector2) -> void:
+func _on_bounce(bounce_pos: Vector2, intensity: float = 1.0) -> void:
 	if data.bounce_sound:
 		AudioPool.play(data.bounce_sound, bounce_pos)
 	if is_instance_valid(_squash_tween):
 		_squash_tween.kill()
+	var sx := 1.0 + 0.3 * intensity
+	var sy := 1.0 - 0.3 * intensity
 	_squash_tween = create_tween()
-	_squash_tween.tween_property(_sprite, "scale", _sprite_scale * Vector2(1.3, 0.7), 0.04)
+	_squash_tween.tween_property(_sprite, "scale", _sprite_scale * Vector2(sx, sy), 0.04)
 	_squash_tween.tween_property(_sprite, "scale", _sprite_scale, 0.1).set_ease(Tween.EASE_OUT)
+
+
+func _build_settle_thresholds() -> void:
+	_settle_thresholds.clear()
+	var count := data.settle_clink_count
+	if count <= 0:
+		return
+	# Space thresholds evenly between settle_speed and stop threshold (50),
+	# excluding the endpoints (stop clink is handled separately).
+	for i in range(count):
+		var t := float(i + 1) / float(count + 1)
+		_settle_thresholds.append(lerpf(data.settle_speed, 50.0, t))
+	_settle_thresholds.sort()
+	_settle_thresholds.reverse()  # check highest first
+
+
+func _tick_settle_clinks() -> void:
+	var speed := velocity.length()
+	while _settle_index < _settle_thresholds.size() and speed <= _settle_thresholds[_settle_index]:
+		var intensity := _settle_thresholds[_settle_index] / data.settle_speed
+		_on_bounce(global_position, intensity)
+		velocity = velocity.normalized() * speed * 1.5
+		_settle_index += 1
 
 
 func _explode() -> void:
@@ -119,8 +162,9 @@ func _explode() -> void:
 		AudioPool.play(data.explosion_sound, global_position)
 	if data.explosion_fx:
 		data.explosion_fx.spawn(global_position)
+	_camera.shake(Vector2.UP, data.explosion_shake_strength, 1.0, 0.8)
 
-	await get_tree().create_timer(data.damage_delay).timeout
+	await get_tree().create_timer(data.damage_delay, true, false, true).timeout
 
 	_apply_explosion_damage()
 	queue_free()
@@ -159,6 +203,9 @@ func _apply_explosion_damage() -> void:
 			final_damage = data.self_damage_override
 			final_knockback = data.self_knockback_override
 
+		if not _has_los(body as Node2D):
+			continue
+
 		var impact_pos = body.global_position
 		_spawn_impact(_get_impact_data(body), impact_pos)
 		body.take_damage(final_damage, knockback_dir * final_knockback, body.global_position)
@@ -166,6 +213,13 @@ func _apply_explosion_damage() -> void:
 
 func _on_visible_on_screen_notifier_2d_screen_exited() -> void:
 	queue_free()
+
+
+func _has_los(target: Node2D) -> bool:
+	var query := PhysicsRayQueryParameters2D.create(global_position, target.global_position)
+	query.exclude = [self, target]
+	query.collision_mask = data.los_mask
+	return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
 
 
 func _spawn_impact(impact_data: ImpactFXData, impact_pos: Vector2) -> void:

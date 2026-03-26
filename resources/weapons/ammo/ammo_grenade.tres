@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="AmmoType" format=3 uid="uid://dvlpx2l87x5iv"]
+
+[ext_resource type="Script" uid="uid://b3yih4soy3jb7" path="res://scripts/weapons/ammo_type.gd" id="2_c1wr7"]
+
+[resource]
+script = ExtResource("2_c1wr7")
+max_capacity = 3

@@ -28,18 +28,23 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var aim_assist_range: float = 150.0
 @export var aim_assist_strength: float = 0.15
 @export var grenade_data: GrenadeData        # if set, fire() throws a grenade instead of bullets
+@export var ammo_type: AmmoType              # null = infinite ammo
 
 signal fired(direction: Vector2)
 
 var _cooldown: float = 0.0
 var _shot_counter: int = 0
 var _burst_remaining: int = 0
+var owner_node: Node  # set by player on equip; used for ammo checks
 
 func tick(delta: float) -> void:
 	_cooldown = maxf(_cooldown - delta, 0.0)
 
 func can_fire() -> bool:
 	return _cooldown <= 0.0
+
+func cancel_burst() -> void:
+	_burst_remaining = 0
 
 func fire(muzzle: Marker2D, direction: Vector2) -> void:
 	if not can_fire():
@@ -67,7 +72,10 @@ func _fire_single(muzzle: Marker2D, direction: Vector2) -> void:
 func _fire_burst(muzzle: Marker2D, direction: Vector2) -> void:
 	while _burst_remaining > 0:
 		await muzzle.get_tree().create_timer(burst_delay, true, false, true).timeout
-		if not is_instance_valid(muzzle):
+		if not is_instance_valid(muzzle) or _burst_remaining <= 0:
+			return
+		if owner_node != null and not owner_node.has_ammo(self):
+			_burst_remaining = 0
 			return
 		_burst_remaining -= 1
 		_fire_single(muzzle, direction)
@@ -127,7 +135,7 @@ func _spawn_bullet(muzzle: Marker2D, direction: Vector2, shot_id: int = -1) -> v
 	bullet.damage = damage
 	bullet.speed = bullet_speed
 	bullet.knockback_force = knockback_force
-	bullet.range = bullet_range
+	bullet.travel_range = bullet_range
 	bullet.range_fx = bullet_range_fx
 	bullet.shot_id = shot_id
 	bullet.suppress_wall_impacts = suppress_wall_impacts

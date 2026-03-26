@@ -4,7 +4,6 @@
 [ext_resource type="Script" uid="uid://c2x7a5o0fyyvk" path="res://scripts/ui/hud.gd" id="1_hqnrr"]
 [ext_resource type="PackedScene" uid="uid://cn4bjmxispeip" path="res://scenes/ui/heart.tscn" id="2_8qguk"]
 [ext_resource type="PackedScene" uid="uid://cirdt7ede0hqi" path="res://scenes/ui/weaponDisplay.tscn" id="3_bo48s"]
-[ext_resource type="Texture2D" uid="uid://mytqh05f0t6s" path="res://assets/Art/weapons/ammo_rifle.png" id="5_136eg"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_8qguk"]
 outline_size = 2
@@ -38,14 +37,7 @@ custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 text = "24"
 label_settings = SubResource("LabelSettings_8qguk")
-horizontal_alignment = 2
 vertical_alignment = 1
-
-[node name="AmmoIcon" type="TextureRect" parent="HFlowContainer" unique_id=54832459]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-texture = ExtResource("5_136eg")
-expand_mode = 3
 
 [node name="HBoxContainer" type="HFlowContainer" parent="." unique_id=102675290]
 anchors_preset = 10

@@ -1,13 +1,16 @@
 extends CanvasLayer
 
-@onready var weapon_display = $WeaponDisplay
+@onready var weapon_display = $HFlowContainer/WeaponDisplay
 @onready var hbox = $HBoxContainer
 @export var heart_ui_scene: PackedScene
+
+var _current_weapon: Weapon
 
 func _ready() -> void:
 	var player = get_tree().get_first_node_in_group("player")
 	if player:
 		player.weapon_changed.connect(_on_weapon_changed)
+		player.ammo_changed.connect(_on_ammo_changed)
 		player.health_changed.connect(_on_health_changed)
 		_on_weapon_changed(player.weapon)
 		_update_max_hp(player.max_health)
@@ -17,7 +20,15 @@ func _on_health_changed(health:float, maxHealth:float) -> void:
 	_update_hp(health)
 
 func _on_weapon_changed(weapon: Weapon) -> void:
+	_current_weapon = weapon
 	weapon_display.update_weapon(weapon)
+	$HFlowContainer/AmmoIcon.texture = weapon.ammo_type.icon
+	var player = get_tree().get_first_node_in_group("player")
+	_on_ammo_changed(weapon.ammo_type, player.get_ammo(weapon.ammo_type))
+	
+func _on_ammo_changed(ammo_type: AmmoType, current_count:int) -> void:
+	if ( _current_weapon.ammo_type == ammo_type ):
+		$HFlowContainer/AmmoText.text = str(current_count)
 
 func _update_hp(health:int):
 	var i=0

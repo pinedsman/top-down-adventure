@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AmmoType" format=3 uid="uid://dhu12vfky813l"]
+
+[ext_resource type="Texture2D" uid="uid://bb2iwajtw8r3m" path="res://assets/Art/weapons/ammo_shotgun.png" id="1_j7dqw"]
+[ext_resource type="Script" uid="uid://b3yih4soy3jb7" path="res://scripts/weapons/ammo_type.gd" id="2_2vtmg"]
+
+[resource]
+script = ExtResource("2_2vtmg")
+max_capacity = 16
+icon = ExtResource("1_j7dqw")

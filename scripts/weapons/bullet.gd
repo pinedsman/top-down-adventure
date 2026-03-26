@@ -14,7 +14,7 @@ var knockback_force: float = 0.0
 var shot_id: int = -1
 var suppress_wall_impacts: bool = false
 var trail_scene: PackedScene = null
-var range: float = 0.0  # 0 = infinite
+var travel_range: float = 0.0  # 0 = infinite
 var range_fx: ImpactFXData = null
 var owner_node: Node = null:
 	set(value):
@@ -56,8 +56,8 @@ func _physics_process(delta: float) -> void:
 	var motion := direction * speed * delta
 
 	var range_reached := false
-	if range > 0.0:
-		var remaining := range - _distance_travelled
+	if travel_range > 0.0:
+		var remaining := travel_range - _distance_travelled
 		if motion.length() >= remaining:
 			motion = direction * remaining
 			range_reached = true

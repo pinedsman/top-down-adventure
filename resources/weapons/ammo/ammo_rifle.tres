@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AmmoType" format=3 uid="uid://dmab8rbh7k2q1"]
+
+[ext_resource type="Texture2D" uid="uid://mytqh05f0t6s" path="res://assets/Art/weapons/ammo_rifle.png" id="1_dj60p"]
+[ext_resource type="Script" uid="uid://b3yih4soy3jb7" path="res://scripts/weapons/ammo_type.gd" id="2_4tbq8"]
+
+[resource]
+script = ExtResource("2_4tbq8")
+max_capacity = 100
+icon = ExtResource("1_dj60p")

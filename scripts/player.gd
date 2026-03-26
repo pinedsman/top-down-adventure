@@ -16,6 +16,7 @@ const SPEED = 100.0
 
 signal weapon_changed(weapon: Weapon)
 signal health_changed(current: float, maximum: float)
+signal ammo_changed(ammo_type: AmmoType, current: int)
 
 var weapon: Weapon:
 	get: return weapons[_weapon_index] if weapons.size() > 0 else null
@@ -24,7 +25,10 @@ var _weapon_index: int = 0
 var _aim_direction: Vector2 = Vector2.RIGHT
 var _laser: Line2D
 var _camera: CameraController
+@export var fire_buffer_window: float = 0.15
+
 var _fire_held: bool = false
+var _fire_buffer: float = 0.0
 var crosshair: Node2D
 var facingDirection: int
 var _currentAnimEntry: AnimationEntry
@@ -38,6 +42,7 @@ var _is_hit: bool = false
 var _hit_timer: float = 0.0
 var _knockback_velocity: Vector2 = Vector2.ZERO
 var _last_shot_id: int = -1
+var _ammo: Dictionary = {}  # AmmoType -> int
 
 func _ready() -> void:
 	crosshair = get_tree().get_first_node_in_group("crosshair")
@@ -48,6 +53,9 @@ func _ready() -> void:
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	_on_input_mode_changed(InputManager.is_gamepad)
 	HitStop.ended.connect(_on_hit_stop_ended)
+	for w in weapons:
+		if w.ammo_type != null and not _ammo.has(w.ammo_type):
+			_ammo[w.ammo_type] = w.ammo_type.max_capacity
 	_connect_weapon(weapon)
 	weapon_changed.emit(weapon)
 	health_changed.emit(_health, max_health)
@@ -68,21 +76,32 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event.is_action("shoot"):
+		if (_currentAnimEntry==null):
+			return
 		var pressed = event.get_action_strength("shoot") > 0.5
 		if pressed and not _fire_held and not _is_hit:
 			_fire_held = true
 			if weapon and weapon.fire_mode in [Weapon.FireMode.SINGLE, Weapon.FireMode.BURST]:
-				weapon.fire(_get_current_muzzle(), _aim_direction)
+				if not has_ammo(weapon):
+					pass
+				elif weapon.can_fire():
+					weapon.fire(_get_current_muzzle(), _aim_direction)
+				else:
+					_fire_buffer = fire_buffer_window
 		elif not pressed:
 			_fire_held = false
 	elif event.is_action_pressed("weapon_next"):
+		weapon.cancel_burst()
 		_weapon_index = (_weapon_index + 1) % weapons.size()
 		_fire_held = false
+		_fire_buffer = 0.0
 		_connect_weapon(weapon)
 		weapon_changed.emit(weapon)
 	elif event.is_action_pressed("weapon_prev"):
+		weapon.cancel_burst()
 		_weapon_index = (_weapon_index - 1 + weapons.size()) % weapons.size()
 		_fire_held = false
+		_fire_buffer = 0.0
 		_connect_weapon(weapon)
 		weapon_changed.emit(weapon)
 
@@ -151,6 +170,8 @@ func _apply_aim_assist(delta: float) -> void:
 	var best_dir := Vector2.ZERO
 	var best_angle := threshold
 	for enemy: Node2D in get_tree().get_nodes_in_group("enemies"):
+		if enemy.get("_is_dead"):
+			continue
 		var to_enemy := enemy.global_position - global_position
 		if to_enemy.length_squared() > weapon.aim_assist_range * weapon.aim_assist_range:
 			continue
@@ -182,10 +203,15 @@ func _update_laser() -> void:
 		mat.set_shader_parameter("laser_length", laser_length)
 
 func _tick_weapon(delta: float) -> void:
+	_fire_buffer = maxf(_fire_buffer - delta, 0.0)
 	if weapon == null or _is_hit:
 		return
 	weapon.tick(delta)
-	if _fire_held and weapon.fire_mode == Weapon.FireMode.AUTO:
+	if weapon.fire_mode == Weapon.FireMode.AUTO:
+		if _fire_held and has_ammo(weapon):
+			weapon.fire(_get_current_muzzle(), _aim_direction)
+	elif _fire_buffer > 0.0 and weapon.can_fire() and has_ammo(weapon):
+		_fire_buffer = 0.0
 		weapon.fire(_get_current_muzzle(), _aim_direction)
 
 func player_movement(_delta: float) -> void:
@@ -236,12 +262,26 @@ func _spawn_hit_impact(impact_position: Vector2) -> void:
 func _connect_weapon(w: Weapon) -> void:
 	if w == null:
 		return
+	w.owner_node = self
 	if not w.fired.is_connected(_on_weapon_fired):
 		w.fired.connect(_on_weapon_fired)
+
+func has_ammo(w: Weapon) -> bool:
+	return w.ammo_type == null or _ammo.get(w.ammo_type, 0) > 0
+
+func get_ammo(ammo_type: AmmoType) -> int:
+	return _ammo.get(ammo_type, 0)
+
+func add_ammo(ammo_type: AmmoType, amount: int) -> void:
+	_ammo[ammo_type] = mini(_ammo.get(ammo_type, 0) + amount, ammo_type.max_capacity)
+	ammo_changed.emit(ammo_type, _ammo[ammo_type])
 
 func _on_weapon_fired(direction: Vector2) -> void:
 	if weapon and weapon.fire_shake_strength > 0.0:
 		_camera.shake(-direction, weapon.fire_shake_strength)
+	if weapon and weapon.ammo_type != null:
+		_ammo[weapon.ammo_type] = maxi(_ammo.get(weapon.ammo_type, 0) - 1, 0)
+		ammo_changed.emit(weapon.ammo_type, _ammo[weapon.ammo_type])
 
 func _on_hit_stop_ended() -> void:
 	if not Input.is_action_pressed("shoot"):

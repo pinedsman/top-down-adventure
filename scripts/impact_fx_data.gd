@@ -14,4 +14,5 @@ func spawn(position: Vector2, process_mode: Node.ProcessMode = Node.PROCESS_MODE
 	fx.process_mode = process_mode
 	Engine.get_main_loop().current_scene.add_child(fx)
 	fx.global_position = position
+	fx.rotation_degrees = randf_range(0,360)
 	fx.play_impact(self)

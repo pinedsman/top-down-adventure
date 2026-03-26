@@ -17,7 +17,7 @@ func _ready() -> void:
 	_setup_limits()
 
 
-func shake(impact_direction: Vector2, strength_override: float = -1.0) -> void:
+func shake(impact_direction: Vector2, strength_override: float = -1.0, randomness_override: float = -1.0, damping_override: float = -1.0) -> void:
 	var amplitude := strength_override if strength_override >= 0.0 else shake_strength
 	if amplitude <= 0.0:
 		return
@@ -26,11 +26,13 @@ func shake(impact_direction: Vector2, strength_override: float = -1.0) -> void:
 	_shake_tween = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	var dir := impact_direction * -1.0 if impact_direction.length_squared() > 0.0 else Vector2.RIGHT
 	var flip := 1.0
+	var randomness := shake_randomness if (randomness_override==-1) else randomness_override
+	var damping := shake_damping if (damping_override==-1) else damping_override
 	while amplitude >= 0.5:
-		var noise := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * amplitude * shake_randomness
-		var offset := dir * amplitude * flip + noise
-		_shake_tween.tween_property(self, "offset", offset, shake_step_time).set_trans(Tween.TRANS_SINE)
-		amplitude *= shake_damping
+		var noise := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * amplitude * randomness
+		var shake_offset := dir * amplitude * flip + noise
+		_shake_tween.tween_property(self, "offset", shake_offset, shake_step_time).set_trans(Tween.TRANS_SINE)
+		amplitude *= damping
 		flip = -flip
 	_shake_tween.tween_property(self, "offset", Vector2.ZERO, shake_step_time).set_trans(Tween.TRANS_SINE)
 
