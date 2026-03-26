@@ -9,11 +9,13 @@ class_name EnemyBase
 var _active_behavior: EnemyBehavior
 var _player_cache: CharacterBase
 var _muzzle: Marker2D
+var _nav_agent: NavigationAgent2D
 
 
 func _ready() -> void:
 	super._ready()
 	_muzzle = get_node_or_null("Muzzle") as Marker2D
+	_nav_agent = get_node_or_null("NavigationAgent2D") as NavigationAgent2D
 	for w in weapons:
 		w.owner_node = self
 	_run_behavior()
@@ -66,6 +68,12 @@ func _on_die() -> void:
 
 func _run_behavior() -> void:
 	pass  # override in subclasses to define behavior sequences
+
+
+func navigate_toward_player(duration: float) -> Signal:
+	assert(_nav_agent != null,
+		"EnemyBase: scene must have a NavigationAgent2D node to use navigate_toward_player()")
+	return run_behavior(NavigateToPlayerBehavior.new(_nav_agent), duration)
 
 
 func run_behavior(b: EnemyBehavior, duration: float) -> Signal:

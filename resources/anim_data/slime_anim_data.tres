@@ -69,25 +69,25 @@ metadata/_custom_type_script = "uid://djcw251nrn5n6"
 [sub_resource type="Resource" id="Resource_k2d22"]
 script = ExtResource("3_pfx1g")
 bullet_behind_player = true
-animationIndex = "walk_up"
+animationIndex = "hit_up"
 muzzle_offset = Vector2(0, -10)
 metadata/_custom_type_script = "uid://bhs5efw3yntip"
 
 [sub_resource type="Resource" id="Resource_xsjwc"]
 script = ExtResource("3_pfx1g")
-animationIndex = "walk_right"
+animationIndex = "hit_right"
 muzzle_offset = Vector2(3, -7)
 metadata/_custom_type_script = "uid://bhs5efw3yntip"
 
 [sub_resource type="Resource" id="Resource_ksdfw"]
 script = ExtResource("3_pfx1g")
-animationIndex = "walk_down"
+animationIndex = "hit_down"
 muzzle_offset = Vector2(0, -5)
 metadata/_custom_type_script = "uid://bhs5efw3yntip"
 
 [sub_resource type="Resource" id="Resource_phmjf"]
 script = ExtResource("3_pfx1g")
-animationIndex = "walk_left"
+animationIndex = "hit_left"
 muzzle_offset = Vector2(-2.5, -7)
 metadata/_custom_type_script = "uid://bhs5efw3yntip"
 
