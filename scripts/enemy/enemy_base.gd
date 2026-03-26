@@ -5,6 +5,7 @@ class_name EnemyBase
 @export_range(0.0, 1.0) var knockback_scale: float = 1.0
 @export var impact_fx_data: ImpactFXData  # read by bullet.gd for hit FX
 @export var move_speed: float = 80.0
+@export var show_debug: bool = false
 
 var _active_behavior: EnemyBehavior
 var _player_cache: CharacterBase
@@ -18,6 +19,10 @@ func _ready() -> void:
 	_nav_agent = get_node_or_null("NavigationAgent2D") as NavigationAgent2D
 	for w in weapons:
 		w.owner_node = self
+	if show_debug:
+		var overlay := EnemyDebugOverlay.new()
+		add_child(overlay)
+		overlay.setup(self)
 	_run_behavior()
 
 
@@ -103,6 +108,10 @@ func shoot_weapon(index: int, target_pos: Vector2) -> void:
 
 func is_alive() -> bool:
 	return not _is_dead
+
+
+func _get_debug_label() -> String:
+	return ""
 
 
 func get_player() -> CharacterBase:

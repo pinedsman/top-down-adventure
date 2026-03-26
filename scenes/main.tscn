@@ -245,25 +245,10 @@ tile_set = ExtResource("1_sugp2")
 [node name="Player" parent="ySort" unique_id=425293825 groups=["player"] instance=ExtResource("1_o5qli")]
 position = Vector2(324, 201)
 
-[node name="Enemy" parent="ySort" unique_id=1949769439 groups=["enemies"] instance=ExtResource("2_0wfyh")]
-y_sort_enabled = false
-position = Vector2(264, 192)
-
-[node name="Enemy2" parent="ySort" unique_id=345571805 groups=["enemies"] instance=ExtResource("2_0wfyh")]
-y_sort_enabled = false
-position = Vector2(200, 168)
-
-[node name="Enemy3" parent="ySort" unique_id=846256223 groups=["enemies"] instance=ExtResource("2_0wfyh")]
-y_sort_enabled = false
-position = Vector2(360, 131)
-
-[node name="Enemy4" parent="ySort" unique_id=425436009 groups=["enemies"] instance=ExtResource("2_0wfyh")]
-y_sort_enabled = false
-position = Vector2(424, 184)
-
 [node name="Enemy5" parent="ySort" unique_id=336949229 groups=["enemies"] instance=ExtResource("2_0wfyh")]
 y_sort_enabled = false
-position = Vector2(256, 296)
+position = Vector2(520, 541)
+show_debug = true
 
 [node name="Pickup" parent="ySort" unique_id=908505312 instance=ExtResource("6_o6xl0")]
 position = Vector2(272, 128)

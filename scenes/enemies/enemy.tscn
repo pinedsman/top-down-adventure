@@ -785,6 +785,7 @@ animations = [{
 }]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_md0e3"]
+radius = 8.0
 
 [node name="Enemy" type="CharacterBody2D" unique_id=1949769439]
 y_sort_enabled = true
@@ -806,7 +807,7 @@ animation = &"death_down"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=479034634]
 y_sort_enabled = true
-position = Vector2(0, -3.999998)
+position = Vector2(0, -5)
 shape = SubResource("CircleShape2D_md0e3")
 
 [node name="Marker2D" type="Marker2D" parent="." unique_id=2079257842]
