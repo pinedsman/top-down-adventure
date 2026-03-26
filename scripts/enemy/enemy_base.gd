@@ -126,7 +126,7 @@ func _tick_all_weapons(delta: float) -> void:
 func _update_facing_animation() -> void:
 	if anim_data == null or _is_dead:
 		return
-	var state := "walk" if velocity.length() > 0.01 else "idle"
+	var state := "walk" if (velocity.length() > 1 && velocity.normalized().dot(_facing) > 0.0 ) else "idle"
 	if not anim_data.has_state(state):
 		return
 	var dir_index := DirectionalAnimData.direction_to_index(_facing, anim_data.direction_count)
