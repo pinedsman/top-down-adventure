@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="PlayerAnimation" format=3 uid="uid://de862j2p2s401"]
+[gd_resource type="Resource" script_class="DirectionalAnimData" format=3 uid="uid://de862j2p2s401"]
 
-[ext_resource type="Script" uid="uid://qmab47jacxxh" path="res://scripts/player_animation.gd" id="1_m3uxx"]
+[ext_resource type="Script" uid="uid://bcgjbfpwutucn" path="res://scripts/directional_anim_data.gd" id="1_m3uxx"]
 [ext_resource type="Script" uid="uid://djcw251nrn5n6" path="res://scripts/animation_state.gd" id="2_k2d22"]
 [ext_resource type="Script" uid="uid://bhs5efw3yntip" path="res://scripts/animation_entry.gd" id="3_pdrkw"]
 

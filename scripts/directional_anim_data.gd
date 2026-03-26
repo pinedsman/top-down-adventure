@@ -1,8 +1,9 @@
 @tool
 
 extends Resource
-class_name PlayerAnimation
+class_name DirectionalAnimData
 
+@export var direction_count: int = 8;
 @export var states: Array[AnimationState] = []
 
 var _cache: Dictionary = {}  # String -> AnimationState
@@ -18,10 +19,10 @@ func _rebuild_cache() -> void:
 func get_entry(state_name: String, direction: int) -> AnimationEntry:
 	if _cache.is_empty() and not states.is_empty():
 		_rebuild_cache()
-	assert(_cache.has(state_name), "PlayerAnimation: no state named '%s' — check anim_data resource" % state_name)
+	assert(_cache.has(state_name), "DirectionalAnimData: no state named '%s' — check anim_data resource" % state_name)
 	var state: AnimationState = _cache[state_name]
 	assert(direction >= 0 and direction < state.directions.size(),
-		"PlayerAnimation: state '%s' has no entry for direction %d" % [state_name, direction])
+		"DirectionalAnimData: state '%s' has no entry for direction %d" % [state_name, direction])
 	return state.directions[direction]
 
 func has_state(state_name: String) -> bool:
@@ -36,10 +37,10 @@ func get_entry_for_state(state_name: String) -> AnimationEntry:
 				return state.directions[0]
 	return null
 
-static func direction_to_index(direction: Vector2) -> int:
+static func direction_to_index(direction: Vector2, _direction_count: int) -> int:
 	var angle_deg := fmod(rad_to_deg(atan2(direction.x, -direction.y)) + 360.0, 360.0)
-	var per_slice := 360.0 / 8.0
-	for i in range(7):
+	var per_slice := 360.0 / float(_direction_count)
+	for i in range(_direction_count-1):
 		if angle_deg >= per_slice * (i + 0.5) and angle_deg < per_slice * (i + 1.5):
 			return i + 1
 	return 0

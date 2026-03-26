@@ -1131,7 +1131,10 @@ shader_parameter/texture_width = 32.0
 
 [node name="Player" type="CharacterBody2D" unique_id=425293825]
 script = ExtResource("1_524rm")
+laser_length = null
 invulnerability_duration = 0.5
+hit_duration = null
+knockback_force = null
 aim_assist_mask = 2
 fire_buffer_window = 0.4
 anim_data = ExtResource("2_npwbq")

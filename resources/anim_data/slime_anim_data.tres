@@ -1,0 +1,134 @@
+[gd_resource type="Resource" script_class="DirectionalAnimData" format=3 uid="uid://c67jfgsdt3e4t"]
+
+[ext_resource type="Script" uid="uid://bcgjbfpwutucn" path="res://scripts/directional_anim_data.gd" id="1_f4s3s"]
+[ext_resource type="Script" uid="uid://djcw251nrn5n6" path="res://scripts/animation_state.gd" id="2_c7g67"]
+[ext_resource type="Script" uid="uid://bhs5efw3yntip" path="res://scripts/animation_entry.gd" id="3_pfx1g"]
+
+[sub_resource type="Resource" id="Resource_f4s3s"]
+script = ExtResource("3_pfx1g")
+bullet_behind_player = true
+animationIndex = "idle_up"
+muzzle_offset = Vector2(0, -10)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_lyg76"]
+script = ExtResource("3_pfx1g")
+animationIndex = "idle_right"
+muzzle_offset = Vector2(4, -9)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_7ki4i"]
+script = ExtResource("3_pfx1g")
+animationIndex = "idle_down"
+muzzle_offset = Vector2(2, -5)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_33nlg"]
+script = ExtResource("3_pfx1g")
+animationIndex = "idle_left"
+muzzle_offset = Vector2(-2, -8)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_ogf1a"]
+script = ExtResource("2_c7g67")
+state_name = "idle"
+directions = Array[ExtResource("3_pfx1g")]([SubResource("Resource_f4s3s"), SubResource("Resource_lyg76"), SubResource("Resource_7ki4i"), SubResource("Resource_33nlg")])
+metadata/_custom_type_script = "uid://djcw251nrn5n6"
+
+[sub_resource type="Resource" id="Resource_hc7tj"]
+script = ExtResource("3_pfx1g")
+bullet_behind_player = true
+animationIndex = "walk_up"
+muzzle_offset = Vector2(0, -10)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_wi1wx"]
+script = ExtResource("3_pfx1g")
+animationIndex = "walk_right"
+muzzle_offset = Vector2(3, -7)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_8hfa5"]
+script = ExtResource("3_pfx1g")
+animationIndex = "walk_down"
+muzzle_offset = Vector2(0, -5)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_x3f0g"]
+script = ExtResource("3_pfx1g")
+animationIndex = "walk_left"
+muzzle_offset = Vector2(-2.5, -7)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_m8uql"]
+script = ExtResource("2_c7g67")
+state_name = "walk"
+directions = Array[ExtResource("3_pfx1g")]([SubResource("Resource_hc7tj"), SubResource("Resource_wi1wx"), SubResource("Resource_8hfa5"), SubResource("Resource_x3f0g")])
+metadata/_custom_type_script = "uid://djcw251nrn5n6"
+
+[sub_resource type="Resource" id="Resource_k2d22"]
+script = ExtResource("3_pfx1g")
+bullet_behind_player = true
+animationIndex = "walk_up"
+muzzle_offset = Vector2(0, -10)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_xsjwc"]
+script = ExtResource("3_pfx1g")
+animationIndex = "walk_right"
+muzzle_offset = Vector2(3, -7)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_ksdfw"]
+script = ExtResource("3_pfx1g")
+animationIndex = "walk_down"
+muzzle_offset = Vector2(0, -5)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_phmjf"]
+script = ExtResource("3_pfx1g")
+animationIndex = "walk_left"
+muzzle_offset = Vector2(-2.5, -7)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_jjbs0"]
+script = ExtResource("2_c7g67")
+state_name = "hit"
+directions = Array[ExtResource("3_pfx1g")]([SubResource("Resource_k2d22"), SubResource("Resource_xsjwc"), SubResource("Resource_ksdfw"), SubResource("Resource_phmjf")])
+metadata/_custom_type_script = "uid://djcw251nrn5n6"
+
+[sub_resource type="Resource" id="Resource_nim0p"]
+script = ExtResource("3_pfx1g")
+bullet_behind_player = true
+animationIndex = "death_up"
+muzzle_offset = Vector2(0, -10)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_71y7p"]
+script = ExtResource("3_pfx1g")
+animationIndex = "death_right"
+muzzle_offset = Vector2(3, -7)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_1ftq7"]
+script = ExtResource("3_pfx1g")
+animationIndex = "death_down"
+muzzle_offset = Vector2(0, -5)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_ptul3"]
+script = ExtResource("3_pfx1g")
+animationIndex = "death_left"
+muzzle_offset = Vector2(-2.5, -7)
+metadata/_custom_type_script = "uid://bhs5efw3yntip"
+
+[sub_resource type="Resource" id="Resource_lvmoc"]
+script = ExtResource("2_c7g67")
+state_name = "death"
+directions = Array[ExtResource("3_pfx1g")]([SubResource("Resource_nim0p"), SubResource("Resource_71y7p"), SubResource("Resource_1ftq7"), SubResource("Resource_ptul3")])
+metadata/_custom_type_script = "uid://djcw251nrn5n6"
+
+[resource]
+script = ExtResource("1_f4s3s")
+direction_count = 4
+states = Array[ExtResource("2_c7g67")]([SubResource("Resource_ogf1a"), SubResource("Resource_m8uql"), SubResource("Resource_jjbs0"), SubResource("Resource_lvmoc")])

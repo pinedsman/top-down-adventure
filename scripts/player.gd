@@ -1,22 +1,14 @@
-extends CharacterBody2D
+extends CharacterBase
 
 const SPEED = 100.0
 
 @export var laser_length: float = 100
-@export var anim_data: PlayerAnimation
-@export var weapons: Array[Weapon]
-@export var max_health: float = 100.0
-@export var hurt_sound: AudioStream
-@export var death_sound: AudioStream
 @export var invulnerability_duration: float = 1.0
 @export var hit_duration: float = 0.3
 @export var knockback_force: float = 200.0
-@export var hit_stop_duration: float = 0.1
-@export var hit_impact_fx: ImpactFXData
 @export_flags_2d_physics var aim_assist_mask: int = 0
 
 signal weapon_changed(weapon: Weapon)
-signal health_changed(current: float, maximum: float)
 signal ammo_changed(ammo_type: AmmoType, current: int)
 
 var weapon: Weapon:
@@ -31,29 +23,22 @@ var _camera: CameraController
 var _fire_held: bool = false
 var _fire_buffer: float = 0.0
 var crosshair: Node2D
-var facingDirection: int
-var _currentAnimEntry: AnimationEntry
-
-var _health: float
-var _is_dead: bool = false
-var _flash_tween: Tween
-var _invulnerable: bool = false
-var _invulnerable_timer: float = 0.0
 var _is_hit: bool = false
 var _hit_timer: float = 0.0
-var _knockback_velocity: Vector2 = Vector2.ZERO
-var _last_shot_id: int = -1
+var _invulnerable: bool = false
+var _invulnerable_timer: float = 0.0
 var _ammo: Dictionary = {}  # AmmoType -> int
 var _aim_assist_area: Area2D
 var _aim_assist_shape: CircleShape2D
 var _aim_assist_enemies: Array[Node2D] = []
 
+
 func _ready() -> void:
+	super._ready()
 	crosshair = get_tree().get_first_node_in_group("crosshair")
 	assert(crosshair != null, "Player requires a node in the 'crosshair' group")
 	_laser = $LaserSight
 	_camera = $Camera2D
-	_health = max_health
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	_on_input_mode_changed(InputManager.is_gamepad)
 	HitStop.ended.connect(_on_hit_stop_ended)
@@ -64,6 +49,7 @@ func _ready() -> void:
 	_connect_weapon(weapon)
 	weapon_changed.emit(weapon)
 	health_changed.emit(_health, max_health)
+
 
 func _physics_process(delta: float) -> void:
 	_tick_hit_state(delta)
@@ -77,13 +63,14 @@ func _physics_process(delta: float) -> void:
 	if weapon is MeleeWeapon and weapon.debug_draw_arc:
 		queue_redraw()
 
+
 func _unhandled_input(event: InputEvent) -> void:
 	if OS.is_debug_build() and event.is_action_pressed("ui_end"):  # End key
 		take_damage(10.0, Vector2.from_angle(randf() * TAU))
 		return
 
 	if event.is_action("shoot"):
-		if (_currentAnimEntry==null):
+		if _current_anim_entry == null:
 			return
 		var pressed = event.get_action_strength("shoot") > 0.5
 		if pressed and not _fire_held and not _is_hit:
@@ -116,39 +103,51 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_aim_assist_collider()
 			weapon_changed.emit(weapon)
 
-func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, impact_position: Vector2 = global_position, shot_id: int = -1) -> void:
-	var same_shot := shot_id >= 0 and shot_id == _last_shot_id
-	if _invulnerable and not same_shot:
-		return
-	_last_shot_id = shot_id
-	_health = maxf(_health - amount, 0.0)
-	health_changed.emit(_health, max_health)
+
+# — CharacterBase overrides —
+
+func _can_take_damage() -> bool:
+	return not _invulnerable
+
+
+func _on_take_damage(same_shot: bool, knockback_direction: Vector2, _impact_position: Vector2) -> void:
 	if weapon:
 		weapon.interrupt()
-
 	if same_shot:
-		_knockback_velocity += knockback_direction
 		return
-
-	AudioPool.play(hurt_sound, global_position)
-	_knockback_velocity = knockback_direction
 	_is_hit = true
 	_hit_timer = hit_duration
 	_invulnerable = true
 	_invulnerable_timer = invulnerability_duration
-
-	var sprite := $AnimatedSprite2D as CanvasItem
-	if is_instance_valid(_flash_tween):
-		_flash_tween.kill()
-	sprite.modulate = Color(5.0, 5.0, 5.0)
-	_flash_tween = create_tween()
-	_flash_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	_flash_tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
-
-	_spawn_hit_impact(impact_position)
 	_camera.shake(knockback_direction.normalized())
 	_camera.zoom_punch()
-	HitStop.request(hit_stop_duration)
+
+
+func _on_die() -> void:
+	_invulnerable = false
+	var sprite := $AnimatedSprite2D
+	sprite.visible = true
+	sprite.modulate = Color.WHITE
+	set_process_unhandled_input(false)
+	$WallCollision.set_deferred("disabled", true)
+	_laser.hide()
+	crosshair.hide()
+	if anim_data.has_state("death"):
+		var entry := anim_data.get_entry("death", DirectionalAnimData.direction_to_index(_facing, anim_data.direction_count))
+		if entry:
+			sprite.flip_h = entry.flip
+			sprite.play(entry.animationIndex)
+
+
+func _on_weapon_fired(direction: Vector2) -> void:
+	if weapon and weapon.fire_shake_strength > 0.0:
+		_camera.shake(-direction, weapon.fire_shake_strength)
+	if weapon and weapon.ammo_type != null:
+		_ammo[weapon.ammo_type] = maxi(_ammo.get(weapon.ammo_type, 0) - 1, 0)
+		ammo_changed.emit(weapon.ammo_type, _ammo[weapon.ammo_type])
+
+
+# — Hit state —
 
 func _tick_hit_state(delta: float) -> void:
 	if _is_hit:
@@ -165,6 +164,9 @@ func _tick_hit_state(delta: float) -> void:
 		if _invulnerable_timer <= 0.0:
 			_invulnerable = false
 			sprite.visible = true
+
+
+# — Aim —
 
 func _update_aim(delta: float) -> void:
 	var target: Vector2 = Vector2.ZERO
@@ -184,6 +186,7 @@ func _update_aim(delta: float) -> void:
 	else:
 		_aim_direction = target
 
+
 func _setup_aim_assist_area() -> void:
 	_aim_assist_shape = CircleShape2D.new()
 	var col := CollisionShape2D.new()
@@ -197,6 +200,7 @@ func _setup_aim_assist_area() -> void:
 	_aim_assist_area.body_exited.connect(_on_aim_assist_body_exited)
 	_update_aim_assist_collider()
 
+
 func _update_aim_assist_collider() -> void:
 	if _aim_assist_area == null:
 		return
@@ -207,11 +211,14 @@ func _update_aim_assist_collider() -> void:
 	if not enabled:
 		_aim_assist_enemies.clear()
 
+
 func _on_aim_assist_body_entered(body: Node2D) -> void:
 	_aim_assist_enemies.append(body)
 
+
 func _on_aim_assist_body_exited(body: Node2D) -> void:
 	_aim_assist_enemies.erase(body)
+
 
 func _apply_aim_assist(delta: float) -> void:
 	if not InputManager.is_gamepad or weapon == null or weapon.aim_assist_angle <= 0.0:
@@ -231,6 +238,7 @@ func _apply_aim_assist(delta: float) -> void:
 		var t := 1.0 - pow(1.0 - weapon.aim_assist_strength, delta * 60.0)
 		_aim_direction = _aim_direction.lerp(best_dir, t).normalized()
 
+
 func _on_input_mode_changed(is_gamepad: bool) -> void:
 	if is_gamepad:
 		crosshair.hide()
@@ -238,6 +246,9 @@ func _on_input_mode_changed(is_gamepad: bool) -> void:
 	else:
 		crosshair.show()
 		_laser.hide()
+
+
+# — Laser —
 
 func _update_laser() -> void:
 	var laser = _laser
@@ -249,6 +260,9 @@ func _update_laser() -> void:
 	var mat = laser.material as ShaderMaterial
 	if mat:
 		mat.set_shader_parameter("laser_length", laser_length)
+
+
+# — Weapon —
 
 func _tick_weapon(delta: float) -> void:
 	_fire_buffer = maxf(_fire_buffer - delta, 0.0)
@@ -262,6 +276,25 @@ func _tick_weapon(delta: float) -> void:
 		_fire_buffer = 0.0
 		weapon.fire(_get_current_muzzle(), _aim_direction)
 
+
+func has_ammo(w: Weapon) -> bool:
+	return w.ammo_type == null or _ammo.get(w.ammo_type, 0) > 0
+
+func get_ammo(ammo_type: AmmoType) -> int:
+	return _ammo.get(ammo_type, 0)
+
+func add_ammo(ammo_type: AmmoType, amount: int) -> void:
+	_ammo[ammo_type] = mini(_ammo.get(ammo_type, 0) + amount, ammo_type.max_capacity)
+	ammo_changed.emit(ammo_type, _ammo[ammo_type])
+
+
+func _on_hit_stop_ended() -> void:
+	if not Input.is_action_pressed("shoot"):
+		_fire_held = false
+
+
+# — Movement —
+
 func player_movement(_delta: float) -> void:
 	if _is_hit:
 		velocity = _knockback_velocity
@@ -273,13 +306,13 @@ func player_movement(_delta: float) -> void:
 	for i in get_slide_collision_count():
 		var collision = get_slide_collision(i)
 		var collider = collision.get_collider()
-		if collider is Enemy and collider.contact_damage > 0.0:
+		if collider is EnemyBase and collider.contact_damage > 0.0:
 			var knockback: Vector2 = (global_position - collider.global_position).normalized() * knockback_force
 			take_damage(collider.contact_damage, knockback, collision.get_position())
 			break
 
-func _update_crosshair() -> void:
-	crosshair.position = get_viewport().get_mouse_position()
+
+# — Animation —
 
 func player_animation(_delta: float) -> void:
 	if _is_dead:
@@ -292,70 +325,25 @@ func player_animation(_delta: float) -> void:
 		state = "swipe"
 	else:
 		state = "walk" if velocity.length() > 0.01 else "idle"
-	facingDirection = PlayerAnimation.direction_to_index(_aim_direction)
+	_facing = _aim_direction
 
-	_currentAnimEntry = anim_data.get_entry(state, facingDirection)
-	if _currentAnimEntry:
-		anim.flip_h = _currentAnimEntry.flip
-		anim.play(_currentAnimEntry.animationIndex)
-		$Muzzle.position = _currentAnimEntry.muzzle_offset
-		$MuzzleBehind.position = _currentAnimEntry.muzzle_offset
+	_current_anim_entry = anim_data.get_entry(state, DirectionalAnimData.direction_to_index(_facing, anim_data.direction_count))
+	if _current_anim_entry:
+		anim.flip_h = _current_anim_entry.flip
+		anim.play(_current_anim_entry.animationIndex)
+		$Muzzle.position = _current_anim_entry.muzzle_offset
+		$MuzzleBehind.position = _current_anim_entry.muzzle_offset
 		var target_muzzle = _get_current_muzzle()
 		if _laser.get_parent() != target_muzzle:
 			_laser.reparent(target_muzzle)
 			_laser.position = Vector2.ZERO
 
-func _spawn_hit_impact(impact_position: Vector2) -> void:
-	if hit_impact_fx == null:
-		return
-	hit_impact_fx.spawn(impact_position, Node.PROCESS_MODE_ALWAYS)
 
-func _connect_weapon(w: Weapon) -> void:
-	if w == null:
-		return
-	w.owner_node = self
-	if not w.fired.is_connected(_on_weapon_fired):
-		w.fired.connect(_on_weapon_fired)
+func _update_crosshair() -> void:
+	crosshair.position = get_viewport().get_mouse_position()
 
-func has_ammo(w: Weapon) -> bool:
-	return w.ammo_type == null or _ammo.get(w.ammo_type, 0) > 0
 
-func get_ammo(ammo_type: AmmoType) -> int:
-	return _ammo.get(ammo_type, 0)
-
-func add_ammo(ammo_type: AmmoType, amount: int) -> void:
-	_ammo[ammo_type] = mini(_ammo.get(ammo_type, 0) + amount, ammo_type.max_capacity)
-	ammo_changed.emit(ammo_type, _ammo[ammo_type])
-
-func _on_weapon_fired(direction: Vector2) -> void:
-	if weapon and weapon.fire_shake_strength > 0.0:
-		_camera.shake(-direction, weapon.fire_shake_strength)
-	if weapon and weapon.ammo_type != null:
-		_ammo[weapon.ammo_type] = maxi(_ammo.get(weapon.ammo_type, 0) - 1, 0)
-		ammo_changed.emit(weapon.ammo_type, _ammo[weapon.ammo_type])
-
-func _on_hit_stop_ended() -> void:
-	if not Input.is_action_pressed("shoot"):
-		_fire_held = false
-
-func die() -> void:
-	_is_dead = true
-	_invulnerable = false
-	$AnimatedSprite2D.visible = true
-	$AnimatedSprite2D.modulate = Color.WHITE
-	set_physics_process(false)
-	set_process_unhandled_input(false)
-	$WallCollision.set_deferred("disabled", true)
-	_laser.hide()
-	crosshair.hide()
-	if death_sound:
-		AudioPool.play(death_sound, global_position)
-	if anim_data.has_state("death"):
-		var entry := anim_data.get_entry("death", facingDirection)
-		if entry:
-			var anim := $AnimatedSprite2D
-			anim.flip_h = entry.flip
-			anim.play(entry.animationIndex)
+# — Debug draw —
 
 func _draw() -> void:
 	if not (weapon is MeleeWeapon and weapon.debug_draw_arc):
@@ -377,5 +365,5 @@ func _draw() -> void:
 
 
 func _get_current_muzzle() -> Marker2D:
-	assert(_currentAnimEntry != null, "Player: no AnimationEntry for current state/direction — check anim_data is fully populated")
-	return $MuzzleBehind if _currentAnimEntry.bullet_behind_player else $Muzzle
+	assert(_current_anim_entry != null, "Player: no AnimationEntry for current state/direction — check anim_data is fully populated")
+	return $MuzzleBehind if _current_anim_entry.bullet_behind_player else $Muzzle
