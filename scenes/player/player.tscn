@@ -8,6 +8,7 @@
 [ext_resource type="Resource" uid="uid://c0h63vebtpiqg" path="res://resources/weapons/weapon_smg.tres" id="3_v42im"]
 [ext_resource type="Resource" uid="uid://jheygwiu804r" path="res://resources/weapons/weapon_handgun.tres" id="4_je7p5"]
 [ext_resource type="Texture2D" uid="uid://dfjggm4jqbonb" path="res://assets/Characters/Temp/Walk/walk.png" id="4_npwbq"]
+[ext_resource type="Resource" uid="uid://c80q0fllawtsf" path="res://resources/weapons/weapon_melee.tres" id="4_uf5tr"]
 [ext_resource type="Resource" uid="uid://d3wgakbrx0nfv" path="res://resources/weapons/weapon_shotgun.tres" id="4_ugbui"]
 [ext_resource type="AudioStream" uid="uid://bi1px5q0h0fkw" path="res://assets/Sounds/hurt.mp3" id="6_je7p5"]
 [ext_resource type="AudioStream" uid="uid://jbmf8l3laeu7" path="res://assets/Sounds/death.mp3" id="7_fm80t"]
@@ -1131,7 +1132,7 @@ shader_parameter/texture_width = 32.0
 [node name="Player" type="CharacterBody2D" unique_id=425293825]
 script = ExtResource("1_524rm")
 anim_data = ExtResource("2_npwbq")
-weapons = Array[ExtResource("3_h17s1")]([ExtResource("4_ugbui"), ExtResource("3_v42im"), ExtResource("4_je7p5"), ExtResource("7_myrg7"), ExtResource("8_kvlxm")])
+weapons = Array[ExtResource("3_h17s1")]([ExtResource("4_uf5tr"), ExtResource("4_ugbui"), ExtResource("3_v42im"), ExtResource("4_je7p5"), ExtResource("7_myrg7"), ExtResource("8_kvlxm")])
 max_health = 3.0
 hurt_sound = ExtResource("6_je7p5")
 death_sound = ExtResource("7_fm80t")

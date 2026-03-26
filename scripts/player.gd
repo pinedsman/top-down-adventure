@@ -67,13 +67,15 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_tick_hit_state(delta)
-	_update_aim()
+	_update_aim(delta)
 	_apply_aim_assist(delta)
 	_update_crosshair()
 	player_movement(delta)
 	player_animation(delta)
 	_tick_weapon(delta)
 	_update_laser()
+	if weapon is MeleeWeapon and weapon.debug_draw_arc:
+		queue_redraw()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if OS.is_debug_build() and event.is_action_pressed("ui_end"):  # End key
@@ -96,21 +98,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif not pressed:
 			_fire_held = false
 	elif event.is_action_pressed("weapon_next"):
-		weapon.cancel_burst()
-		_weapon_index = (_weapon_index + 1) % weapons.size()
-		_fire_held = false
-		_fire_buffer = 0.0
-		_connect_weapon(weapon)
-		_update_aim_assist_collider()
-		weapon_changed.emit(weapon)
+		if weapon.can_switch():
+			weapon.cancel_burst()
+			_weapon_index = (_weapon_index + 1) % weapons.size()
+			_fire_held = false
+			_fire_buffer = 0.0
+			_connect_weapon(weapon)
+			_update_aim_assist_collider()
+			weapon_changed.emit(weapon)
 	elif event.is_action_pressed("weapon_prev"):
-		weapon.cancel_burst()
-		_weapon_index = (_weapon_index - 1 + weapons.size()) % weapons.size()
-		_fire_held = false
-		_fire_buffer = 0.0
-		_connect_weapon(weapon)
-		_update_aim_assist_collider()
-		weapon_changed.emit(weapon)
+		if weapon.can_switch():
+			weapon.cancel_burst()
+			_weapon_index = (_weapon_index - 1 + weapons.size()) % weapons.size()
+			_fire_held = false
+			_fire_buffer = 0.0
+			_connect_weapon(weapon)
+			_update_aim_assist_collider()
+			weapon_changed.emit(weapon)
 
 func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, impact_position: Vector2 = global_position, shot_id: int = -1) -> void:
 	var same_shot := shot_id >= 0 and shot_id == _last_shot_id
@@ -119,6 +123,8 @@ func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, imp
 	_last_shot_id = shot_id
 	_health = maxf(_health - amount, 0.0)
 	health_changed.emit(_health, max_health)
+	if weapon:
+		weapon.interrupt()
 
 	if same_shot:
 		_knockback_velocity += knockback_direction
@@ -160,15 +166,23 @@ func _tick_hit_state(delta: float) -> void:
 			_invulnerable = false
 			sprite.visible = true
 
-func _update_aim() -> void:
+func _update_aim(delta: float) -> void:
+	var target: Vector2 = Vector2.ZERO
 	if InputManager.is_gamepad:
 		var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
 		if stick.length() > 0.0:
-			_aim_direction = stick.normalized()
+			target = stick.normalized()
 	else:
 		var mouse := get_global_mouse_position() - global_position
 		if mouse.length() > 1.0:
-			_aim_direction = mouse.normalized()
+			target = mouse.normalized()
+	if target == Vector2.ZERO:
+		return
+	if weapon is MeleeWeapon and (weapon as MeleeWeapon).is_swinging():
+		var t := 1.0 - pow(1.0 - (weapon as MeleeWeapon).swing_rotation_scale(), delta * 60.0)
+		_aim_direction = _aim_direction.lerp(target, t).normalized()
+	else:
+		_aim_direction = target
 
 func _setup_aim_assist_area() -> void:
 	_aim_assist_shape = CircleShape2D.new()
@@ -253,7 +267,8 @@ func player_movement(_delta: float) -> void:
 		velocity = _knockback_velocity
 		_knockback_velocity = lerp(_knockback_velocity, Vector2.ZERO, 0.2)
 	else:
-		velocity = Input.get_vector("move_left", "move_right", "move_up", "move_down") * SPEED
+		var speed_scale := (weapon as MeleeWeapon).swing_move_scale() if weapon is MeleeWeapon else 1.0
+		velocity = Input.get_vector("move_left", "move_right", "move_up", "move_down") * SPEED * speed_scale
 	move_and_slide()
 	for i in get_slide_collision_count():
 		var collision = get_slide_collision(i)
@@ -273,6 +288,8 @@ func player_animation(_delta: float) -> void:
 	var state: String
 	if _is_hit and anim_data.has_state("hit"):
 		state = "hit"
+	elif weapon is MeleeWeapon and weapon.is_swinging() and anim_data.has_state("swipe"):
+		state = "swipe"
 	else:
 		state = "walk" if velocity.length() > 0.01 else "idle"
 	facingDirection = PlayerAnimation.direction_to_index(_aim_direction)
@@ -339,6 +356,25 @@ func die() -> void:
 			var anim := $AnimatedSprite2D
 			anim.flip_h = entry.flip
 			anim.play(entry.animationIndex)
+
+func _draw() -> void:
+	if not (weapon is MeleeWeapon and weapon.debug_draw_arc):
+		return
+	var melee := weapon as MeleeWeapon
+	var swing := melee.swings[clamp(melee._swing_index, 0, melee.swings.size() - 1)] if melee.swings.size() > 0 else null
+	if swing == null:
+		return
+	var dir := melee._swing_direction
+	var half_arc := deg_to_rad(swing.arc_angle * 0.5)
+	var r := swing.arc_range
+	var start_angle := dir.angle() - half_arc
+	var end_angle := dir.angle() + half_arc
+	var active := melee._state == MeleeWeapon.SwingState.ACTIVE
+	var col := Color(1, 0.3, 0, 0.7) if active else Color(1, 1, 0, 0.3)
+	draw_arc(Vector2.ZERO, r, start_angle, end_angle, 32, col, 1.5)
+	draw_line(Vector2.ZERO, Vector2.from_angle(start_angle) * r, col, 1.0)
+	draw_line(Vector2.ZERO, Vector2.from_angle(end_angle) * r, col, 1.0)
+
 
 func _get_current_muzzle() -> Marker2D:
 	assert(_currentAnimEntry != null, "Player: no AnimationEntry for current state/direction — check anim_data is fully populated")

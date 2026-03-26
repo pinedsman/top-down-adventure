@@ -46,6 +46,12 @@ func can_fire() -> bool:
 func cancel_burst() -> void:
 	_burst_remaining = 0
 
+func interrupt() -> void:
+	pass  # overridden by MeleeWeapon
+
+func can_switch() -> bool:
+	return true  # overridden by MeleeWeapon
+
 func fire(muzzle: Marker2D, direction: Vector2) -> void:
 	if not can_fire():
 		return

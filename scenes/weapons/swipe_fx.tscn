@@ -1,0 +1,87 @@
+[gd_scene format=3 uid="uid://7uvpsyttubui"]
+
+[ext_resource type="Script" uid="uid://cf30lgixd3nkc" path="res://scripts/swipe_fx.gd" id="1_swipefx"]
+[ext_resource type="Texture2D" uid="uid://cajbftu14fcp0" path="res://assets/Art/weapons/melee.png" id="2_6k2tu"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6k2tu"]
+atlas = ExtResource("2_6k2tu")
+region = Rect2(0, 0, 64, 47)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w76vf"]
+atlas = ExtResource("2_6k2tu")
+region = Rect2(64, 0, 64, 47)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yhsuc"]
+atlas = ExtResource("2_6k2tu")
+region = Rect2(128, 0, 64, 47)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jvlng"]
+atlas = ExtResource("2_6k2tu")
+region = Rect2(0, 47, 64, 47)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b2a88"]
+atlas = ExtResource("2_6k2tu")
+region = Rect2(64, 47, 64, 47)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_osws3"]
+atlas = ExtResource("2_6k2tu")
+region = Rect2(128, 47, 64, 47)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lvhx2"]
+atlas = ExtResource("2_6k2tu")
+region = Rect2(0, 94, 64, 47)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o1byh"]
+atlas = ExtResource("2_6k2tu")
+region = Rect2(64, 94, 64, 47)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bve4c"]
+atlas = ExtResource("2_6k2tu")
+region = Rect2(128, 94, 64, 47)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_swipe"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6k2tu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w76vf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yhsuc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jvlng")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b2a88")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_osws3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lvhx2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o1byh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bve4c")
+}],
+"loop": false,
+"name": &"swipe",
+"speed": 40.0
+}]
+
+[node name="SwipeFX" type="Node2D" unique_id=1322858624]
+script = ExtResource("1_swipefx")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=96988097]
+position = Vector2(13.999999, 1.9999998)
+scale = Vector2(1.25, 1.25)
+sprite_frames = SubResource("SpriteFrames_swipe")
+animation = &"swipe"
+frame_progress = 1.0
+
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animation_finished"]
