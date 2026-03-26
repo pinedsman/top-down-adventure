@@ -16,6 +16,7 @@ enum PatrolState { PATROL, SPOTTED, RETURNING }
 
 var _patrol_state: PatrolState = PatrolState.PATROL
 var _last_known_pos: Vector2 = Vector2.ZERO
+var _damage_alert_pos: Vector2 = Vector2.ZERO  # set on hit while PATROL; cleared on transition
 var _patrol_origin: Vector2   # position at _ready; fallback when no waypoints
 var _wp_index: int = 0
 var _bounce_dir: int = 1
@@ -24,6 +25,17 @@ var _bounce_dir: int = 1
 func _ready() -> void:
 	super._ready()
 	_patrol_origin = global_position
+
+
+func _on_take_damage(same_shot: bool, knockback_direction: Vector2, impact_position: Vector2) -> void:
+	super(same_shot, knockback_direction, impact_position)
+	# Alert from damage only when unalerted and not already chasing.
+	# knockback_direction points away from attacker, so attacker is at -knockback_direction.
+	if same_shot or _patrol_state != PatrolState.PATROL:
+		return
+	var attack_dir := -knockback_direction.normalized() if knockback_direction != Vector2.ZERO \
+			else Vector2.from_angle(randf() * TAU)
+	_damage_alert_pos = global_position + attack_dir * alerted_sight_range
 
 
 func _physics_process(delta: float) -> void:
@@ -39,6 +51,12 @@ func _run_behavior() -> void:
 		if _can_see_player():
 			_patrol_state = PatrolState.SPOTTED
 			_last_known_pos = player_position()
+			_damage_alert_pos = Vector2.ZERO
+			await _run_spotted()
+		elif _damage_alert_pos != Vector2.ZERO:
+			_patrol_state = PatrolState.SPOTTED
+			_last_known_pos = _damage_alert_pos
+			_damage_alert_pos = Vector2.ZERO
 			await _run_spotted()
 		else:
 			_patrol_state = PatrolState.PATROL
@@ -115,6 +133,8 @@ func _navigate_interruptible(target: Vector2, timeout: float = 20.0) -> void:
 		if _nav_agent.is_navigation_finished():
 			break
 		if _can_see_player():
+			break
+		if _damage_alert_pos != Vector2.ZERO:
 			break
 		await get_tree().physics_frame
 	_active_behavior = null

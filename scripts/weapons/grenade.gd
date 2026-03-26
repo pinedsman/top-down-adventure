@@ -37,8 +37,8 @@ func init(grenade_data: GrenadeData, direction: Vector2, speed: float, thrower: 
 func _ready() -> void:
 	assert(data != null, "Grenade: data not set — call init() before adding to tree")
 	assert(_sprite != null, "Grenade: scene must have a Sprite2D child node")
-	_camera = owner_node.get_node("Camera2D") as CameraController
-	assert(_camera != null, "Grenade: owner_node has no Camera2D child named 'Camera2D'")
+	_camera = get_tree().get_first_node_in_group("camera") as CameraController
+	assert(_camera != null, "Grenade: no CameraController in group 'camera'")
 	_fuse_timer = data.fuse_time
 	_build_settle_thresholds()
 	if is_instance_valid(owner_node) and owner_node is PhysicsBody2D:

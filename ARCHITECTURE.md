@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A top-down action shooter built in Godot 4.6. The player navigates a tiled level, aims with mouse or gamepad, and shoots enemies using a data-driven weapon system. Currently a prototype with movement, shooting, impact effects, enemy combat, health/damage, camera feedback, and a basic HUD.
+A top-down action shooter built in Godot 4.6. The player navigates a tiled level, aims with mouse or gamepad, shoots enemies using a data-driven weapon system, and throws grenades. Currently a prototype with movement, shooting, impact effects, enemy combat, health/damage, camera feedback, pathfinding AI, ammo, and a basic HUD.
 
 **Engine:** Godot 4.6 (Forward Plus renderer, Jolt Physics, Direct3D 12)
 **Resolution:** 1280×960 display, 640×480 internal (2× scale)
@@ -16,9 +16,9 @@ A top-down action shooter built in Godot 4.6. The player navigates a tiled level
 top-down-adventure/
 ├── assets/
 │   ├── Art/
-│   │   ├── Tileset/          # Ground, wall, prop, plant, shadow tiles
+│   │   ├── Tileset/
 │   │   ├── crosshair.png
-│   │   ├── impact.png        # Shared impact sprite sheet
+│   │   ├── impact.png
 │   │   ├── hitimpact.png
 │   │   ├── laser.png
 │   │   └── muzzleflash.png
@@ -26,46 +26,79 @@ top-down-adventure/
 │   │   ├── Slime1/           # Attack, Death, Hurt, Idle, Run, Walk
 │   │   ├── Slime2/
 │   │   ├── Slime3/
-│   │   └── Temp/             # Player sprites (Idle, Walk, Death, Hit)
+│   │   └── Temp/             # Player sprites
 │   └── Sounds/
-│       ├── handgun_shoot.mp3
-│       ├── impact.mp3
-│       ├── rock_impact.mp3
-│       └── slime_death.mp3
 ├── resources/
-│   ├── anim_data.tres        # Player animation configuration
-│   ├── weapon_default.tres   # Handgun weapon definition
+│   ├── anim_data.tres        # Player DirectionalAnimData
+│   ├── weapons/
+│   │   ├── weapon_default.tres
+│   │   └── weapon_slow.tres
+│   ├── ammo/                 # AmmoType resources
+│   ├── pickups/              # PickupData resources (pickup_ammo_*.tres)
 │   ├── tilesets/
-│   │   └── grassy.tres       # Tileset with custom impact_fx_data
+│   │   └── grassy.tres
 │   └── impacts/
 │       ├── flesh_impact.tres
 │       └── rock_impact.tres
 ├── scenes/
 │   ├── player/
 │   │   └── Player.tscn
+│   ├── weapons/
+│   │   └── grenade.tscn
 │   ├── impacts/
-│   │   ├── impactFX.tscn     # Generic impact effect
-│   │   └── stone.tscn        # Stone impact variant
+│   │   ├── impactFX.tscn
+│   │   └── stone.tscn
 │   ├── main.tscn
 │   ├── enemy.tscn
 │   ├── bullet.tscn
 │   └── MuzzleFlash.tscn
 └── scripts/
-    ├── player.gd
-    ├── enemy.gd
-    ├── player_animation.gd
+    ├── character_base.gd          # Shared base for Player and EnemyBase
+    ├── player.gd                  # extends CharacterBase
+    ├── directional_anim_data.gd   # formerly PlayerAnimation
     ├── animation_state.gd
-    ├── animation_entry.gd
-    ├── debug_draw.gd         # Autoload: DebugDraw
-    ├── audio_pool.gd         # Autoload: AudioPool
-    ├── hit_stop.gd           # Autoload: HitStop
-    ├── input_manager.gd      # Autoload: InputManager
+    ├── animation_entry.gd         # @tool: in-editor animation preview button
+    ├── camera_controller.gd
+    ├── debug_draw.gd              # Autoload: DebugDraw
+    ├── audio_pool.gd              # Autoload: AudioPool
+    ├── hit_stop.gd                # Autoload: HitStop
+    ├── input_manager.gd           # Autoload: InputManager
     ├── impact_fx.gd
     ├── impact_fx_data.gd
     ├── muzzleflash.gd
+    ├── pickup.gd                  # Area2D pickup; grants ammo on player contact
+    ├── pickup_data.gd             # Resource: scene, ammo_type, texture, sound
+    ├── swipe_fx.gd                # Melee swing visual effect (AnimatedSprite2D)
+    ├── enemy/
+    │   ├── enemy_base.gd          # extends CharacterBase
+    │   ├── enemy_patrol_base.gd   # extends EnemyBase — patrol/spotted/returning FSM
+    │   ├── enemy_debug_overlay.gd # top_level Node2D; draws detection radii, LKP, path
+    │   ├── behaviors/
+    │   │   ├── enemy_behavior.gd                    # base: execute(enemy, delta)
+    │   │   ├── idle_behavior.gd
+    │   │   ├── chase_player_behavior.gd
+    │   │   ├── move_to_point_behavior.gd
+    │   │   ├── rotate_toward_player_behavior.gd
+    │   │   ├── navigate_to_player_behavior.gd
+    │   │   ├── navigate_to_point_behavior.gd
+    │   │   └── navigate_to_spotted_target_behavior.gd
+    │   └── types/
+    │       └── enemy_slime.gd     # extends EnemyPatrolBase
+    ├── ui/
+    │   ├── hud.gd
+    │   ├── heart.gd
+    │   └── weapon_display.gd
     └── weapons/
-        ├── weapon.gd
-        └── bullet.gd
+        ├── weapon_data.gd         # Resource (pure config); extends WeaponData
+        ├── weapon.gd              # RefCounted (runtime instance); created from WeaponData
+        ├── melee_weapon_data.gd   # extends WeaponData — melee config (swings, los_mask)
+        ├── melee_weapon.gd        # extends Weapon — windup/active/recovery combo chain
+        ├── swing_data.gd          # Resource: arc_range, arc_angle, damage, timing, FX
+        ├── bullet.gd
+        ├── bullet_trail.gd
+        ├── ammo_type.gd
+        ├── grenade.gd
+        └── grenade_data.gd
 ```
 
 ---
@@ -76,58 +109,38 @@ top-down-adventure/
 
 ```
 Node2D
-├── Ground (TileMapLayer)          # Base ground layer; group: ground_tilemap
-│                                  # Used to compute camera bounds
-├── ySort (Node2D)                 # Y-sorted for correct depth ordering; group: ysort
-│   ├── 2ndFloor (TileMapLayer)    # Elevated tile layer
-│   ├── Walls (TileMapLayer)       # Wall tiles with collision
+├── Ground (TileMapLayer)          # group: ground_tilemap — used for camera bounds
+├── NavigationRegion2D             # Baked nav mesh for enemy pathfinding
+├── ySort (Node2D)                 # Y-sorted depth; group: ysort
+│   ├── 2ndFloor (TileMapLayer)
+│   ├── Walls (TileMapLayer)
 │   ├── Player (Player.tscn)       # group: player
 │   └── Enemy × N (enemy.tscn)
 └── HUD (CanvasLayer)              # group: hud
     ├── HBoxContainer              # Heart containers
-    ├── WeaponDisplay              # Current weapon icon
-    └── Crosshair (Node2D)         # group: crosshair — follows mouse cursor
+    ├── WeaponDisplay
+    └── Crosshair (Node2D)         # group: crosshair
 ```
 
 ### `Player.tscn`
 
 ```
-CharacterBody2D
-├── AnimatedSprite2D               # 8-directional idle/walk/hit/death animations
-├── WallCollision (CollisionShape2D, CapsuleShape2D)
-├── Muzzle (Marker2D)              # Bullet spawn origin (foreground shots)
-│   └── LaserSight (Line2D)        # Reparented here when shooting forward
-├── MuzzleBehind (Marker2D)        # Bullet spawn origin (behind-player shots)
-│   └── LaserSight (Line2D)        # Reparented here when shooting backward
-└── Camera2D                       # Follows player; limits from ground tilemap
+CharacterBody2D (player.gd)
+├── AnimatedSprite2D
+├── WallCollision (CollisionShape2D)
+├── Muzzle (Marker2D)
+│   └── LaserSight (Line2D)        # Reparented based on anim entry
+├── MuzzleBehind (Marker2D)
+└── Camera2D (camera_controller.gd)
 ```
-
-> `LaserSight` is dynamically reparented between `Muzzle` and `MuzzleBehind` each frame
-> based on `_currentAnimEntry.bullet_behind_player`, so it always originates from the
-> correct muzzle point without z-index hacks.
 
 ### `enemy.tscn`
 
 ```
-CharacterBody2D
-├── AnimatedSprite2D               # idle_down, death_down animations (Slime1)
-└── CollisionShape2D
-```
-
-### `bullet.tscn`
-
-```
-Area2D
-├── CollisionShape2D (CircleShape2D)
-├── VisibleOnScreenNotifier2D
-└── Sprite2D
-```
-
-### `impactFX.tscn`
-
-```
-Node2D
-└── AnimatedSprite2D               # impact_flesh, impact_rock variants
+CharacterBody2D (EnemySlime / EnemyBase subclass)
+├── AnimatedSprite2D
+├── CollisionShape2D
+└── NavigationAgent2D              # Required for patrol/navigate behaviors
 ```
 
 ---
@@ -136,223 +149,247 @@ Node2D
 
 | Name | Script | Responsibility |
 |---|---|---|
-| `AudioPool` | `scripts/audio_pool.gd` | Single round-robin pool of `AudioStreamPlayer2D` nodes shared across all streams. `play(stream, position, ignore_pause)` swaps the stream and plays. `ignore_pause = true` sets `PROCESS_MODE_ALWAYS` so the player fires through a `HitStop` pause. |
-| `HitStop` | `scripts/hit_stop.gd` | Pauses the scene tree for a real-time duration. Multiple concurrent `request(duration)` calls are merged — the tree stays paused until the longest request expires. Emits `ended` when unpausing. |
-| `InputManager` | `scripts/input_manager.gd` | Tracks active input device (gamepad vs MKB). Switches on any joypad event (button or stick above deadzone) or any keyboard/mouse event. Emits `input_mode_changed(is_gamepad)`. |
-| `DebugDraw` | `scripts/debug_draw.gd` | Global `add_line` / `add_circle` with TTL-based fade. Auto-parents to the `hud` CanvasLayer. Skips `queue_redraw` when empty. |
+| `AudioPool` | `scripts/audio_pool.gd` | Round-robin `AudioStreamPlayer2D` pool. `play(stream, position, ignore_pause)` swaps stream and sets `PROCESS_MODE_ALWAYS` when `ignore_pause` to survive `HitStop` pauses. |
+| `HitStop` | `scripts/hit_stop.gd` | Pauses the scene tree for a real-time duration. Multiple concurrent `request(duration)` calls are merged — tree stays paused until the longest expires. Uses `Time.get_ticks_usec` and real-time timers (ignore_time_scale) internally. Emits `ended`. |
+| `InputManager` | `scripts/input_manager.gd` | Tracks active input device (gamepad vs MKB). Emits `input_mode_changed(is_gamepad)`. Filters joypad axis noise below `STICK_DEADZONE = 0.2`. |
+| `DebugDraw` | `scripts/debug_draw.gd` | Global `add_line` / `add_circle` with TTL fade. Auto-parents to `hud` CanvasLayer. Skips `queue_redraw` when empty. |
 
 ---
 
 ## Core Systems
 
-### 1. Player Controller (`scripts/player.gd`)
+### 1. Character Hierarchy
 
-`CharacterBody2D`. Central node combining movement, aiming, shooting, health, camera feedback, and animation.
+```
+CharacterBase (character_base.gd)   — health, damage, death, hit flash, knockback, weapons, animation data
+├── Player (player.gd)              — input, camera, aim, laser, crosshair, invulnerability, ammo
+└── EnemyBase (enemy/enemy_base.gd) — contact damage, knockback scale, behavior API, move_speed
+    └── EnemyPatrolBase             — patrol/spotted/returning FSM, LOS detection, waypoints
+        └── EnemySlime              — overrides _spotted_behavior()
+```
 
-**Movement**
-- WASD / left stick at `SPEED = 100` units/sec via `Input.get_vector`.
-- During `_is_hit`, normal input is blocked and velocity is set to `_knockback_velocity`, which lerps toward zero each frame.
+**`CharacterBase`** holds the shared contract:
+- `max_health`, `_health`, `health_changed` signal
+- `take_damage(amount, knockback_direction, impact_position, shot_id)` — hit flash, knockback accumulation, health decrement, death check
+- `die()` — disables physics/collision, virtual `_on_die()` for subclass cleanup
+- `_on_take_damage(same_shot, knockback_direction, impact_position)` — virtual hook
+- `weapons: Array[Weapon]`, `anim_data: DirectionalAnimData`, `_facing: Vector2`
+- `has_ammo(w: Weapon) -> bool` — returns `true` by default; Player overrides
 
-**Aiming**
-- Mouse: `get_global_mouse_position() - global_position`, normalised. Updated only when mouse has moved.
-- Gamepad: right stick vector, updated only above zero (deadzone handled by `InputManager`).
-- Device switches handled via `InputManager.input_mode_changed` signal: crosshair shown for MKB, `LaserSight` shown for gamepad.
+### 2. Player Controller (`scripts/player.gd`)
 
-**Camera**
-- Limits derived from `ground_tilemap` group extents × `tile_set.tile_size` (supports non-square tiles).
-- On hit: spring shake in the impact direction (exponential damping), plus a fast zoom-in / slow zoom-out tween. Both use `TWEEN_PAUSE_PROCESS` to run through `HitStop` pauses.
+**Aiming:** Mouse (get_global_mouse_position) or gamepad right stick. Device switches via `InputManager.input_mode_changed`. Aim assist scans an `Area2D` (physics-layer filtered, no per-frame group scan) for enemies within `weapon.aim_assist_angle`, applies exponential decay lerp.
 
-**Health & Damage** (`take_damage(amount, knockback_direction, impact_position)`)
-1. Ignored if `_invulnerable`.
-2. Decrements `_health`, emits `health_changed`.
-3. Plays hurt sound (bypasses hit stop via `ignore_pause`).
-4. Starts `_is_hit` state for `hit_duration` seconds (blocks shooting, plays hit animation, applies knockback).
-5. Sets `_invulnerable` for `invulnerability_duration` seconds (blinking sprite).
-6. White flash tween (`TWEEN_PAUSE_PROCESS`).
-7. Spawns `hit_impact_fx` at the contact point (`PROCESS_MODE_ALWAYS`).
-8. Camera shake + zoom.
-9. `HitStop.request(hit_stop_duration)`.
-- On `_is_hit` expiry: if `_health <= 0`, calls `die()`.
-- `die()`: disables physics/input/collision, cancels blink, plays death animation and death sound.
+**Shooting:**
+- SINGLE/BURST: fires on press, buffered for `fire_buffer_window` seconds if cooldown not yet elapsed
+- AUTO: fires each tick while held
+- `_fire_held` corrected on `HitStop.ended` in case release was missed during pause
 
-**Shooting**
-- SINGLE mode: fires on press event in `_unhandled_input`, gated by `not _is_hit`.
-- AUTO mode: fires each `_tick_weapon` frame while `_fire_held` and `not _is_hit`.
-- Weapon switching: `weapon_next` / `weapon_prev` actions cycle `_weapon_index`.
-- `_fire_held` is corrected on `HitStop.ended` in case the release event was missed during a pause.
+**Ammo:** Player holds `_ammo: Dictionary` (AmmoType → int). `has_ammo(w)` gates all fire paths. `ammo_changed(ammo_type, current)` signal emitted on consumption. `add_ammo(ammo_type, amount)` for pickups.
 
-**Contact Damage**
-- After `move_and_slide`, iterates `get_slide_collision_count()`. If any collider is an `Enemy` with `contact_damage > 0`, calls `take_damage` with the collision contact point.
+**Contact damage:** After `move_and_slide`, iterates slide collisions; calls `take_damage` if collider is `EnemyBase` with `contact_damage > 0`.
 
-### 2. Animation System
+**Camera:** Spring shake in impact direction (exponential damping) + zoom punch. Both use `TWEEN_PAUSE_PROCESS` to survive `HitStop`.
 
-Three resource classes compose the animation lookup:
+### 3. Animation System (`DirectionalAnimData`)
 
-| Class | File | Role |
-|---|---|---|
-| `AnimationEntry` | `animation_entry.gd` | Data for one direction: animation name, flip, muzzle offset, bullet z-order flag |
-| `AnimationState` | `animation_state.gd` | Groups 8 `AnimationEntry` objects for one logical state (idle, walk, hit, death) |
-| `PlayerAnimation` | `player_animation.gd` | Array of `AnimationState`; primary API is `get_entry(state, direction) -> AnimationEntry` |
+Three resource classes compose the lookup:
 
-`PlayerAnimation` builds a `Dictionary` cache (`state_name → AnimationState`) in `_init` and lazily on first `get_entry`/`has_state` call (handles resources loaded from disk before `states` is populated). Lookups are O(1).
+| Class | Role |
+|---|---|
+| `AnimationEntry` | One direction: animation name, flip, muzzle offset, bullet-behind flag |
+| `AnimationState` | Groups N `AnimationEntry` objects for one logical state (idle, walk, death…) |
+| `DirectionalAnimData` | Array of `AnimationState`; O(1) Dictionary cache; `get_entry(state, dir_index)` |
 
-`direction_to_index(Vector2) -> int` is a static method on `PlayerAnimation`, available to enemies and any future directional system.
+`direction_to_index(Vector2, direction_count) -> int` is static on `DirectionalAnimData`, used by both Player and EnemyBase.
 
-**`AnimationEntry` fields:**
+### 4. Weapon System
 
-| Field | Type | Description |
-|---|---|---|
-| `animationIndex` | String | Animation name on `AnimatedSprite2D` |
-| `flip` | bool | Horizontal flip for mirrored directions |
-| `muzzle_offset` | Vector2 | Muzzle position for this direction |
-| `bullet_behind_player` | bool | Whether bullet and laser should originate from `MuzzleBehind` |
+The weapon system separates configuration from runtime state so the same `.tres` resource file can safely be shared across multiple enemies without mutable-state collisions.
 
-`AnimationEntry` is a `@tool` resource with a live muzzle preview and a "Preview Animation" button for in-editor testing.
-
-### 3. Weapon System (`scripts/weapons/weapon.gd`)
-
-Data-driven `Resource`. Multiple weapons can be assigned to `player.weapons: Array[Weapon]`.
+**`WeaponData`** (`Resource`) — pure configuration, no runtime state. Assigned in the Inspector.
 
 | Property | Description |
 |---|---|
-| `fire_mode` | SINGLE, AUTO, or BURST |
-| `fire_rate` | Seconds between shots |
-| `damage` | Damage per bullet |
-| `bullet_speed` | px/sec (overwrites bullet scene export at spawn) |
-| `knockback_force` | Pre-scaled knockback magnitude passed to `take_damage` |
-| `bullet_range` | Max travel distance; 0 = infinite |
-| `bullet_range_fx` | `ImpactFXData` spawned when the bullet expires at max range |
-| `hud_icon` | `Texture2D` shown in the weapon HUD slot |
-| `bullet_scene` | Projectile `PackedScene` |
-| `shoot_sound` | `AudioStream` played via `AudioPool` |
-| `muzzle_flash_scene` | `PackedScene` parented to the muzzle |
+| `fire_mode` | SINGLE / AUTO / BURST |
+| `ammo_type` | `AmmoType` resource; `null` = infinite |
+| `pellet_count` / `spread_angle` | Shotgun-style multi-pellet |
+| `bullet_trail_scene` | `PackedScene` for `BulletTrail` |
+| `grenade_data` | If set, `fire()` throws a grenade instead of bullets |
+| `aim_assist_angle/range/strength` | Per-weapon gamepad aim assist |
+| `fire_shake_strength` | Camera shake on fire |
+| `suppress_wall_impacts` | Skip wall impact FX (e.g. shotgun) |
 
-`Weapon.fire(muzzle, direction, behind_player)` checks cooldown, plays sound via `AudioPool`, spawns the muzzle flash (z_index adjusted for behind-player), and spawns the bullet into the `ysort` group node.
+**`Weapon`** (`RefCounted`) — per-character runtime instance. Created by `WeaponData.create_instance()` in `CharacterBase._ready()`. Holds `_cooldown`, `_burst_remaining`, `_shot_counter`, and the `fired` signal. Exposes data properties as read-through getters so call sites are unchanged.
 
-### 4. Projectile System (`scripts/weapons/bullet.gd`)
+`CharacterBase` exports `weapons: Array[WeaponData]` (config) and maintains `_weapon_instances: Array[Weapon]` (one per slot, created at ready). `fire(muzzle, direction, shooter)` takes the shooter explicitly — no stored `owner_node` on the instance.
 
-`Area2D`. Manual cast-motion physics each frame using `PhysicsShapeQueryParameters2D` (all three query objects cached in `_ready`). Bullets added to the `ysort` group for correct depth sorting.
+**`MeleeWeaponData`** extends `WeaponData` — adds `swings: Array[SwingData]`, `los_mask`, `debug_draw_arc`. `create_instance()` returns a `MeleeWeapon`.
 
-**Collision flow:**
-1. Cast motion in aim direction. If range is finite, clamp motion at remaining range.
-2. If hit: get rest info for exact surface point and normal.
-3. Skip if collider is `owner_node` (friendly fire prevention).
-4. Call `body.take_damage(damage, direction * knockback_force, impact_pos)`.
-5. Determine impact data: TileMapLayer → cell custom data `"impact_fx_data"` → `ImpactFXData`; other bodies → `body.impact_fx_data`; fallback → bullet's own `impact_fx_data`.
-6. `data.spawn(impact_pos)` — `ImpactFXData` instantiates and plays the effect.
-7. `queue_free()`.
+**`MeleeWeapon`** extends `Weapon` — holds swing state machine (WINDUP / ACTIVE / RECOVERY / IDLE), `_shooter` stored on `fire()` for use by tick helpers.
 
-If range is reached without a hit, spawns `range_fx` (if set) and frees.
+Shot ID system: each `fire()` call increments a counter. All pellets from one shot share the same `shot_id`. Same-shot hits on a body accumulate knockback only — no repeated flash/sound/impact FX.
 
-### 5. Impact Effect System
+### 5. Grenade System
 
-**`ImpactFXData` (`scripts/impact_fx_data.gd`)** — `Resource`:
+**`GrenadeData`** (`Resource`) — all configuration grouped by export groups: Fuse, Explosion, Bounce, Radius Indicator, Pre-Explode.
+
+**`Grenade`** (`CharacterBody2D`) — thrown projectile:
+- `init(data, direction, speed, thrower, shot_id)` called **before** `add_child`
+- Physics: `move_and_collide` with exponential velocity decay and bounce friction
+- Fuse countdown with pre-explode flash (lerped rate) and radius indicator (`GrenadeRadius` top-level Node2D)
+- Settle clinks: N extra bounce FX as speed decays to `stop_speed`
+- Explosion: `PhysicsShapeQueryParameters2D` circle query, falloff curve sampling, LOS raycast per target, optional self-damage override
+- Damage fires after `damage_delay` seconds so FX plays before HitStop freezes
+
+### 6. Enemy Behavior System
+
+#### Behavior Objects (`scripts/enemy/behaviors/`)
+
+```gdscript
+class EnemyBehavior extends RefCounted:
+    func execute(enemy: EnemyBase, delta: float) -> void
+```
+
+`EnemyBase._active_behavior` is set by the coroutine API and called each `_physics_process`. Knockback takes velocity priority over behavior.
+
+Built-in behaviors: `IdleBehavior`, `ChasePlayerBehavior`, `MoveToPointBehavior`, `RotateTowardPlayerBehavior`, `NavigateToPlayerBehavior`, `NavigateToPointBehavior`, `NavigateToSpottedTargetBehavior`.
+
+#### `EnemyBase` Behavior API
+
+```gdscript
+# Awaitables (return Signal — await in _run_behavior)
+run_behavior(b: EnemyBehavior, duration: float) -> Signal
+navigate_toward_player(duration: float) -> Signal
+rest(duration: float) -> Signal
+
+# Immediate
+face(direction: Vector2) -> void
+shoot_weapon(index: int, target_pos: Vector2) -> void
+is_alive() -> bool
+get_player() -> CharacterBase       # cached via "player" group
+player_position() -> Vector2
+```
+
+`_run_behavior()` is a virtual async method started detached in `_ready`. Subclasses override it to define behavior sequences using `await`.
+
+#### `EnemyPatrolBase` FSM
+
+Three states: `PATROL → SPOTTED → RETURNING → PATROL`.
+
+```
+PATROL:   navigate waypoints (loop or bounce); _navigate_interruptible breaks on player spotted
+SPOTTED:  run _spotted_behavior() loop; navigate toward player (or LKP when not visible)
+RETURNING: navigate back to waypoint[0] or _patrol_origin; resume spotted if player reappears
+```
+
+Key details:
+- `_can_see_player()`: range check + LOS raycast (excludes self + player)
+- Two ranges: `sight_range` (unalerted) and `alerted_sight_range` (SPOTTED/RETURNING)
+- `_last_known_pos` updated every physics frame while player is visible (not just per loop)
+- Exit SPOTTED when: `_should_return()` (too far from path) OR `_at_last_known_pos()` (reached LKP, player gone)
+- Always navigates back to patrol path after exiting SPOTTED
+
+#### `EnemyDebugOverlay`
+
+`top_level = true` Node2D (escapes ysort). Toggled via `EnemyBase.show_debug`. Draws:
+- Cyan circle: unalerted `sight_range`
+- Orange circle: `alerted_sight_range` (when different)
+- Yellow dots + lines: waypoint path with current target highlighted
+- Red dot + line: last known player position (LKP)
+- State label centred above enemy
+
+### 7. Melee System (`scripts/weapons/melee_weapon.gd`)
+
+**`MeleeWeapon`** extends `Weapon`. Each attack runs through four states: `WINDUP → ACTIVE → RECOVERY → IDLE`.
+
+**`SwingData`** (`Resource`) — one entry per combo step:
 
 | Property | Description |
 |---|---|
-| `scene` | `PackedScene` to instantiate (`ImpactFX` node) |
-| `animation_name` | Animation to play on the `AnimatedSprite2D` |
-| `sound` | Optional `AudioStream` played via `AudioPool` |
-| `offset` | Sprite position adjustment |
-| `scale` | Sprite scale multiplier |
+| `windup_time / active_time / recovery_time` | Phase durations |
+| `arc_range / arc_angle` | Hit detection circle radius and cone half-angle |
+| `damage / knockback_force` | Per-swing values |
+| `move_scale / rotation_scale` | Multiplier applied to player move speed and aim-steer speed during swing |
+| `swing_sound / swipe_fx_scene` | Audio and visual FX |
 
-`ImpactFXData.spawn(position, process_mode)` instantiates `scene`, sets `process_mode` (callers pass `PROCESS_MODE_ALWAYS` when the effect must survive a `HitStop` pause), parents to `current_scene`, positions, and calls `play_impact(self)`.
+**Combo chain:** During ACTIVE or RECOVERY, another `fire()` call sets `_pending_swing = true`. When the current ACTIVE window ends, the next swing starts immediately if pending. Up to `swings.size()` consecutive hits; after the last swing the chain resets.
 
-**`ImpactFX` (`scripts/impact_fx.gd`)** — applies data, plays animation and sound, `queue_free()`s on `animation_finished`. Audio respects `ignore_pause` based on its own `process_mode`.
+**Hit detection:** `_do_arc_query` runs every tick while ACTIVE. A `CircleShape2D` centered on the muzzle returns all overlapping bodies; the cone angle test (`_swing_direction.angle_to(to_body)`) and optional LOS raycast (`los_mask`) filter the results. Bodies are tracked in `_hit_set` to prevent double-hits per swing.
 
-### 6. Enemy (`scenes/enemy.tscn` + `scripts/enemy.gd`)
+**Integration with Player:** `player_movement` applies `swing_move_scale()` to SPEED. `_update_aim` applies `swing_rotation_scale()` as an exponential-decay lerp coefficient so the aim can't snap freely while swinging. `can_switch()` returns false during WINDUP.
 
-`CharacterBody2D`. Minimal implementation.
+### 8. Projectile System (`scripts/weapons/bullet.gd`)
 
-| Property | Description |
-|---|---|
-| `max_health` | Starting health |
-| `contact_damage` | Damage dealt to player on collision |
-| `knockback_scale` | 0–1 scalar dampening incoming knockback (for large/heavy enemies) |
-| `impact_fx_data` | Hit effect read by `bullet.gd` |
-| `death_sound` | Played via `AudioPool` on death |
+`Area2D`. Manual cast-motion physics via cached `PhysicsShapeQueryParameters2D`. Shot ID deduplication prevents multi-pellet hits triggering multiple flash/sound/FX on the same target. `BulletTrail` (`Line2D`, `top_level = true`) follows bullet and detaches at impact with final point added.
 
-- `take_damage(amount, knockback_direction, _impact_position)`: clamps health at 0 implicitly via die check, applies knockback scaled by `knockback_scale`, white flash tween (`TWEEN_PAUSE_PROCESS`).
-- `die()`: disables physics/collision, plays `"death_down"`, `queue_free()`s on animation end.
+### 9. Impact Effect System
 
-No pathfinding or AI yet. Death animation is hardcoded to `"death_down"`.
+**`ImpactFXData`** (`Resource`): `scene`, `animation_name`, `sound`, `offset`, `scale`. `spawn(position, process_mode)` parents to `current_scene`.
 
-### 7. HUD (`scripts/ui/hud.gd`, `scripts/ui/heart.gd`, `scripts/ui/weapon_display.gd`)
+### 10. Ammo System
 
-`CanvasLayer`. Connects to `player.weapon_changed` and `player.health_changed` signals in `_ready` (found via `"player"` group).
+**`AmmoType`** (`Resource`): `max_capacity`, `icon`. Shared `.tres` instance = shared pool between weapons. Player initialises `_ammo` dict from all equipped weapons at `_ready`. Enemies have infinite ammo (`has_ammo` base returns `true`).
 
-- **Hearts:** `Heart` control nodes in an `HBoxContainer`. Each heart has a `value` (0 = empty, 2 = full) and cycles through `heartImages`. `_update_max_hp` adds/removes hearts to match `max_health`. `_update_hp` fills hearts from left to right.
-- **Weapon display:** Sets `$WeaponIcon.texture` from `weapon.hud_icon`.
+### 11. Pickup System
+
+**`PickupData`** (`Resource`): `scene`, `ammo_type`, `pickup_sound`, `pickup_texture`, `offset`, `scale`. `spawn(position, amount)` instances the pickup scene into `ysort` group.
+
+**`Pickup`** (extends Area2D): `body_entered` triggers `player.add_ammo(data.ammo_type, amount)`, plays sound, and calls `queue_free`. Configured with a `preset_pickup_data` export so pickups can be dropped at runtime without requiring a separate scene per ammo type.
+
+### 12. HUD
+
+Connects to `player.health_changed`, `player.weapon_changed`, `player.ammo_changed` signals via `"player"` group. Hearts: `Heart` nodes in `HBoxContainer`, value 0–2. Weapon display: icon texture. Ammo display: count per `AmmoType`.
 
 ---
 
 ## Input Map
 
-| Action | Keyboard/Mouse | Gamepad | Deadzone |
-|---|---|---|---|
-| `move_left` | A | Left Stick X− | 0.2 |
-| `move_right` | D | Left Stick X+ | 0.2 |
-| `move_up` | W | Left Stick Y− | 0.2 |
-| `move_down` | S | Left Stick Y+ | 0.2 |
-| `shoot` | LMB | RT (axis 5) | 0.2 |
-| `aim_left` | — | Right Stick X− | 0.2 |
-| `aim_right` | — | Right Stick X+ | 0.2 |
-| `aim_up` | — | Right Stick Y− | 0.2 |
-| `aim_down` | — | Right Stick Y+ | 0.2 |
-| `weapon_next` | Scroll Up | Y Button | 0.5 |
-| `weapon_prev` | Scroll Down | — | 0.5 |
-
----
-
-## Resource Dependency Graph
-
-```
-weapon_default.tres (Weapon)
-  ├── bullet.tscn
-  │     └── flesh_impact.tres (ImpactFXData)
-  │           └── impactFX.tscn
-  ├── bullet_range_fx → (optional ImpactFXData)
-  ├── MuzzleFlash.tscn
-  └── handgun_shoot.mp3
-
-anim_data.tres (PlayerAnimation)
-  └── AnimationState[] → AnimationEntry[]
-
-grassy.tres (TileSet)
-  └── cell custom data "impact_fx_data" → rock_impact.tres (ImpactFXData)
-        └── stone.tscn
-```
+| Action | Keyboard/Mouse | Gamepad |
+|---|---|---|
+| `move_left/right/up/down` | WASD | Left Stick |
+| `shoot` | LMB | RT |
+| `aim_*` | — | Right Stick |
+| `weapon_next/prev` | Scroll | Y Button |
 
 ---
 
 ## Engineering Philosophy
 
-**Fail loudly on bad setup.** Missing scene dependencies (wrong group name, unassigned export, missing node path) should crash immediately with a clear `assert` message, not silently no-op. Silent failures let broken configurations go unnoticed and make bugs harder to trace. A null guard is only appropriate when the absent value is a genuinely valid runtime state (e.g. an optional audio stream, an optional impact fx).
+**Fail loudly on bad setup.** Missing scene dependencies crash immediately with a clear `assert` message. A null guard is only appropriate when the absent value is a genuinely valid runtime state (e.g. optional audio stream, optional impact fx).
+
+**init() before add_child.** Nodes that need data at `_ready` time (Grenade, BulletTrail) receive it via an `init()` call before being added to the scene tree.
+
+**Single velocity setter.** `EnemyBase._physics_process` is the only place that assigns `velocity` — behavior objects write to it via `execute()`, knockback takes priority. This prevents coroutine/physics races.
 
 ---
 
-## Current State & Known Gaps
+## Current State
 
 | Area | Status |
 |---|---|
 | Player movement & aiming | Complete |
 | Mouse + gamepad input switching | Complete |
-| Weapon & bullet system | Complete (2 weapons) |
-| Impact effects (flesh + rock) | Complete |
-| 8-directional animation (idle/walk/hit/death) | Complete |
-| Camera with level bounds | Complete |
-| Camera shake & zoom on hit | Complete |
-| Player health, damage, death | Complete |
-| Player invulnerability + blink | Complete |
+| Weapon system (single/auto/burst/shotgun) | Complete |
+| Grenade system | Complete |
+| Ammo system | Complete |
+| Bullet trails | Complete |
+| Aim assist (gamepad) | Complete |
+| Impact effects | Complete |
+| 8-directional animation | Complete |
+| Camera shake, zoom, spring | Complete |
+| Player health, damage, death, invulnerability | Complete |
 | Hit stop | Complete |
-| Enemy health, damage, death | Basic |
-| Enemy knockback dampening | Complete |
-| Enemy AI / pathfinding | Not implemented |
-| Enemy directional animations | Not implemented (death hardcoded to `death_down`) |
-| Melee combat | Not implemented |
-| HUD (health hearts, weapon icon) | Basic |
-| Level design | Single test room |
+| Enemy base (health, damage, death, knockback) | Complete |
+| Enemy directional animations | Complete (via DirectionalAnimData) |
+| Enemy behavior system (coroutine + behavior objects) | Complete |
+| Enemy patrol / LOS / spotted / return | Complete |
+| Enemy pathfinding (NavigationAgent2D) | Complete |
+| Enemy weapons | Implemented, not configured |
+| HUD (health, weapon icon) | Basic |
+| Ammo HUD | Implemented, needs wiring |
+| Melee combat (MeleeWeapon, SwingData) | Implemented — windup/active/recovery, combo chain, arc query, LOS |
+| Multiple room / level design | Single test room |
 | Game states (menu, pause, game over) | Not implemented |
-| Player dash/jump | Assets present, not wired |
 | Audio bus / mixing | Not implemented |
 | Save / load | Not implemented |

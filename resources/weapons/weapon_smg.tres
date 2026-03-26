@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="Weapon" format=3 uid="uid://c0h63vebtpiqg"]
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://c0h63vebtpiqg"]
 
+[ext_resource type="Script" uid="uid://2wc7slhe27dr" path="res://scripts/weapons/weapon_data.gd" id="1_45hft"]
 [ext_resource type="PackedScene" uid="uid://bps1yhxgkp7on" path="res://scenes/weapons/bullet.tscn" id="1_pq0yf"]
 [ext_resource type="Resource" uid="uid://l0ohb1sped8b" path="res://resources/weapons/ammo/ammo_hangun.tres" id="1_qg53x"]
-[ext_resource type="Script" uid="uid://c8injxos6i6xd" path="res://scripts/weapons/weapon.gd" id="1_y2hbt"]
 [ext_resource type="Texture2D" uid="uid://t1c2ywi6w6sj" path="res://assets/Art/weapons/weapons.png" id="2_pq0yf"]
 [ext_resource type="PackedScene" uid="uid://cnsro8f0k7ab1" path="res://scenes/weapons/bulletTrail.tscn" id="2_tfonx"]
 [ext_resource type="PackedScene" uid="uid://bpxmf2n0kjgd2" path="res://scenes/weapons/muzzleflash.tscn" id="3_tfonx"]
@@ -13,7 +13,7 @@ atlas = ExtResource("2_pq0yf")
 region = Rect2(378.64, 335.78, 128, 56)
 
 [resource]
-script = ExtResource("1_y2hbt")
+script = ExtResource("1_45hft")
 fire_mode = 1
 fire_rate = 0.1
 bullet_speed = 800.0

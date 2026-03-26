@@ -22,17 +22,18 @@ func _on_health_changed(health:float, maxHealth:float) -> void:
 func _on_weapon_changed(weapon: Weapon) -> void:
 	_current_weapon = weapon
 	weapon_display.update_weapon(weapon)
-	if (weapon.ammo_type != null):
+	var player = get_tree().get_first_node_in_group("player")
+	if (weapon != null && weapon.ammo_type != null):
 		$HFlowContainer/AmmoIcon.texture = weapon.ammo_type.icon
+		_on_ammo_changed(weapon.ammo_type, player.get_ammo(weapon.ammo_type))
 	else:
 		$HFlowContainer/AmmoIcon.texture = null
-	var player = get_tree().get_first_node_in_group("player")
-	_on_ammo_changed(weapon.ammo_type, player.get_ammo(weapon.ammo_type))
+		_on_ammo_changed(null, 0)
 	
 func _on_ammo_changed(ammo_type: AmmoType, current_count:int) -> void:
-	if ( _current_weapon.ammo_type == ammo_type ):
+	if ( ammo_type != null && _current_weapon != null && _current_weapon.ammo_type == ammo_type ):
 		$HFlowContainer/AmmoText.text = str(current_count)
-	if ( _current_weapon.ammo_type == null ):
+	else:
 		$HFlowContainer/AmmoText.text = ""
 
 func _update_hp(health:int):

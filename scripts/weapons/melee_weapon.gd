@@ -3,9 +3,13 @@ class_name MeleeWeapon
 
 enum SwingState { IDLE, WINDUP, ACTIVE, RECOVERY }
 
-@export var swings: Array[SwingData] = []
-@export_flags_2d_physics var los_mask: int = 0
-@export var debug_draw_arc: bool = false
+# Data pass-throughs for melee-specific fields
+var swings: Array[SwingData]:  
+	get: return (data as MeleeWeaponData).swings
+var debug_draw_arc: bool:      
+	get: return (data as MeleeWeaponData).debug_draw_arc
+var los_mask: int:             
+	get: return (data as MeleeWeaponData).los_mask
 
 signal swing_started(swing_index: int)
 
@@ -16,7 +20,20 @@ var _hit_set: Array = []
 var _pending_swing: bool = false
 var _swing_direction: Vector2 = Vector2.RIGHT
 var _swing_muzzle: Marker2D = null
+var _shooter: Node = null  # set on each fire(); used by tick helpers
 
+var _arc_shape: CircleShape2D
+var _arc_query: PhysicsShapeQueryParameters2D
+
+
+func _init(weapon_data: WeaponData) -> void:
+	super(weapon_data)
+	_arc_shape = CircleShape2D.new()
+	_arc_query = PhysicsShapeQueryParameters2D.new()
+	_arc_query.shape = _arc_shape
+
+
+# — Weapon overrides —
 
 func tick(delta: float) -> void:
 	super.tick(delta)
@@ -41,7 +58,8 @@ func can_switch() -> bool:
 	return _state == SwingState.IDLE or _state == SwingState.RECOVERY
 
 
-func fire(muzzle: Marker2D, direction: Vector2) -> void:
+func fire(muzzle: Marker2D, direction: Vector2, shooter: Node) -> void:
+	_shooter = shooter
 	match _state:
 		SwingState.IDLE:
 			if _cooldown > 0.0:
@@ -66,6 +84,8 @@ func cancel_burst() -> void:
 	interrupt()
 
 
+# — State queries —
+
 func is_swinging() -> bool:
 	return _state != SwingState.IDLE
 
@@ -82,6 +102,8 @@ func swing_rotation_scale() -> float:
 	return _current_swing().rotation_scale
 
 
+# — Internal —
+
 func _start_swing(muzzle: Marker2D, direction: Vector2) -> void:
 	_swing_muzzle = muzzle
 	_swing_direction = direction
@@ -89,8 +111,8 @@ func _start_swing(muzzle: Marker2D, direction: Vector2) -> void:
 	var swing := _current_swing()
 	_state_timer = swing.windup_time
 	_cooldown = swing.windup_time + swing.active_time + swing.recovery_time
-	if swing.swing_sound:
-		AudioPool.play(swing.swing_sound, owner_node.global_position)
+	if swing.swing_sound and is_instance_valid(_shooter):
+		AudioPool.play(swing.swing_sound, (_shooter as Node2D).global_position)
 	fired.emit(direction)
 	swing_started.emit(_swing_index)
 
@@ -118,18 +140,15 @@ func _advance_state() -> void:
 
 func _do_arc_query() -> void:
 	var swing := _current_swing()
-	var shape := CircleShape2D.new()
-	shape.radius = swing.arc_range
-	var query := PhysicsShapeQueryParameters2D.new()
-	query.shape = shape
-	query.transform = Transform2D(0.0, _swing_muzzle.global_position)
-	var hits := _swing_muzzle.get_world_2d().direct_space_state.intersect_shape(query)
+	_arc_shape.radius = swing.arc_range
+	_arc_query.transform = Transform2D(0.0, _swing_muzzle.global_position)
+	var hits := _swing_muzzle.get_world_2d().direct_space_state.intersect_shape(_arc_query)
 	var half_arc := deg_to_rad(swing.arc_angle * 0.5)
 	for hit in hits:
 		var body: Node = hit.collider
 		if not body.has_method("take_damage"):
 			continue
-		if body == owner_node or _hit_set.has(body):
+		if body == _shooter or _hit_set.has(body):
 			continue
 		var to_body: Vector2 = (body as Node2D).global_position - _swing_muzzle.global_position
 		if absf(_swing_direction.angle_to(to_body.normalized())) > half_arc:
@@ -148,7 +167,7 @@ func _has_los(target: Node2D) -> bool:
 	if los_mask == 0:
 		return true
 	var query := PhysicsRayQueryParameters2D.create(_swing_muzzle.global_position, target.global_position)
-	query.exclude = [owner_node, target]
+	query.exclude = [_shooter, target]
 	query.collision_mask = los_mask
 	return _swing_muzzle.get_world_2d().direct_space_state.intersect_ray(query).is_empty()
 
@@ -157,11 +176,12 @@ func _spawn_swipe_fx() -> void:
 	var swing := _current_swing()
 	if swing.swipe_fx_scene == null or not is_instance_valid(_swing_muzzle):
 		return
-	var fx = swing.swipe_fx_scene.instantiate()
-	var ysort = _swing_muzzle.get_tree().get_first_node_in_group("ysort")
+	var fx := swing.swipe_fx_scene.instantiate()
+	var ysort := _swing_muzzle.get_tree().get_first_node_in_group("ysort")
 	assert(ysort != null, "MeleeWeapon: no node in group 'ysort'")
 	ysort.add_child(fx)
-	fx.global_position = owner_node.global_position
+	if is_instance_valid(_shooter):
+		fx.global_position = (_shooter as Node2D).global_position
 	fx.rotation = _swing_direction.angle()
 	fx.play()
 

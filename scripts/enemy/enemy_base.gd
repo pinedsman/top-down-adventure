@@ -17,8 +17,6 @@ func _ready() -> void:
 	super._ready()
 	_muzzle = get_node_or_null("Muzzle") as Marker2D
 	_nav_agent = get_node_or_null("NavigationAgent2D") as NavigationAgent2D
-	for w in weapons:
-		w.owner_node = self
 	if show_debug:
 		var overlay := EnemyDebugOverlay.new()
 		add_child(overlay)
@@ -62,11 +60,7 @@ func _on_die() -> void:
 			sprite.play(entry.animationIndex)
 			sprite.animation_finished.connect(queue_free)
 			return
-	# Fallback for enemies without DirectionalAnimData configured
-	var dir_index := DirectionalAnimData.direction_to_index(_facing, anim_data.direction_count)
-	var dir_names := ["up", "up", "right", "down", "down", "down", "left", "up"]
-	sprite.play("death_" + dir_names[dir_index])
-	sprite.animation_finished.connect(queue_free)
+	queue_free()
 
 
 # — Behavior API —
@@ -98,12 +92,12 @@ func face(direction: Vector2) -> void:
 
 
 func shoot_weapon(index: int, target_pos: Vector2) -> void:
-	assert(index >= 0 and index < weapons.size(),
-		"EnemyBase: weapon index %d out of range (have %d weapons)" % [index, weapons.size()])
+	assert(index >= 0 and index < _weapon_instances.size(),
+		"EnemyBase: weapon index %d out of range (have %d weapons)" % [index, _weapon_instances.size()])
 	assert(_muzzle != null,
 		"EnemyBase: scene must have a Marker2D named 'Muzzle' to use shoot_weapon()")
 	var direction := (target_pos - _muzzle.global_position).normalized()
-	weapons[index].fire(_muzzle, direction)
+	_weapon_instances[index].fire(_muzzle, direction, self)
 
 
 func is_alive() -> bool:
@@ -128,7 +122,7 @@ func player_position() -> Vector2:
 # — Internal —
 
 func _tick_all_weapons(delta: float) -> void:
-	for w: Weapon in weapons:
+	for w: Weapon in _weapon_instances:
 		w.tick(delta)
 
 

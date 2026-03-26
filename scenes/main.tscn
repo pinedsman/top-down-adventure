@@ -6,7 +6,10 @@
 [ext_resource type="Texture2D" uid="uid://bnmxmp05l7eon" path="res://assets/Art/Tileset/TX Tileset Stone Ground.png" id="2_jyhfs"]
 [ext_resource type="PackedScene" uid="uid://c55pbs8b28i2l" path="res://scenes/ui/hud.tscn" id="5_tbgi4"]
 [ext_resource type="PackedScene" uid="uid://cfekublly24p0" path="res://scenes/pickup.tscn" id="6_o6xl0"]
+[ext_resource type="Resource" uid="uid://b421f8bsyuknh" path="res://resources/pickups/pickup_ammo_rifle.tres" id="7_choun"]
 [ext_resource type="Resource" uid="uid://bq186y06fmwjg" path="res://resources/pickups/pickup_ammo_handgun.tres" id="7_tipki"]
+[ext_resource type="Resource" uid="uid://ddgn5obs35su8" path="res://resources/pickups/pickup_ammo_grenade.tres" id="8_ya4ey"]
+[ext_resource type="Resource" uid="uid://dq7px0m0yxh3b" path="res://resources/pickups/pickup_ammo_shotgun.tres" id="9_eb6dy"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_tbgi4"]
 vertices = PackedVector2Array(18, 25.929688, 1262, 18.0625, 1262, 246, 490, 214, 490, 246, 310, 214, 18, 630, 310, 362, 1262, 630, 1262, 362)
@@ -253,5 +256,17 @@ show_debug = true
 [node name="Pickup" parent="ySort" unique_id=908505312 instance=ExtResource("6_o6xl0")]
 position = Vector2(272, 128)
 preset_pickup_data = ExtResource("7_tipki")
+
+[node name="Pickup2" parent="ySort" unique_id=498507320 instance=ExtResource("6_o6xl0")]
+position = Vector2(331, 128)
+preset_pickup_data = ExtResource("7_choun")
+
+[node name="Pickup3" parent="ySort" unique_id=1804370368 instance=ExtResource("6_o6xl0")]
+position = Vector2(392, 128)
+preset_pickup_data = ExtResource("8_ya4ey")
+
+[node name="Pickup4" parent="ySort" unique_id=527850222 instance=ExtResource("6_o6xl0")]
+position = Vector2(448, 128)
+preset_pickup_data = ExtResource("9_eb6dy")
 
 [node name="HUD" parent="." unique_id=2071458643 instance=ExtResource("5_tbgi4")]

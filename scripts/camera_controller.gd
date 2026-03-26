@@ -14,6 +14,7 @@ var _zoom_tween: Tween
 
 
 func _ready() -> void:
+	add_to_group("camera")
 	_setup_limits()
 
 

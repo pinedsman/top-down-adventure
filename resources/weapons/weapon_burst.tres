@@ -1,11 +1,11 @@
-[gd_resource type="Resource" script_class="Weapon" format=3 uid="uid://cuetixx0bifap"]
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://cuetixx0bifap"]
 
+[ext_resource type="Script" uid="uid://2wc7slhe27dr" path="res://scripts/weapons/weapon_data.gd" id="1_444je"]
 [ext_resource type="PackedScene" uid="uid://bps1yhxgkp7on" path="res://scenes/weapons/bullet.tscn" id="1_twwlm"]
 [ext_resource type="Resource" uid="uid://dmab8rbh7k2q1" path="res://resources/weapons/ammo/ammo_rifle.tres" id="1_yhqlu"]
 [ext_resource type="PackedScene" uid="uid://cnsro8f0k7ab1" path="res://scenes/weapons/bulletTrail.tscn" id="2_yhqlu"]
 [ext_resource type="Texture2D" uid="uid://t1c2ywi6w6sj" path="res://assets/Art/weapons/weapons.png" id="3_uprv3"]
 [ext_resource type="PackedScene" uid="uid://bpxmf2n0kjgd2" path="res://scenes/weapons/muzzleflash.tscn" id="4_bm6bk"]
-[ext_resource type="Script" uid="uid://c8injxos6i6xd" path="res://scripts/weapons/weapon.gd" id="5_i2l0j"]
 [ext_resource type="AudioStream" uid="uid://chong44bh2h5" path="res://assets/Sounds/handgun_shoot.mp3" id="6_hsix4"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_twwlm"]
@@ -13,7 +13,7 @@ atlas = ExtResource("3_uprv3")
 region = Rect2(120.365, 332.33, 128, 64)
 
 [resource]
-script = ExtResource("5_i2l0j")
+script = ExtResource("1_444je")
 fire_mode = 2
 fire_rate = 0.6
 damage = 25.0

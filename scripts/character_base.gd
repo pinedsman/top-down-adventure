@@ -2,7 +2,7 @@ extends CharacterBody2D
 class_name CharacterBase
 
 @export var anim_data: DirectionalAnimData
-@export var weapons: Array[Weapon]
+@export var weapons: Array[WeaponData]   # config resources; instances created in _ready
 @export var max_health: float = 100.0
 @export var hurt_sound: AudioStream
 @export var death_sound: AudioStream
@@ -18,10 +18,13 @@ var _knockback_velocity: Vector2 = Vector2.ZERO
 var _last_shot_id: int = -1
 var _facing: Vector2 = Vector2.DOWN
 var _current_anim_entry: AnimationEntry
+var _weapon_instances: Array[Weapon] = []  # one per weapons[] entry, created in _ready
 
 
 func _ready() -> void:
 	_health = max_health
+	for wd: WeaponData in weapons:
+		_weapon_instances.append(wd.create_instance())
 
 
 func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, impact_position: Vector2 = global_position, shot_id: int = -1) -> void:
@@ -66,7 +69,6 @@ func die() -> void:
 func _connect_weapon(w: Weapon) -> void:
 	if w == null:
 		return
-	w.owner_node = self
 	if not w.fired.is_connected(_on_weapon_fired):
 		w.fired.connect(_on_weapon_fired)
 

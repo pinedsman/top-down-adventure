@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="MeleeWeapon" format=3 uid="uid://c80q0fllawtsf"]
+[gd_resource type="Resource" script_class="MeleeWeaponData" format=3 uid="uid://c80q0fllawtsf"]
 
 [ext_resource type="Texture2D" uid="uid://cajbftu14fcp0" path="res://assets/Art/weapons/melee.png" id="1_ekie5"]
-[ext_resource type="Script" uid="uid://dg0rel83r086t" path="res://scripts/weapons/melee_weapon.gd" id="1_melee"]
+[ext_resource type="Script" uid="uid://bk1vqmxlt0rlt" path="res://scripts/weapons/melee_weapon_data.gd" id="1_kwbjt"]
 [ext_resource type="Script" uid="uid://cmw420ubn1gyp" path="res://scripts/weapons/swing_data.gd" id="2_swing"]
 [ext_resource type="AudioStream" uid="uid://k6q5bk8asvpe" path="res://assets/Sounds/melee_slash.mp3" id="4_b0tel"]
 [ext_resource type="PackedScene" uid="uid://7uvpsyttubui" path="res://scenes/weapons/swipe_fx.tscn" id="4_v5npp"]
@@ -22,7 +22,7 @@ swing_sound = ExtResource("4_b0tel")
 swipe_fx_scene = ExtResource("4_v5npp")
 
 [resource]
-script = ExtResource("1_melee")
+script = ExtResource("1_kwbjt")
 swings = Array[ExtResource("2_swing")]([SubResource("SwingData_1")])
 hud_icon = SubResource("AtlasTexture_v5npp")
 show_laser = false

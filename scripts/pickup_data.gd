@@ -4,6 +4,7 @@ class_name PickupData
 @export var scene: PackedScene
 @export var ammo_type: AmmoType
 @export var pickup_sound: AudioStream
+@export var pickup_texture: Texture2D
 @export var offset: Vector2 = Vector2.ZERO
 @export var scale: Vector2 = Vector2.ONE
 
@@ -13,7 +14,7 @@ func spawn(position: Vector2, amount:int) -> void:
 	assert(scene != null, "{PickupData}: scene is not set on resource '%s'" % resource_path)
 	var pickup: Node2D = scene.instantiate()
 	_get_ysort().add_child(pickup)
-	pickup.data = self
+	pickup.set_pickup_data( self )
 	pickup.amount = amount
 	pickup.global_position = position
 	pickup.rotation_degrees = randf_range(0,360)

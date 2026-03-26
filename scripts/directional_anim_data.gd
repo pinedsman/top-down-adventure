@@ -3,7 +3,7 @@
 extends Resource
 class_name DirectionalAnimData
 
-@export var direction_count: int = 8;
+@export var direction_count: int = 8
 @export var states: Array[AnimationState] = []
 
 var _cache: Dictionary = {}  # String -> AnimationState
@@ -29,13 +29,6 @@ func has_state(state_name: String) -> bool:
 	if _cache.is_empty() and not states.is_empty():
 		_rebuild_cache()
 	return _cache.has(state_name)
-
-func get_entry_for_state(state_name: String) -> AnimationEntry:
-	for state in states:
-		if state.state_name == state_name:
-			if state.directions.size() > 0:
-				return state.directions[0]
-	return null
 
 static func direction_to_index(direction: Vector2, _direction_count: int) -> int:
 	var angle_deg := fmod(rad_to_deg(atan2(direction.x, -direction.y)) + 360.0, 360.0)

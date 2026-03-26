@@ -13,7 +13,7 @@ signal weapon_changed(weapon: Weapon)
 signal ammo_changed(ammo_type: AmmoType, current: int)
 
 var weapon: Weapon:
-	get: return weapons[_weapon_index] if weapons.size() > 0 else null
+	get: return _weapon_instances[_weapon_index] if _weapon_instances.size() > 0 else null
 
 var _weapon_index: int = 0
 var _aim_direction: Vector2 = Vector2.RIGHT
@@ -44,7 +44,7 @@ func _ready() -> void:
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	_on_input_mode_changed(InputManager.is_gamepad)
 	HitStop.ended.connect(_on_hit_stop_ended)
-	for w in weapons:
+	for w: Weapon in _weapon_instances:
 		if w.ammo_type != null and not _ammo.has(w.ammo_type):
 			_ammo[w.ammo_type] = w.ammo_type.max_capacity
 	_setup_aim_assist_area()
@@ -80,28 +80,27 @@ func _unhandled_input(event: InputEvent) -> void:
 		var pressed = event.get_action_strength("shoot") > 0.5
 		if pressed and not _fire_held and not _is_hit:
 			_fire_held = true
-			if weapon and weapon.fire_mode in [Weapon.FireMode.SINGLE, Weapon.FireMode.BURST]:
-				if not has_ammo(weapon):
-					pass
-				elif weapon.can_fire():
-					weapon.fire(_get_current_muzzle(), _aim_direction)
-				else:
-					_fire_buffer = fire_buffer_window
+			if weapon and weapon.fire_mode in [WeaponData.FireMode.SINGLE, WeaponData.FireMode.BURST]:
+				if has_ammo(weapon):
+					if weapon.can_fire():
+						weapon.fire(_get_current_muzzle(), _aim_direction, self)
+					else:
+						_fire_buffer = fire_buffer_window
 		elif not pressed:
 			_fire_held = false
 	elif event.is_action_pressed("weapon_next"):
-		if weapon.can_switch():
+		if weapon != null and weapon.can_switch() and _weapon_instances.size() > 1:
 			weapon.cancel_burst()
-			_weapon_index = (_weapon_index + 1) % weapons.size()
+			_weapon_index = (_weapon_index + 1) % _weapon_instances.size()
 			_fire_held = false
 			_fire_buffer = 0.0
 			_connect_weapon(weapon)
 			_update_aim_assist_collider()
 			weapon_changed.emit(weapon)
 	elif event.is_action_pressed("weapon_prev"):
-		if weapon.can_switch():
+		if weapon != null and weapon.can_switch() and _weapon_instances.size() > 1:
 			weapon.cancel_burst()
-			_weapon_index = (_weapon_index - 1 + weapons.size()) % weapons.size()
+			_weapon_index = (_weapon_index - 1 + _weapon_instances.size()) % _weapon_instances.size()
 			_fire_held = false
 			_fire_buffer = 0.0
 			_connect_weapon(weapon)
@@ -282,12 +281,12 @@ func _tick_weapon(delta: float) -> void:
 	if weapon == null or _is_hit:
 		return
 	weapon.tick(delta)
-	if weapon.fire_mode == Weapon.FireMode.AUTO:
+	if weapon.fire_mode == WeaponData.FireMode.AUTO:
 		if _fire_held and has_ammo(weapon):
-			weapon.fire(_get_current_muzzle(), _aim_direction)
+			weapon.fire(_get_current_muzzle(), _aim_direction, self)
 	elif _fire_buffer > 0.0 and weapon.can_fire() and has_ammo(weapon):
 		_fire_buffer = 0.0
-		weapon.fire(_get_current_muzzle(), _aim_direction)
+		weapon.fire(_get_current_muzzle(), _aim_direction, self)
 
 
 func has_ammo(w: Weapon) -> bool:
@@ -296,9 +295,13 @@ func has_ammo(w: Weapon) -> bool:
 func get_ammo(ammo_type: AmmoType) -> int:
 	return _ammo.get(ammo_type, 0)
 
-func add_ammo(ammo_type: AmmoType, amount: int) -> void:
+func add_ammo(ammo_type: AmmoType, amount: int) -> int:
+	var old_count = _ammo[ammo_type]
 	_ammo[ammo_type] = mini(_ammo.get(ammo_type, 0) + amount, ammo_type.max_capacity)
-	ammo_changed.emit(ammo_type, _ammo[ammo_type])
+	var delta = _ammo[ammo_type] - old_count
+	if ( delta > 0 ):
+		ammo_changed.emit(ammo_type, _ammo[ammo_type])
+	return delta
 
 
 func _on_hit_stop_ended() -> void:
