@@ -417,7 +417,8 @@ func player_animation(_delta: float) -> void:
 	_current_anim_entry = anim_data.get_entry(state, DirectionalAnimData.direction_to_index(_facing, anim_data.direction_count))
 	if _current_anim_entry:
 		anim.flip_h = _current_anim_entry.flip
-		anim.play(_current_anim_entry.animationIndex)
+		var anim_speed := -1.0 if state == "walk" and velocity.normalized().dot(_facing) < 0.0 else 1.0
+		anim.play(_current_anim_entry.animationIndex, anim_speed)
 		$Muzzle.position = _current_anim_entry.muzzle_offset
 		$MuzzleBehind.position = _current_anim_entry.muzzle_offset
 		var target_muzzle = _get_current_muzzle()
