@@ -303,6 +303,8 @@ func _end_dash() -> void:
 	if dash_data.invincible_during_dash:
 		collision_layer = _saved_collision_layer
 	_on_input_mode_changed(InputManager.is_gamepad)
+	if Input.is_action_pressed("shoot"):
+		_fire_held = true
 
 
 func _on_input_mode_changed(is_gamepad: bool) -> void:

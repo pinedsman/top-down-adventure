@@ -246,7 +246,7 @@ tile_map_data = PackedByteArray("AAAOAAoAAQACAAcAAAAOAAkAAQADAAYAAAAOAAgAAQAEAAQ
 tile_set = ExtResource("1_sugp2")
 
 [node name="Player" parent="ySort" unique_id=425293825 groups=["player"] instance=ExtResource("1_o5qli")]
-position = Vector2(324, 201)
+position = Vector2(344, 199)
 
 [node name="Enemy5" parent="ySort" unique_id=336949229 groups=["enemies"] instance=ExtResource("2_0wfyh")]
 y_sort_enabled = false
