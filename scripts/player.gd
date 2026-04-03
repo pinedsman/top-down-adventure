@@ -9,6 +9,7 @@ const SPEED = 100.0
 @export var knockback_force: float = 200.0
 @export_flags_2d_physics var aim_assist_mask: int = 0
 @export var dash_data: DashData
+@export var weapon_slots: Array[WeaponSlotData] = []
 
 signal weapon_changed(weapon: Weapon)
 signal ammo_changed(ammo_type: AmmoType, current: int)
@@ -34,7 +35,9 @@ var _is_dashing: bool = false
 var _dash_timer: float = 0.0
 var _dash_cooldown_timer: float = 0.0
 var _dash_velocity: Vector2 = Vector2.ZERO
+var _dash_direction: Vector2 = Vector2.ZERO
 var _saved_collision_layer: int = 0
+var _slot_instances: Array[Weapon] = []
 var _aim_assist_area: Area2D
 var _aim_assist_shape: CircleShape2D
 var _aim_assist_enemies: Array[Node2D] = []
@@ -54,6 +57,15 @@ func _ready() -> void:
 	for w: Weapon in _weapon_instances:
 		if w.ammo_type != null and not _ammo.has(w.ammo_type):
 			_ammo[w.ammo_type] = w.ammo_type.max_capacity
+	for slot: WeaponSlotData in weapon_slots:
+		if slot.weapon_data == null:
+			_slot_instances.append(null)
+			continue
+		var instance := slot.weapon_data.create_instance()
+		_slot_instances.append(instance)
+		instance.fired.connect(func(dir: Vector2) -> void:
+			if instance.fire_shake_strength > 0.0:
+				_camera.shake(-dir, instance.fire_shake_strength))
 	_setup_aim_assist_area()
 	_connect_weapon(weapon)
 	weapon_changed.emit(weapon)
@@ -74,7 +86,8 @@ func _physics_process(delta: float) -> void:
 	player_movement(delta)
 	player_animation(delta)
 	_tick_weapon(delta)
-	if weapon is MeleeWeapon and weapon.debug_draw_arc:
+	var active_melee := _active_melee_slot()
+	if active_melee != null and active_melee.debug_draw_arc:
 		queue_redraw()
 
 
@@ -92,7 +105,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _current_anim_entry == null:
 			return
 		var pressed = event.get_action_strength("shoot") > 0.5
-		if pressed and not _fire_held and not _is_hit and not _is_dashing:
+		if pressed and not _fire_held and not _is_hit and not _is_dashing and not _slot_blocking_fire():
 			_fire_held = true
 			if weapon and weapon.fire_mode in [WeaponData.FireMode.SINGLE, WeaponData.FireMode.BURST]:
 				if has_ammo(weapon):
@@ -127,6 +140,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			_connect_weapon(weapon)
 			_update_aim_assist_collider()
 			weapon_changed.emit(weapon)
+	else:
+		for i in _slot_instances.size():
+			var slot := weapon_slots[i]
+			if slot.input_action.is_empty():
+				continue
+			if event.is_action_pressed(slot.input_action):
+				var instance := _slot_instances[i]
+				if instance != null and not _is_hit and not _is_dashing and _current_anim_entry != null:
+					instance.fire(_get_current_muzzle(), _aim_direction, self)
+				break
 
 
 # — CharacterBase overrides —
@@ -142,6 +165,9 @@ func _can_take_damage() -> bool:
 func _on_take_damage(same_shot: bool, knockback_direction: Vector2, _impact_position: Vector2) -> void:
 	if weapon:
 		weapon.interrupt()
+	for instance in _slot_instances:
+		if instance != null:
+			instance.interrupt()
 	if same_shot:
 		return
 	_is_hit = true
@@ -174,6 +200,7 @@ func _on_weapon_fired(direction: Vector2) -> void:
 	if weapon and weapon.ammo_type != null:
 		_ammo[weapon.ammo_type] = maxi(_ammo.get(weapon.ammo_type, 0) - 1, 0)
 		ammo_changed.emit(weapon.ammo_type, _ammo[weapon.ammo_type])
+
 
 
 # — Hit state —
@@ -209,8 +236,9 @@ func _update_aim(delta: float) -> void:
 			target = mouse.normalized()
 	if target == Vector2.ZERO:
 		return
-	if weapon is MeleeWeapon and (weapon as MeleeWeapon).is_swinging():
-		var t := 1.0 - pow(1.0 - (weapon as MeleeWeapon).swing_rotation_scale(), delta * 60.0)
+	var _swinging_melee := _active_melee_slot()
+	if _swinging_melee != null:
+		var t := 1.0 - pow(1.0 - _swinging_melee.swing_rotation_scale(), delta * 60.0)
 		_aim_direction = _aim_direction.lerp(target, t).normalized()
 	else:
 		_aim_direction = target
@@ -274,6 +302,7 @@ func _start_dash() -> void:
 	var move_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var dash_dir := move_input.normalized() if move_input.length() > 0.01 else _aim_direction
 	_is_dashing = true
+	_dash_direction = dash_dir
 	dash_particle.emitting = true
 	_facing = dash_dir
 	
@@ -303,6 +332,27 @@ func _tick_dash(delta: float) -> void:
 	_dash_timer -= delta
 	if _dash_timer <= 0.0:
 		_end_dash()
+		return
+	_apply_dash_steering()
+
+
+func _apply_dash_steering() -> void:
+	var progress := 1.0 - (_dash_timer / dash_data.dash_duration)
+	var control_scale := dash_data.control_curve.sample(progress) \
+			if dash_data.control_curve else progress
+
+	var move_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var fwd := _dash_direction
+	var lat := fwd.orthogonal()
+
+	var steer := Vector2.ZERO
+	if move_input.length() > 0.01:
+		steer += lat * move_input.dot(lat) * dash_data.lateral_control
+		var med := move_input.dot(fwd)
+		if med < 0.0:
+			steer += fwd * med * dash_data.medial_control
+
+	_dash_velocity = (fwd + steer * control_scale) * dash_data.dash_speed
 
 
 func _end_dash() -> void:
@@ -351,7 +401,10 @@ func _update_laser() -> void:
 
 func _tick_weapon(delta: float) -> void:
 	_fire_buffer = maxf(_fire_buffer - delta, 0.0)
-	if weapon == null or _is_hit or _is_dashing:
+	for instance in _slot_instances:
+		if instance != null and not _is_hit:
+			instance.tick(delta)
+	if weapon == null or _is_hit or _is_dashing or _slot_blocking_fire():
 		return
 	weapon.tick(delta)
 	if weapon.fire_mode == WeaponData.FireMode.AUTO:
@@ -393,7 +446,8 @@ func player_movement(_delta: float) -> void:
 		velocity = _knockback_velocity
 		_knockback_velocity = lerp(_knockback_velocity, Vector2.ZERO, 0.2)
 	else:
-		var speed_scale := (weapon as MeleeWeapon).swing_move_scale() if weapon is MeleeWeapon else 1.0
+		var _sm := _active_melee_slot()
+		var speed_scale := _sm.swing_move_scale() if _sm != null else 1.0
 		velocity = Input.get_vector("move_left", "move_right", "move_up", "move_down") * SPEED * speed_scale
 	move_and_slide()
 	for i in get_slide_collision_count():
@@ -416,7 +470,7 @@ func player_animation(_delta: float) -> void:
 		state = "dash"
 	elif _is_hit and anim_data.has_state("hit"):
 		state = "hit"
-	elif weapon is MeleeWeapon and weapon.is_swinging() and anim_data.has_state("swipe"):
+	elif _active_melee_slot() != null and anim_data.has_state("swipe"):
 		state = "swipe"
 	else:
 		state = "walk" if velocity.length() > 0.01 else "idle"
@@ -443,9 +497,9 @@ func _update_crosshair() -> void:
 # — Debug draw —
 
 func _draw() -> void:
-	if not (weapon is MeleeWeapon and weapon.debug_draw_arc):
+	var melee := _active_melee_slot()
+	if melee == null or not melee.debug_draw_arc:
 		return
-	var melee := weapon as MeleeWeapon
 	var swing := melee.swings[clamp(melee._swing_index, 0, melee.swings.size() - 1)] if melee.swings.size() > 0 else null
 	if swing == null:
 		return
@@ -467,6 +521,17 @@ func _draw() -> void:
 		points.append(Vector2(cx, cy).rotated(base_angle) * r)
 	points.append(Vector2.ZERO)
 	draw_polyline(points, col, 1.5)
+
+
+func _active_melee_slot() -> MeleeWeapon:
+	for instance in _slot_instances:
+		if instance is MeleeWeapon and (instance as MeleeWeapon).is_swinging():
+			return instance as MeleeWeapon
+	return null
+
+
+func _slot_blocking_fire() -> bool:
+	return _active_melee_slot() != null
 
 
 func _get_current_muzzle() -> Marker2D:
