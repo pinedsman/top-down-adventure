@@ -214,7 +214,7 @@ terrain_set_0/terrain_0/color = Color(0.5, 0.34375, 0.25, 1)
 sources/0 = SubResource("TileSetAtlasSource_tbgi4")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_alonr"]
-size = Vector2(816, 496)
+size = Vector2(856, 536)
 
 [node name="Node2D" type="Node2D" unique_id=1310451328]
 
@@ -290,10 +290,9 @@ position = Vector2(440, 432)
 position = Vector2(416, 232)
 
 [node name="Area2D" type="Area2D" parent="." unique_id=1133997201 groups=["camera_bounds"]]
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=2076647570]
-position = Vector2(400, 240)
+position = Vector2(404, 244)
 shape = SubResource("RectangleShape2D_alonr")
