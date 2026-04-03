@@ -59,7 +59,7 @@ func _load_next() -> void:
 
 	var camera = get_tree().get_first_node_in_group("camera")
 	if camera is CameraController:
-		camera.refresh_limits()
+		camera.refresh_limits(room_scene)
 
 	var room_manager := RoomManager.new()
 	room_scene.add_child(room_manager)

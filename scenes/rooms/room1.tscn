@@ -213,6 +213,9 @@ terrain_set_0/terrain_0/name = "StoneGround"
 terrain_set_0/terrain_0/color = Color(0.5, 0.34375, 0.25, 1)
 sources/0 = SubResource("TileSetAtlasSource_tbgi4")
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6bky5"]
+size = Vector2(1000, 664)
+
 [node name="Node2D" type="Node2D" unique_id=1310451328]
 
 [node name="Ground" type="TileMapLayer" parent="." unique_id=351324744 groups=["ground_tilemap"]]
@@ -285,3 +288,11 @@ position = Vector2(962, 474)
 
 [node name="player_spawn" type="Marker2D" parent="." unique_id=2035032189 groups=["player_spawn"]]
 position = Vector2(512, 400)
+
+[node name="Area2D" type="Area2D" parent="." unique_id=837248984 groups=["camera_bounds"]]
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1686678690]
+position = Vector2(492, 324)
+shape = SubResource("RectangleShape2D_6bky5")

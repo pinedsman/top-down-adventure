@@ -857,6 +857,7 @@ y_sort_enabled = true
 collision_layer = 2
 collision_mask = 5
 script = ExtResource("1_sk1i3")
+preferred_distance = 200.0
 sight_range = 400.0
 alerted_sight_range = 800.0
 contact_damage = 1.0

@@ -13,7 +13,9 @@ region = Rect2(4, 104, 56, 28)
 [sub_resource type="Resource" id="SwingData_1"]
 script = ExtResource("2_swing")
 damage = 50.0
+arc_angle = 220.0
 arc_range = 50.0
+arc_width = 30.0
 windup_time = 0.05
 active_time = 0.1
 recovery_time = 0.05
@@ -23,6 +25,5 @@ swipe_fx_scene = ExtResource("4_v5npp")
 [resource]
 script = ExtResource("1_kwbjt")
 swings = Array[ExtResource("2_swing")]([SubResource("SwingData_1")])
-debug_draw_arc = true
 hud_icon = SubResource("AtlasTexture_v5npp")
 show_laser = false

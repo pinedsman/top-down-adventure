@@ -140,10 +140,14 @@ func _advance_state() -> void:
 
 func _do_arc_query() -> void:
 	var swing := _current_swing()
-	_arc_shape.radius = swing.arc_range
+	var range_x: float = swing.arc_range
+	var range_y: float = swing.arc_width if swing.arc_width > 0.0 else swing.arc_range
+	_arc_shape.radius = maxf(range_x, range_y)
 	_arc_query.transform = Transform2D(0.0, _swing_muzzle.global_position)
 	var hits := _swing_muzzle.get_world_2d().direct_space_state.intersect_shape(_arc_query)
 	var half_arc := deg_to_rad(swing.arc_angle * 0.5)
+	var fwd := _swing_direction.normalized()
+	var side := fwd.orthogonal()
 	for hit in hits:
 		var body: Node = hit.collider
 		if not body.has_method("take_damage"):
@@ -152,6 +156,10 @@ func _do_arc_query() -> void:
 			continue
 		var to_body: Vector2 = (body as Node2D).global_position - _swing_muzzle.global_position
 		if absf(_swing_direction.angle_to(to_body.normalized())) > half_arc:
+			continue
+		var fd := to_body.dot(fwd)
+		var sd := to_body.dot(side)
+		if (fd / range_x) * (fd / range_x) + (sd / range_y) * (sd / range_y) > 1.0:
 			continue
 		if not _has_los(body as Node2D):
 			continue

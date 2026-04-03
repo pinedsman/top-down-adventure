@@ -450,15 +450,23 @@ func _draw() -> void:
 	if swing == null:
 		return
 	var dir := melee._swing_direction
+	var base_angle := dir.angle()
 	var half_arc := deg_to_rad(swing.arc_angle * 0.5)
-	var r := swing.arc_range
-	var start_angle := dir.angle() - half_arc
-	var end_angle := dir.angle() + half_arc
+	var range_x: float = swing.arc_range
+	var range_y: float = swing.arc_width if swing.arc_width > 0.0 else swing.arc_range
 	var active := melee._state == MeleeWeapon.SwingState.ACTIVE
 	var col := Color(1, 0.3, 0, 0.7) if active else Color(1, 1, 0, 0.3)
-	draw_arc(Vector2.ZERO, r, start_angle, end_angle, 32, col, 1.5)
-	draw_line(Vector2.ZERO, Vector2.from_angle(start_angle) * r, col, 1.0)
-	draw_line(Vector2.ZERO, Vector2.from_angle(end_angle) * r, col, 1.0)
+	# Draw arc-clipped ellipse: for each polar angle, find the ellipse surface point
+	var points: PackedVector2Array = [Vector2.ZERO]
+	var steps := 32
+	for i in steps + 1:
+		var theta := lerpf(-half_arc, half_arc, float(i) / float(steps))
+		var cx := cos(theta)
+		var cy := sin(theta)
+		var r := 1.0 / sqrt((cx / range_x) * (cx / range_x) + (cy / range_y) * (cy / range_y))
+		points.append(Vector2(cx, cy).rotated(base_angle) * r)
+	points.append(Vector2.ZERO)
+	draw_polyline(points, col, 1.5)
 
 
 func _get_current_muzzle() -> Marker2D:

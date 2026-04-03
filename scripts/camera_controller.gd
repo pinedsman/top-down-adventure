@@ -18,8 +18,8 @@ func _ready() -> void:
 	_setup_limits()
 
 
-func refresh_limits() -> void:
-	_setup_limits()
+func refresh_limits(room_root: Node = null) -> void:
+	_setup_limits(room_root)
 
 
 func shake(impact_direction: Vector2, strength_override: float = -1.0, randomness_override: float = -1.0, damping_override: float = -1.0) -> void:
@@ -52,10 +52,17 @@ func zoom_punch() -> void:
 	_zoom_tween.tween_property(self, "zoom", Vector2.ONE, zoom_out_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
-func _setup_limits() -> void:
+func _setup_limits(room_root: Node = null) -> void:
 	# Manual bounds: place an Area2D in the "camera_bounds" group with a
 	# CollisionShape2D child using a RectangleShape2D.
-	var bounds_node = get_tree().get_first_node_in_group("camera_bounds")
+	var bounds_node: Node = null
+	if room_root != null:
+		for node in get_tree().get_nodes_in_group("camera_bounds"):
+			if node == room_root or room_root.is_ancestor_of(node):
+				bounds_node = node
+				break
+	else:
+		bounds_node = get_tree().get_first_node_in_group("camera_bounds")
 	if bounds_node is Area2D:
 		var col := bounds_node.get_node_or_null("CollisionShape2D") as CollisionShape2D
 		if col != null and col.shape is RectangleShape2D:
