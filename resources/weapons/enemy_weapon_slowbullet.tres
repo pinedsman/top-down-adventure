@@ -3,22 +3,16 @@
 [ext_resource type="Resource" uid="uid://l0ohb1sped8b" path="res://resources/weapons/ammo/ammo_hangun.tres" id="1_u1vou"]
 [ext_resource type="PackedScene" uid="uid://bps1yhxgkp7on" path="res://scenes/weapons/bullet.tscn" id="2_pdqom"]
 [ext_resource type="PackedScene" uid="uid://cnsro8f0k7ab1" path="res://scenes/weapons/bulletTrail.tscn" id="3_0eehu"]
-[ext_resource type="Texture2D" uid="uid://t1c2ywi6w6sj" path="res://assets/Art/weapons/weapons.png" id="4_suh2v"]
 [ext_resource type="PackedScene" uid="uid://bpxmf2n0kjgd2" path="res://scenes/weapons/muzzleflash.tscn" id="5_740f2"]
 [ext_resource type="Script" uid="uid://2wc7slhe27dr" path="res://scripts/weapons/weapon_data.gd" id="6_gbho2"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_wsjwr"]
-atlas = ExtResource("4_suh2v")
-region = Rect2(508.64, 334.19, 128, 64)
-
 [resource]
 script = ExtResource("6_gbho2")
-fire_rate = 0.3
+fire_rate = 0.1
 damage = 1.0
-bullet_speed = 80.0
+bullet_speed = 60.0
 knockback_force = 0.0
-bullet_range = 400.0
-hud_icon = SubResource("AtlasTexture_wsjwr")
+bullet_range = 600.0
 bullet_scene = ExtResource("2_pdqom")
 bullet_trail_scene = ExtResource("3_0eehu")
 muzzle_flash_scene = ExtResource("5_740f2")

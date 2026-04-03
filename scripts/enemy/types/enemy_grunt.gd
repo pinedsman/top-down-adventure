@@ -8,6 +8,9 @@ class_name EnemyGrunt
 @export var arc_angle: float = 45.0            # total spread in degrees
 @export var wind_up: float = 0.3
 @export var shot_interval: float = 0.25
+@export var post_burst_wait_min: float = 0.4
+@export var post_burst_wait_max: float = 0.9
+@export var reposition_chance: float = 0.4   # 0–1 probability of repositioning after a burst
 @export var reposition_angle_min: float = 70.0
 @export var reposition_angle_max: float = 130.0
 @export var reposition_wait_min: float = 0.2
@@ -24,18 +27,29 @@ func _spotted_behavior() -> void:
 	if not is_alive():
 		return
 
+	await _fire_burst()
+
+	await rest(randf_range(post_burst_wait_min, post_burst_wait_max))
+	if not is_alive():
+		return
+
+	if not _can_see_player() or randf() < reposition_chance:
+		await _reposition()
+		await rest(randf_range(reposition_wait_min, reposition_wait_max))
+
+
+func _fire_burst() -> void:
 	for i in shot_count:
 		if not is_alive():
 			return
+		# Grunt controls burst timing — bypass weapon cooldown so shot_interval is authoritative
+		_weapon_instances[0]._cooldown = 0.0
 		var to_player := (player_position() - global_position).normalized()
 		var spread := randf_range(-arc_angle * 0.5, arc_angle * 0.5)
 		var dir := to_player.rotated(deg_to_rad(spread))
 		shoot_weapon(0, global_position + dir * 500.0)
 		if i < shot_count - 1:
 			await rest(shot_interval)
-
-	await _reposition()
-	await rest(randf_range(reposition_wait_min, reposition_wait_max))
 
 
 # Drives the nav agent directly each frame, stopping when within shoot_range.
