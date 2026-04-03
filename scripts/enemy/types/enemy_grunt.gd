@@ -43,7 +43,8 @@ func _fire_burst() -> void:
 		if not is_alive():
 			return
 		# Grunt controls burst timing — bypass weapon cooldown so shot_interval is authoritative
-		_weapon_instances[0]._cooldown = 0.0
+		if _weapon_instances.size() > 0:
+			_weapon_instances[0].reset_cooldown()
 		var to_player := (player_position() - global_position).normalized()
 		var spread := randf_range(-arc_angle * 0.5, arc_angle * 0.5)
 		var dir := to_player.rotated(deg_to_rad(spread))
@@ -52,21 +53,10 @@ func _fire_burst() -> void:
 			await rest(shot_interval)
 
 
-# Drives the nav agent directly each frame, stopping when within shoot_range.
+# Approach the player until within shoot_range or LOS is lost.
 func _navigate_to_shoot_range() -> void:
-	assert(_nav_agent != null,
-		"EnemyGrunt: scene must have a NavigationAgent2D")
-	await get_tree().physics_frame
-	while is_alive() and _can_see_player():
-		if global_position.distance_to(player_position()) <= shoot_range:
-			break
-		_nav_agent.target_position = player_position()
-		var next_pos := _nav_agent.get_next_path_position()
-		var dir := (next_pos - global_position).normalized()
-		_facing = dir
-		velocity = dir * move_speed
-		await get_tree().physics_frame
-	velocity = Vector2.ZERO
+	await _navigate_interruptible(player_position(), 20.0,
+		func() -> bool: return not _can_see_player() or global_position.distance_to(player_position()) <= shoot_range)
 
 
 # Navigate to a point orbiting the player at a random side-angle.

@@ -38,6 +38,7 @@ var _dash_velocity: Vector2 = Vector2.ZERO
 var _dash_direction: Vector2 = Vector2.ZERO
 var _saved_collision_layer: int = 0
 var _slot_instances: Array[Weapon] = []
+var _cached_active_melee: MeleeWeapon = null
 var _aim_assist_area: Area2D
 var _aim_assist_shape: CircleShape2D
 var _aim_assist_enemies: Array[Node2D] = []
@@ -58,9 +59,8 @@ func _ready() -> void:
 		if w.ammo_type != null and not _ammo.has(w.ammo_type):
 			_ammo[w.ammo_type] = w.ammo_type.max_capacity
 	for slot: WeaponSlotData in weapon_slots:
-		if slot.weapon_data == null:
-			_slot_instances.append(null)
-			continue
+		assert(slot.weapon_data != null,
+			"Player: WeaponSlotData '%s' has null weapon_data — assign a WeaponData resource" % slot.resource_path)
 		var instance := slot.weapon_data.create_instance()
 		_slot_instances.append(instance)
 		instance.fired.connect(func(dir: Vector2) -> void:
@@ -76,6 +76,7 @@ func _connect_weapon(w: Weapon) -> void:
 	_on_input_mode_changed(InputManager.is_gamepad)
 
 func _physics_process(delta: float) -> void:
+	_cached_active_melee = _active_melee_slot()
 	_tick_hit_state(delta)
 	_tick_dash(delta)
 	if not _is_dashing:
@@ -86,8 +87,7 @@ func _physics_process(delta: float) -> void:
 	player_movement(delta)
 	player_animation(delta)
 	_tick_weapon(delta)
-	var active_melee := _active_melee_slot()
-	if active_melee != null and active_melee.debug_draw_arc:
+	if _cached_active_melee != null and _cached_active_melee.debug_draw_arc:
 		queue_redraw()
 
 
@@ -146,9 +146,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			if slot.input_action.is_empty():
 				continue
 			if event.is_action_pressed(slot.input_action):
-				var instance := _slot_instances[i]
-				if instance != null and not _is_hit and not _is_dashing and _current_anim_entry != null:
-					instance.fire(_get_current_muzzle(), _aim_direction, self)
+				if not _is_hit and not _is_dashing and _current_anim_entry != null:
+					_slot_instances[i].fire(_get_current_muzzle(), _aim_direction, self)
 				break
 
 
@@ -166,8 +165,7 @@ func _on_take_damage(same_shot: bool, knockback_direction: Vector2, _impact_posi
 	if weapon:
 		weapon.interrupt()
 	for instance in _slot_instances:
-		if instance != null:
-			instance.interrupt()
+		instance.interrupt()
 	if same_shot:
 		return
 	_is_hit = true
@@ -360,7 +358,7 @@ func _end_dash() -> void:
 	dash_particle.emitting = false
 	_dash_cooldown_timer = dash_data.dash_cooldown
 	if dash_data.invincible_during_dash:
-		collision_layer = _saved_collision_layer
+		set_deferred("collision_layer", _saved_collision_layer)
 	_on_input_mode_changed(InputManager.is_gamepad)
 	if Input.is_action_pressed("shoot"):
 		_fire_held = true
@@ -402,7 +400,7 @@ func _update_laser() -> void:
 func _tick_weapon(delta: float) -> void:
 	_fire_buffer = maxf(_fire_buffer - delta, 0.0)
 	for instance in _slot_instances:
-		if instance != null and not _is_hit:
+		if not _is_hit:
 			instance.tick(delta)
 	if weapon == null or _is_hit or _is_dashing or _slot_blocking_fire():
 		return
@@ -446,8 +444,7 @@ func player_movement(_delta: float) -> void:
 		velocity = _knockback_velocity
 		_knockback_velocity = lerp(_knockback_velocity, Vector2.ZERO, 0.2)
 	else:
-		var _sm := _active_melee_slot()
-		var speed_scale := _sm.swing_move_scale() if _sm != null else 1.0
+		var speed_scale := _cached_active_melee.swing_move_scale() if _cached_active_melee != null else 1.0
 		velocity = Input.get_vector("move_left", "move_right", "move_up", "move_down") * SPEED * speed_scale
 	move_and_slide()
 	for i in get_slide_collision_count():
@@ -470,7 +467,7 @@ func player_animation(_delta: float) -> void:
 		state = "dash"
 	elif _is_hit and anim_data.has_state("hit"):
 		state = "hit"
-	elif _active_melee_slot() != null and anim_data.has_state("swipe"):
+	elif _cached_active_melee != null and anim_data.has_state("swipe"):
 		state = "swipe"
 	else:
 		state = "walk" if velocity.length() > 0.01 else "idle"
@@ -497,7 +494,7 @@ func _update_crosshair() -> void:
 # — Debug draw —
 
 func _draw() -> void:
-	var melee := _active_melee_slot()
+	var melee := _cached_active_melee
 	if melee == null or not melee.debug_draw_arc:
 		return
 	var swing := melee.swings[clamp(melee._swing_index, 0, melee.swings.size() - 1)] if melee.swings.size() > 0 else null
@@ -531,12 +528,19 @@ func _active_melee_slot() -> MeleeWeapon:
 
 
 func _slot_blocking_fire() -> bool:
-	return _active_melee_slot() != null
+	return _cached_active_melee != null
 
 
 func _get_current_muzzle() -> Marker2D:
 	assert(_current_anim_entry != null, "Player: no AnimationEntry for current state/direction — check anim_data is fully populated")
 	return $MuzzleBehind if _current_anim_entry.bullet_behind_player else $Muzzle
+
+
+# — Room transitions —
+
+func enter_room(ysort: Node, spawn_position: Vector2) -> void:
+	reparent(ysort, true)
+	global_position = spawn_position
 
 
 # — State persistence (used by WaveModeManager) —

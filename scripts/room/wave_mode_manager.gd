@@ -44,18 +44,22 @@ func _load_next() -> void:
 	_room_container.add_child(room_scene)
 	_current_room_scene = room_scene
 
-	# Reparent the persistent player into the new room's ysort layer
+	# Move the persistent player into the new room's ysort layer
 	var players := get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
-		var player := players[0] as Node2D
+		var player := players[0] as Player
+		var ysort: Node = null
 		for node in get_tree().get_nodes_in_group("ysort"):
 			if room_scene.is_ancestor_of(node):
-				player.reparent(node, true)
+				ysort = node
 				break
+		var spawn_position := player.global_position
 		for node in get_tree().get_nodes_in_group("player_spawn"):
 			if room_scene.is_ancestor_of(node):
-				player.global_position = (node as Node2D).global_position
+				spawn_position = (node as Node2D).global_position
 				break
+		if ysort != null:
+			player.enter_room(ysort, spawn_position)
 
 	var camera = get_tree().get_first_node_in_group("camera")
 	if camera is CameraController:

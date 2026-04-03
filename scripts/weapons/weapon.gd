@@ -49,6 +49,10 @@ func can_fire() -> bool:
 	return _cooldown <= 0.0
 
 
+func reset_cooldown() -> void:
+	_cooldown = 0.0
+
+
 func cancel_burst() -> void:
 	_burst_remaining = 0
 

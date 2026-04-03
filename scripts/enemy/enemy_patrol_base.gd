@@ -120,7 +120,7 @@ func _run_return_to_path() -> void:
 # — Interruptible navigation —
 # Loops frame-by-frame so patrol can react to spotting the player mid-traverse.
 
-func _navigate_interruptible(target: Vector2, timeout: float = 20.0) -> void:
+func _navigate_interruptible(target: Vector2, timeout: float = 20.0, stop_condition: Callable = Callable()) -> void:
 	assert(_nav_agent != null,
 		"EnemyPatrolBase: scene must have a NavigationAgent2D to use patrol")
 	_active_behavior = NavigateToPointBehavior.new(_nav_agent, target)
@@ -132,7 +132,12 @@ func _navigate_interruptible(target: Vector2, timeout: float = 20.0) -> void:
 			break
 		if _nav_agent.is_navigation_finished():
 			break
-		if _can_see_player():
+		# When a stop_condition is provided it replaces the default LOS-break so callers
+		# that chase the player (always visible) can supply their own exit criteria.
+		if not stop_condition.is_null():
+			if stop_condition.call():
+				break
+		elif _can_see_player():
 			break
 		if _damage_alert_pos != Vector2.ZERO:
 			break
