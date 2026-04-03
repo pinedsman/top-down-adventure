@@ -789,13 +789,17 @@ radius = 8.0
 
 [node name="Enemy" type="CharacterBody2D" unique_id=1949769439]
 y_sort_enabled = true
-collision_layer = 3
+collision_layer = 2
+collision_mask = 5
 script = ExtResource("1_jt03m")
+approach_min = 4.0
+approach_max = 8.0
+wait_max = 4.0
 sight_range = 400.0
 alerted_sight_range = 800.0
 contact_damage = 1.0
 impact_fx_data = ExtResource("2_lu5c6")
-move_speed = 30.0
+move_speed = 60.0
 anim_data = ExtResource("3_jt03m")
 death_sound = ExtResource("2_5uy6h")
 hit_stop_duration = 0.0
@@ -805,7 +809,7 @@ hit_impact_fx = ExtResource("2_lu5c6")
 y_sort_enabled = true
 position = Vector2(0, -4.999998)
 sprite_frames = SubResource("SpriteFrames_t3vcr")
-animation = &"death_down"
+animation = &"walk_left"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=479034634]
 y_sort_enabled = true

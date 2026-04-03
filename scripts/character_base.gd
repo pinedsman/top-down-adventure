@@ -66,6 +66,15 @@ func die() -> void:
 	_on_die()
 
 
+func heal(amount: float) -> float:
+	if _is_dead or _health >= max_health:
+		return 0.0
+	var prev := _health
+	_health = minf(_health + amount, max_health)
+	health_changed.emit(_health, max_health)
+	return _health - prev
+
+
 func _connect_weapon(w: Weapon) -> void:
 	if w == null:
 		return

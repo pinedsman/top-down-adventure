@@ -30,6 +30,7 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var grenade_data: GrenadeData       # if set, fire() throws a grenade
 @export var ammo_type: AmmoType             # null = infinite ammo
 @export var show_laser: bool = true
+@export_flags_2d_physics var bullet_collision_mask: int = 0xFFFFFFFF
 
 
 func create_instance() -> Weapon:

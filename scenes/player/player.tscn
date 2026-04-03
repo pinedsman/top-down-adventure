@@ -1587,6 +1587,8 @@ shader_parameter/laser_length = 100.0
 shader_parameter/texture_width = 32.0
 
 [node name="Player" type="CharacterBody2D" unique_id=425293825]
+collision_layer = 4
+collision_mask = 3
 script = ExtResource("1_524rm")
 invulnerability_duration = 0.5
 hit_duration = 0.2

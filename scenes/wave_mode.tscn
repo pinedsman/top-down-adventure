@@ -1,0 +1,66 @@
+[gd_scene format=3 uid="uid://ccm2nvnslebrl"]
+
+[ext_resource type="Script" uid="uid://cspg7wvhr57so" path="res://scripts/room/wave_mode_manager.gd" id="1_6ub6g"]
+[ext_resource type="Script" uid="uid://b2vg2h2djitpv" path="res://scripts/room/room_data.gd" id="2_1fn3f"]
+[ext_resource type="Script" uid="uid://bq0f26gxvnl2m" path="res://scripts/room/room_flag.gd" id="3_7v6n1"]
+[ext_resource type="Script" uid="uid://cyl46p1pxrami" path="res://scripts/room/flag_group.gd" id="4_xn44v"]
+[ext_resource type="PackedScene" uid="uid://ccjuq5jga7dgd" path="res://scenes/rooms/room0.tscn" id="5_7v6n1"]
+[ext_resource type="Script" uid="uid://bxnlujtuycqex" path="res://scripts/room/wave_data.gd" id="5_wo1e6"]
+[ext_resource type="Script" uid="uid://h2dpvx8smwr5" path="res://scripts/room/enemy_entry.gd" id="6_j3475"]
+[ext_resource type="Script" uid="uid://dyaxmnbmt3quc" path="res://scripts/room/wave_set_data.gd" id="7_j3475"]
+[ext_resource type="PackedScene" uid="uid://2a6shr2pkidq" path="res://scenes/enemies/slime.tscn" id="7_wsiya"]
+[ext_resource type="PackedScene" uid="uid://c55pbs8b28i2l" path="res://scenes/ui/hud.tscn" id="8_1fn3f"]
+[ext_resource type="PackedScene" uid="uid://cqmapeibj6fa4" path="res://scenes/rooms/room1.tscn" id="9_6pgut"]
+[ext_resource type="PackedScene" uid="uid://qc5e2dol24nr" path="res://scenes/enemies/slime_spit.tscn" id="10_wsiya"]
+[ext_resource type="PackedScene" uid="uid://cyh51ay5pd7qa" path="res://scenes/player/player.tscn" id="19_fr7yn"]
+[ext_resource type="PackedScene" uid="uid://8wdbj7fy3qf" path="res://scenes/ui/wave_overlay.tscn" id="19_gokfg"]
+
+[sub_resource type="Resource" id="Resource_7v6n1"]
+script = ExtResource("2_1fn3f")
+scene = ExtResource("5_7v6n1")
+metadata/_custom_type_script = "uid://b2vg2h2djitpv"
+
+[sub_resource type="Resource" id="Resource_xn44v"]
+script = ExtResource("2_1fn3f")
+scene = ExtResource("9_6pgut")
+metadata/_custom_type_script = "uid://b2vg2h2djitpv"
+
+[sub_resource type="Curve" id="Curve_wsiya"]
+_data = [Vector2(0.044247787, 0), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Resource" id="Resource_wsiya"]
+script = ExtResource("6_j3475")
+enemy_scene = ExtResource("10_wsiya")
+point_cost = 2
+metadata/_custom_type_script = "uid://h2dpvx8smwr5"
+
+[sub_resource type="Resource" id="Resource_lpwqu"]
+script = ExtResource("6_j3475")
+enemy_scene = ExtResource("7_wsiya")
+metadata/_custom_type_script = "uid://h2dpvx8smwr5"
+
+[sub_resource type="Resource" id="Resource_75gqj"]
+script = ExtResource("5_wo1e6")
+escalation_curve = SubResource("Curve_wsiya")
+spawn_pool = Array[ExtResource("6_j3475")]([SubResource("Resource_wsiya"), SubResource("Resource_lpwqu")])
+metadata/_custom_type_script = "uid://bxnlujtuycqex"
+
+[sub_resource type="Resource" id="Resource_ail11"]
+script = ExtResource("7_j3475")
+waves = Array[ExtResource("5_wo1e6")]([SubResource("Resource_75gqj")])
+
+[node name="WaveMode" type="Node2D" unique_id=1739105418 node_paths=PackedStringArray("overlay")]
+script = ExtResource("1_6ub6g")
+rooms = Array[ExtResource("2_1fn3f")]([SubResource("Resource_7v6n1"), SubResource("Resource_xn44v")])
+wave_sets = Array[ExtResource("7_j3475")]([SubResource("Resource_ail11")])
+overlay = NodePath("WaveOverlay")
+
+[node name="RoomContainer" type="Node2D" parent="." unique_id=2122102425]
+
+[node name="Player" parent="." unique_id=425293825 groups=["player"] instance=ExtResource("19_fr7yn")]
+position = Vector2(344, 199)
+
+[node name="HUD" parent="." unique_id=2071458643 instance=ExtResource("8_1fn3f")]
+
+[node name="WaveOverlay" parent="." unique_id=1057501910 instance=ExtResource("19_gokfg")]

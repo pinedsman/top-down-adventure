@@ -18,6 +18,10 @@ func _ready() -> void:
 	_setup_limits()
 
 
+func refresh_limits() -> void:
+	_setup_limits()
+
+
 func shake(impact_direction: Vector2, strength_override: float = -1.0, randomness_override: float = -1.0, damping_override: float = -1.0) -> void:
 	var amplitude := strength_override if strength_override >= 0.0 else shake_strength
 	if amplitude <= 0.0:
@@ -49,6 +53,22 @@ func zoom_punch() -> void:
 
 
 func _setup_limits() -> void:
+	# Manual bounds: place an Area2D in the "camera_bounds" group with a
+	# CollisionShape2D child using a RectangleShape2D.
+	var bounds_node = get_tree().get_first_node_in_group("camera_bounds")
+	if bounds_node is Area2D:
+		var col := bounds_node.get_node_or_null("CollisionShape2D") as CollisionShape2D
+		if col != null and col.shape is RectangleShape2D:
+			var center := col.global_position
+			var half := (col.shape as RectangleShape2D).size * 0.5
+			var rect := Rect2(center - half, (col.shape as RectangleShape2D).size)
+			limit_left   = int(rect.position.x)
+			limit_top    = int(rect.position.y)
+			limit_right  = int(rect.end.x)
+			limit_bottom = int(rect.end.y)
+			return
+
+	# Fallback: derive bounds from the ground tilemap.
 	var ground = get_tree().get_first_node_in_group("ground_tilemap")
 	if ground == null:
 		return

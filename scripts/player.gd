@@ -82,12 +82,17 @@ func _unhandled_input(event: InputEvent) -> void:
 	if OS.is_debug_build() and event.is_action_pressed("ui_end"):  # End key
 		take_damage(10.0, Vector2.from_angle(randf() * TAU))
 		return
+	if OS.is_debug_build() and event.is_action_pressed("ui_home"):  # Home key
+		for enemy in get_tree().get_nodes_in_group("enemies"):
+			if enemy.has_method("die"):
+				enemy.die()
+		return
 
 	if event.is_action("shoot"):
 		if _current_anim_entry == null:
 			return
 		var pressed = event.get_action_strength("shoot") > 0.5
-		if pressed and not _fire_held and not _is_hit:
+		if pressed and not _fire_held and not _is_hit and not _is_dashing:
 			_fire_held = true
 			if weapon and weapon.fire_mode in [WeaponData.FireMode.SINGLE, WeaponData.FireMode.BURST]:
 				if has_ammo(weapon):
@@ -95,6 +100,10 @@ func _unhandled_input(event: InputEvent) -> void:
 						weapon.fire(_get_current_muzzle(), _aim_direction, self)
 					else:
 						_fire_buffer = fire_buffer_window
+		elif pressed and _is_dashing and not _is_hit:
+			if weapon and weapon.fire_mode in [WeaponData.FireMode.SINGLE, WeaponData.FireMode.BURST]:
+				if _dash_timer <= fire_buffer_window:
+					_fire_buffer = fire_buffer_window
 		elif not pressed:
 			_fire_held = false
 	elif event.is_action_pressed("dash"):
@@ -342,7 +351,7 @@ func _update_laser() -> void:
 
 func _tick_weapon(delta: float) -> void:
 	_fire_buffer = maxf(_fire_buffer - delta, 0.0)
-	if weapon == null or _is_hit:
+	if weapon == null or _is_hit or _is_dashing:
 		return
 	weapon.tick(delta)
 	if weapon.fire_mode == WeaponData.FireMode.AUTO:
@@ -455,3 +464,27 @@ func _draw() -> void:
 func _get_current_muzzle() -> Marker2D:
 	assert(_current_anim_entry != null, "Player: no AnimationEntry for current state/direction — check anim_data is fully populated")
 	return $MuzzleBehind if _current_anim_entry.bullet_behind_player else $Muzzle
+
+
+# — State persistence (used by WaveModeManager) —
+
+func save_to_state() -> PlayerState:
+	var state := PlayerState.new()
+	state.health = _health
+	state.weapons = weapons.duplicate()
+	state.weapon_index = _weapon_index
+	state.ammo = _ammo.duplicate()
+	return state
+
+
+func restore_from_state(state: PlayerState) -> void:
+	weapons = state.weapons.duplicate()
+	_weapon_instances.clear()
+	for wd: WeaponData in weapons:
+		_weapon_instances.append(wd.create_instance())
+	_weapon_index = clampi(state.weapon_index, 0, maxi(_weapon_instances.size() - 1, 0))
+	_ammo = state.ammo.duplicate()
+	_health = state.health
+	health_changed.emit(_health, max_health)
+	_connect_weapon(weapon)
+	weapon_changed.emit(weapon)

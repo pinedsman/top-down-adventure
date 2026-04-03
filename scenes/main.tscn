@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://cyh51ay5pd7qa" path="res://scenes/player/player.tscn" id="1_o5qli"]
 [ext_resource type="TileSet" uid="uid://cbwn1hgf1iapo" path="res://resources/tilesets/grassy.tres" id="1_sugp2"]
-[ext_resource type="PackedScene" uid="uid://2a6shr2pkidq" path="res://scenes/enemies/enemy.tscn" id="2_0wfyh"]
+[ext_resource type="PackedScene" uid="uid://2a6shr2pkidq" path="res://scenes/enemies/slime.tscn" id="2_0wfyh"]
 [ext_resource type="Texture2D" uid="uid://bnmxmp05l7eon" path="res://assets/Art/Tileset/TX Tileset Stone Ground.png" id="2_jyhfs"]
 [ext_resource type="PackedScene" uid="uid://c55pbs8b28i2l" path="res://scenes/ui/hud.tscn" id="5_tbgi4"]
 [ext_resource type="PackedScene" uid="uid://cfekublly24p0" path="res://scenes/pickup.tscn" id="6_o6xl0"]

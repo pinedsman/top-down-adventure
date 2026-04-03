@@ -18,9 +18,14 @@ func set_pickup_data(newData:PickupData):
 	$Sprite2D.position = newData.offset
 
 func _on_player_entered(body: Node2D) -> void:
-	if (body is Player):
-		var player = body as Player
-		var delta = player.add_ammo(data.ammo_type, amount)
-		if ( delta > 0 ):
-			AudioPool.play(data.pickup_sound, global_position)
-			queue_free()
+	if not body is Player:
+		return
+	var player := body as Player
+	var consumed := false
+	if data.heal_amount > 0.0:
+		consumed = player.heal(data.heal_amount) > 0.0
+	elif data.ammo_type != null:
+		consumed = player.add_ammo(data.ammo_type, amount) > 0
+	if consumed:
+		AudioPool.play(data.pickup_sound, global_position)
+		queue_free()

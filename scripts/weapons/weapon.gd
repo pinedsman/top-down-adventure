@@ -151,6 +151,7 @@ func _spawn_bullet(muzzle: Marker2D, direction: Vector2, shot_id: int, shooter: 
 	bullet.range_fx = data.bullet_range_fx
 	bullet.shot_id = shot_id
 	bullet.suppress_wall_impacts = data.suppress_wall_impacts
+	bullet.hit_mask = data.bullet_collision_mask
 	bullet.owner_node = shooter
 
 

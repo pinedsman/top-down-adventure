@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Top Down Adventure"
-run/main_scene="uid://babas57d0we8y"
+run/main_scene="uid://ccm2nvnslebrl"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -102,6 +102,7 @@ dash={
 
 2d_physics/layer_1="walls"
 2d_physics/layer_2="enemies"
+2d_physics/layer_3="player"
 
 [physics]
 

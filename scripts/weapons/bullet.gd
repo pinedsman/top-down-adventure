@@ -23,6 +23,12 @@ var owner_node: Node = null:
 		_cast_query.exclude = exclude
 		_rest_query.exclude = exclude
 		_hit_query.exclude = exclude
+var hit_mask: int = 0xFFFFFFFF:
+	set(value):
+		hit_mask = value
+		_cast_query.collision_mask = value
+		_rest_query.collision_mask = value
+		_hit_query.collision_mask = value
 
 var _distance_travelled: float = 0.0
 var _trail: BulletTrail = null
