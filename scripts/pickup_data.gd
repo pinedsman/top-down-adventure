@@ -22,6 +22,6 @@ func spawn(position: Vector2, amount:int) -> void:
 
 func _get_ysort() -> Node:
 	if not is_instance_valid(_ysort):
-		_ysort = Engine.get_main_loop().current_scene.get_first_node_in_group("ysort")
+		_ysort = (Engine.get_main_loop() as SceneTree).get_first_node_in_group("ysort")
 		assert(_ysort != null, "Pickup: no node in group 'ysort'")
 	return _ysort

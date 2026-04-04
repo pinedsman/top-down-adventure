@@ -5,10 +5,23 @@
 [ext_resource type="PackedScene" uid="uid://cn4bjmxispeip" path="res://scenes/ui/heart.tscn" id="2_8qguk"]
 [ext_resource type="PackedScene" uid="uid://cirdt7ede0hqi" path="res://scenes/ui/weaponDisplay.tscn" id="3_bo48s"]
 [ext_resource type="Texture2D" uid="uid://mytqh05f0t6s" path="res://assets/Art/weapons/ammo_rifle.png" id="5_136eg"]
+[ext_resource type="Script" uid="uid://dvgjxx0xywds1" path="res://scripts/ui/interact_prompt.gd" id="6_oj5la"]
+[ext_resource type="Texture2D" uid="uid://deib2tqcg5df0" path="res://addons/input_prompts/icons/xbox/x.png" id="7_h022r"]
+[ext_resource type="Script" uid="uid://f6i84c0x2tum" path="res://addons/input_prompts/action_prompt/action_prompt.gd" id="8_4jqwt"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_8qguk"]
 outline_size = 2
 outline_color = Color(0, 0, 0, 1)
+
+[sub_resource type="InputEventKey" id="InputEventKey_kicr4"]
+device = -1
+physical_keycode = 70
+unicode = 102
+
+[sub_resource type="InputEventJoypadButton" id="InputEventJoypadButton_mj13f"]
+device = -1
+button_index = 2
+pressed = true
 
 [node name="HUD" type="CanvasLayer" unique_id=2071458643 groups=["hud"]]
 script = ExtResource("1_hqnrr")
@@ -55,3 +68,24 @@ offset_top = 20.0
 offset_right = 20.0
 offset_bottom = 20.0
 grow_horizontal = 2
+
+[node name="InteractPrompt" type="CanvasLayer" parent="." unique_id=826426287]
+script = ExtResource("6_oj5la")
+
+[node name="Container" type="HFlowContainer" parent="InteractPrompt" unique_id=320187181]
+offset_right = 284.0
+offset_bottom = 37.0
+
+[node name="ActionPrompt" type="TextureRect" parent="InteractPrompt/Container" unique_id=2072708643]
+layout_mode = 2
+texture = ExtResource("7_h022r")
+stretch_mode = 5
+script = ExtResource("8_4jqwt")
+action = "interact"
+icon = 0
+events = Array[InputEvent]([SubResource("InputEventKey_kicr4"), SubResource("InputEventJoypadButton_mj13f")])
+metadata/_custom_type_script = "uid://f6i84c0x2tum"
+
+[node name="Label" type="Label" parent="InteractPrompt/Container" unique_id=763449535]
+layout_mode = 2
+text = "test"

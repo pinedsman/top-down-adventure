@@ -2,6 +2,8 @@ extends CharacterBase
 class_name Player
 
 const SPEED = 100.0
+const MAX_PRIMARY_SLOTS: int = 2
+const DROP_OFFSET: float = 24.0   # world units in front of player where weapon lands
 
 @export var laser_length: float = 100
 @export var invulnerability_duration: float = 1.0
@@ -11,8 +13,14 @@ const SPEED = 100.0
 @export var dash_data: DashData
 @export var weapon_slots: Array[WeaponSlotData] = []
 
+@export_group("Interaction")
+@export var interact_radius: float = 48.0
+@export var interact_cone_angle: float = 0.0   # degrees half-cone; 0 = full circle
+@export_flags_2d_physics var interact_los_mask: int = 1
+
 signal weapon_changed(weapon: Weapon)
 signal ammo_changed(ammo_type: AmmoType, current: int)
+signal interactable_focused(target: Interactable)
 
 var weapon: Weapon:
 	get: return _weapon_instances[_weapon_index] if _weapon_instances.size() > 0 else null
@@ -39,6 +47,7 @@ var _dash_direction: Vector2 = Vector2.ZERO
 var _saved_collision_layer: int = 0
 var _slot_instances: Array[Weapon] = []
 var _cached_active_melee: MeleeWeapon = null
+var _focused_interactable: Interactable = null
 var _aim_assist_area: Area2D
 var _aim_assist_shape: CircleShape2D
 var _aim_assist_enemies: Array[Node2D] = []
@@ -77,6 +86,7 @@ func _connect_weapon(w: Weapon) -> void:
 
 func _physics_process(delta: float) -> void:
 	_cached_active_melee = _active_melee_slot()
+	_update_interactable()
 	_tick_hit_state(delta)
 	_tick_dash(delta)
 	if not _is_dashing:
@@ -99,6 +109,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		for enemy in get_tree().get_nodes_in_group("enemies"):
 			if enemy.has_method("die"):
 				enemy.die()
+		return
+
+	if event.is_action_pressed("interact"):
+		if _focused_interactable != null:
+			_focused_interactable.interact(self)
 		return
 
 	if event.is_action("shoot"):
@@ -168,6 +183,8 @@ func _on_take_damage(same_shot: bool, knockback_direction: Vector2, _impact_posi
 		instance.interrupt()
 	if same_shot:
 		return
+	if _is_dashing:
+		_end_dash()
 	_is_hit = true
 	_hit_timer = hit_duration
 	_invulnerable = true
@@ -195,7 +212,11 @@ func _on_die() -> void:
 func _on_weapon_fired(direction: Vector2) -> void:
 	if weapon and weapon.fire_shake_strength > 0.0:
 		_camera.shake(-direction, weapon.fire_shake_strength)
-	if weapon and weapon.ammo_type != null:
+	if Weapon.use_weapon_ammo:
+		if weapon:
+			weapon.spend_magazine_ammo()
+			ammo_changed.emit(weapon.ammo_type, weapon.magazine_ammo())
+	elif weapon and weapon.ammo_type != null:
 		_ammo[weapon.ammo_type] = maxi(_ammo.get(weapon.ammo_type, 0) - 1, 0)
 		ammo_changed.emit(weapon.ammo_type, _ammo[weapon.ammo_type])
 
@@ -414,6 +435,8 @@ func _tick_weapon(delta: float) -> void:
 
 
 func has_ammo(w: Weapon) -> bool:
+	if Weapon.use_weapon_ammo:
+		return w.has_magazine_ammo()
 	return w.ammo_type == null or _ammo.get(w.ammo_type, 0) > 0
 
 func get_ammo(ammo_type: AmmoType) -> int:
@@ -534,6 +557,82 @@ func _slot_blocking_fire() -> bool:
 func _get_current_muzzle() -> Marker2D:
 	assert(_current_anim_entry != null, "Player: no AnimationEntry for current state/direction — check anim_data is fully populated")
 	return $MuzzleBehind if _current_anim_entry.bullet_behind_player else $Muzzle
+
+
+# — Interaction —
+
+func _update_interactable() -> void:
+	var best: Interactable = null
+	var best_dist := interact_radius * interact_radius
+	var half_cone := deg_to_rad(interact_cone_angle * 0.5)
+	var space := get_world_2d().direct_space_state
+
+	for node in get_tree().get_nodes_in_group("interactable"):
+		if not node is Interactable:
+			continue
+		var target := node as Interactable
+		var to_target := target.global_position - global_position
+		var dist_sq := to_target.length_squared()
+		if dist_sq > best_dist:
+			continue
+		if interact_cone_angle > 0.0:
+			if _aim_direction.angle_to(to_target.normalized()) > half_cone:
+				continue
+		# LOS check
+		var ray := PhysicsRayQueryParameters2D.create(global_position, target.global_position)
+		ray.collision_mask = interact_los_mask
+		ray.exclude = [self]
+		if not space.intersect_ray(ray).is_empty():
+			continue
+		best = target
+		best_dist = dist_sq
+
+	if best != _focused_interactable:
+		_focused_interactable = best
+		interactable_focused.emit(_focused_interactable)
+
+
+func pick_up_weapon(dropped: DroppedWeapon) -> void:
+	# Try to find an empty primary slot first
+	var empty_index: int = -1
+	for i in mini(weapons.size(), MAX_PRIMARY_SLOTS):
+		if weapons[i] == null:
+			empty_index = i
+			break
+	# Also consider appending if below the cap
+	if empty_index == -1 and weapons.size() < MAX_PRIMARY_SLOTS:
+		empty_index = weapons.size()
+
+	if empty_index >= 0:
+		# Fill the empty slot
+		var new_instance := dropped.weapon_data.create_instance()
+		new_instance._magazine = dropped.saved_magazine
+		if empty_index < weapons.size():
+			weapons[empty_index] = dropped.weapon_data
+			_weapon_instances[empty_index] = new_instance
+		else:
+			weapons.append(dropped.weapon_data)
+			_weapon_instances.append(new_instance)
+		_connect_weapon(new_instance)
+		weapon_changed.emit(weapon)
+	else:
+		# Replace the currently held weapon
+		var old_data: WeaponData = weapons[_weapon_index]
+		var old_magazine: int = _weapon_instances[_weapon_index].magazine_ammo()
+		var drop_pos := global_position + _aim_direction * DROP_OFFSET
+
+		weapons[_weapon_index] = dropped.weapon_data
+		var new_instance := dropped.weapon_data.create_instance()
+		new_instance._magazine = dropped.saved_magazine
+		_weapon_instances[_weapon_index] = new_instance
+		_connect_weapon(new_instance)
+		weapon_changed.emit(weapon)
+
+		DroppedWeapon.spawn(old_data, old_magazine, global_position, drop_pos)
+
+	dropped.queue_free()
+	_focused_interactable = null
+	interactable_focused.emit(null)
 
 
 # — Room transitions —

@@ -4,17 +4,24 @@ class_name Weapon
 # Runtime instance wrapping a WeaponData config resource.
 # One Weapon is created per character per weapon slot — never shared.
 
+# When true, each Weapon instance tracks its own ammo (magazine_size).
+# When false (default), the Player's shared ammo pool (AmmoType) is used instead.
+static var use_weapon_ammo: bool = true
+
 var data: WeaponData
 
 var _cooldown: float = 0.0
 var _shot_counter: int = 0
 var _burst_remaining: int = 0
+# -1 = infinite (magazine_size == 0), >= 0 = current rounds remaining
+var _magazine: int = -1
 
 signal fired(direction: Vector2)
 
 
 func _init(weapon_data: WeaponData) -> void:
 	data = weapon_data
+	_magazine = weapon_data.magazine_size if weapon_data.magazine_size > 0 else -1
 
 
 # — Data pass-throughs (keeps call sites unchanged) —
@@ -51,6 +58,22 @@ func can_fire() -> bool:
 
 func reset_cooldown() -> void:
 	_cooldown = 0.0
+
+
+# — Magazine API (weapon-ammo mode) —
+
+func magazine_ammo() -> int:
+	return _magazine  # -1 = infinite
+
+func has_magazine_ammo() -> bool:
+	return _magazine != 0  # -1 (infinite) or > 0 both have ammo
+
+func spend_magazine_ammo() -> void:
+	if _magazine > 0:
+		_magazine -= 1
+
+func refill_magazine() -> void:
+	_magazine = data.magazine_size if data.magazine_size > 0 else -1
 
 
 func cancel_burst() -> void:

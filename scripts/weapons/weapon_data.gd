@@ -28,7 +28,10 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var aim_assist_range: float = 150.0
 @export var aim_assist_strength: float = 0.15
 @export var grenade_data: GrenadeData       # if set, fire() throws a grenade
-@export var ammo_type: AmmoType             # null = infinite ammo
+@export var weapon_name: String = ""
+@export var drop_sprite: Texture2D
+@export var ammo_type: AmmoType             # null = infinite ammo (shared-pool mode)
+@export var magazine_size: int = 0          # weapon-ammo mode: rounds per instance; 0 = infinite
 @export var show_laser: bool = true
 @export_flags_2d_physics var bullet_collision_mask: int = 0xFFFFFFFF
 

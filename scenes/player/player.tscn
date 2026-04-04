@@ -28,6 +28,7 @@ point_count = 3
 script = ExtResource("2_lgqa7")
 dash_sound = ExtResource("2_3j4b4")
 dash_speed = 500.0
+dash_duration = 0.3
 dash_cooldown = 1.0
 invincible_during_dash = false
 lateral_control = 1.0

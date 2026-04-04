@@ -68,6 +68,15 @@ func _physics_process(delta: float) -> void:
 			motion = direction * remaining
 			range_reached = true
 
+	# Check for bodies already overlapping the bullet at its current position.
+	# cast_motion only sweeps forward — it misses bodies that walked laterally into us.
+	_hit_query.transform = Transform2D(0.0, global_position)
+	var standing_hits = space.intersect_shape(_hit_query)
+	for hit in standing_hits:
+		if hit.collider != owner_node:
+			_on_impact(global_position, -direction, hit.collider)
+			return
+
 	_cast_query.transform = Transform2D(0.0, global_position)
 	_cast_query.motion = motion
 	var result = space.cast_motion(_cast_query)

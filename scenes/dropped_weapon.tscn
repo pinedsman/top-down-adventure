@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://c433noonfnc38"]
+
+[ext_resource type="Script" uid="uid://bi82xqxkukdqt" path="res://scripts/dropped_weapon.gd" id="1"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 12.0
+
+[node name="DroppedWeapon" type="Area2D" unique_id=109347102]
+collision_layer = 0
+collision_mask = 0
+script = ExtResource("1")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1547050555]
+scale = Vector2(0.4, 0.4)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1711894564]
+shape = SubResource("CircleShape2D_1")
