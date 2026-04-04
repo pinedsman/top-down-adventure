@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://fblcgsdbxvev"]
+
+[ext_resource type="Script" uid="uid://dv6usldbv5c5e" path="res://scripts/weapons/heal_ability.gd" id="1_drqnj"]
+[ext_resource type="AudioStream" uid="uid://h33bjkp7484c" path="res://assets/Sounds/heal_prevent.mp3" id="1_r5l3s"]
+[ext_resource type="Script" uid="uid://2wc7slhe27dr" path="res://scripts/weapons/weapon_data.gd" id="1_y2e43"]
+[ext_resource type="Resource" uid="uid://c2nj3b238b53y" path="res://resources/weapons/ammo/ammo_heals.tres" id="2_7q888"]
+[ext_resource type="PackedScene" uid="uid://ku1063k8xak6" path="res://scenes/weapons/charge_heal.tscn" id="3_1c62a"]
+[ext_resource type="PackedScene" uid="uid://ylopubrbpx1n" path="res://scenes/weapons/muzzleflash_heal.tscn" id="3_gdmp5"]
+[ext_resource type="AudioStream" uid="uid://b7xtdla2s15xx" path="res://assets/Sounds/charge_heal.mp3" id="4_7cay5"]
+[ext_resource type="AudioStream" uid="uid://di1r7a8cbn04u" path="res://assets/Sounds/heal.mp3" id="5_1c62a"]
+
+[sub_resource type="Resource" id="Resource_7q888"]
+script = ExtResource("1_drqnj")
+player_at_full_health_sound = ExtResource("1_r5l3s")
+
+[resource]
+script = ExtResource("1_y2e43")
+shoot_sound = ExtResource("5_1c62a")
+muzzle_flash_scene = ExtResource("3_gdmp5")
+ammo_type = ExtResource("2_7q888")
+use_weapon_ammo = false
+ability = SubResource("Resource_7q888")
+blocks_other_weapons = true
+blocks_dash = true
+charge_time = 2.0
+charge_mode = 2
+charge_fx_scene = ExtResource("3_1c62a")
+charge_loop_sound = ExtResource("4_7cay5")
+damage_cancels_charge = true
+charge_move_speed_scale = 0.25
+charge_turn_speed_scale = 0.25
+metadata/_custom_type_script = "uid://2wc7slhe27dr"

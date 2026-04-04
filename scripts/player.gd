@@ -66,16 +66,19 @@ func _ready() -> void:
 	_on_input_mode_changed(InputManager.is_gamepad)
 	HitStop.ended.connect(_on_hit_stop_ended)
 	for w: Weapon in _weapon_instances:
-		if w.ammo_type != null and not _ammo.has(w.ammo_type):
+		if not w.data.use_weapon_ammo && w.ammo_type != null and not _ammo.has(w.ammo_type):
 			_ammo[w.ammo_type] = w.ammo_type.max_capacity
 	for slot: WeaponSlotData in weapon_slots:
 		assert(slot.weapon_data != null,
 			"Player: WeaponSlotData '%s' has null weapon_data — assign a WeaponData resource" % slot.resource_path)
 		var instance := slot.weapon_data.create_instance()
 		_slot_instances.append(instance)
+		if not slot.weapon_data.use_weapon_ammo and slot.weapon_data.ammo_type != null and not _ammo.has(slot.weapon_data.ammo_type):
+			_ammo[slot.weapon_data.ammo_type] = slot.weapon_data.ammo_type.max_capacity
 		instance.fired.connect(func(dir: Vector2) -> void:
 			if instance.fire_shake_strength > 0.0:
-				_camera.shake(-dir, instance.fire_shake_strength))
+				_camera.shake(-dir, instance.fire_shake_strength)
+			_spend_ammo(instance))
 	_setup_aim_assist_area()
 	_connect_weapon(weapon)
 	weapon_changed.emit(weapon)
@@ -104,7 +107,7 @@ func _physics_process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if OS.is_debug_build() and event.is_action_pressed("ui_end"):  # End key
-		take_damage(10.0, Vector2.from_angle(randf() * TAU))
+		take_damage(1.0, Vector2.from_angle(randf() * TAU))
 		return
 	if OS.is_debug_build() and event.is_action_pressed("ui_home"):  # Home key
 		for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -123,7 +126,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		var pressed = event.get_action_strength("shoot") > 0.5
 		if pressed and not _fire_held and not _is_hit and not _is_dashing and not _slot_blocking_fire():
 			_fire_held = true
-			if weapon and weapon.fire_mode in [WeaponData.FireMode.SINGLE, WeaponData.FireMode.BURST]:
+			if weapon and weapon.is_charge_weapon():
+				if has_ammo(weapon) and weapon.can_fire():
+					if weapon.can_activate(self):
+						weapon.start_charge(_get_current_muzzle(), _aim_direction, self)
+					else:
+						weapon.notify_fire_prevented(self)
+				else:
+					_play_dryfire()
+			elif weapon and weapon.fire_mode in [WeaponData.FireMode.SINGLE, WeaponData.FireMode.BURST]:
 				if has_ammo(weapon):
 					if weapon.can_fire():
 						weapon.fire(_get_current_muzzle(), _aim_direction, self)
@@ -140,12 +151,16 @@ func _unhandled_input(event: InputEvent) -> void:
 					_fire_buffer = fire_buffer_window
 		elif not pressed:
 			_fire_held = false
+			if weapon and weapon.is_charge_weapon() and weapon.is_charging():
+				weapon.release_charge(_aim_direction)
 	elif event.is_action_pressed("dash"):
-		if not _is_dashing and _dash_cooldown_timer <= 0.0 and dash_data != null and not _is_hit:
+		if not _is_dashing and _dash_cooldown_timer <= 0.0 and dash_data != null and not _is_hit \
+				and not _slot_instances.any(func(w: Weapon) -> bool: return w.is_blocking_dash()):
 			_start_dash()
 	elif event.is_action_pressed("weapon_next"):
 		if weapon != null and weapon.can_switch() and _weapon_instances.size() > 1:
 			weapon.cancel_burst()
+			weapon.cancel_charge()
 			_weapon_index = (_weapon_index + 1) % _weapon_instances.size()
 			_fire_held = false
 			_fire_buffer = 0.0
@@ -156,6 +171,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("weapon_prev"):
 		if weapon != null and weapon.can_switch() and _weapon_instances.size() > 1:
 			weapon.cancel_burst()
+			weapon.cancel_charge()
 			_weapon_index = (_weapon_index - 1 + _weapon_instances.size()) % _weapon_instances.size()
 			_fire_held = false
 			_fire_buffer = 0.0
@@ -168,9 +184,23 @@ func _unhandled_input(event: InputEvent) -> void:
 			var slot := weapon_slots[i]
 			if slot.input_action.is_empty():
 				continue
+			var inst := _slot_instances[i]
 			if event.is_action_pressed(slot.input_action):
-				if not _is_hit and not _is_dashing and _current_anim_entry != null:
-					_slot_instances[i].fire(_get_current_muzzle(), _aim_direction, self)
+				if not _is_hit and not _is_dashing and _current_anim_entry != null and not _slot_blocking_fire():
+					if inst.is_charge_weapon():
+						if has_ammo(inst) and inst.can_fire():
+							if inst.can_activate(self):
+								inst.start_charge(_get_current_muzzle(), _aim_direction, self)
+							else:
+								inst.notify_fire_prevented(self)
+						else:
+							_play_dryfire_from(inst)
+					else:
+						inst.fire(_get_current_muzzle(), _aim_direction, self)
+				break
+			elif event.is_action_released(slot.input_action):
+				if inst.is_charge_weapon() and inst.is_charging():
+					inst.release_charge(_aim_direction)
 				break
 
 
@@ -187,6 +217,11 @@ func _can_take_damage() -> bool:
 func _on_take_damage(same_shot: bool, knockback_direction: Vector2, _impact_position: Vector2) -> void:
 	if weapon:
 		weapon.interrupt()
+	for inst: Weapon in _slot_instances:
+		if inst.is_charging() and inst.data.damage_cancels_charge:
+			inst.cancel_charge()
+	if weapon and weapon.is_charging() and weapon.data.damage_cancels_charge:
+		weapon.cancel_charge()
 	for instance in _slot_instances:
 		instance.interrupt()
 	if same_shot:
@@ -220,13 +255,17 @@ func _on_die() -> void:
 func _on_weapon_fired(direction: Vector2) -> void:
 	if weapon and weapon.fire_shake_strength > 0.0:
 		_camera.shake(-direction, weapon.fire_shake_strength)
-	if Weapon.use_weapon_ammo:
-		if weapon:
-			weapon.spend_magazine_ammo()
-			ammo_changed.emit(weapon.ammo_type, weapon.magazine_ammo())
-	elif weapon and weapon.ammo_type != null:
-		_ammo[weapon.ammo_type] = maxi(_ammo.get(weapon.ammo_type, 0) - 1, 0)
-		ammo_changed.emit(weapon.ammo_type, _ammo[weapon.ammo_type])
+	if weapon:
+		_spend_ammo(weapon)
+
+
+func _spend_ammo(w: Weapon) -> void:
+	if w.data.use_weapon_ammo:
+		w.spend_magazine_ammo()
+		ammo_changed.emit(w.ammo_type, w.magazine_ammo())
+	elif w.ammo_type != null:
+		_ammo[w.ammo_type] = maxi(_ammo.get(w.ammo_type, 0) - 1, 0)
+		ammo_changed.emit(w.ammo_type, _ammo[w.ammo_type])
 
 
 
@@ -264,8 +303,12 @@ func _update_aim(delta: float) -> void:
 	if target == Vector2.ZERO:
 		return
 	var _swinging_melee := _active_melee_slot()
+	var _charging := get_charging_weapon()
 	if _swinging_melee != null:
 		var t := 1.0 - pow(1.0 - _swinging_melee.swing_rotation_scale(), delta * 60.0)
+		_aim_direction = _aim_direction.lerp(target, t).normalized()
+	elif _charging != null and _charging.data.charge_turn_speed_scale < 1.0:
+		var t := 1.0 - pow(1.0 - _charging.data.charge_turn_speed_scale, delta * 60.0)
 		_aim_direction = _aim_direction.lerp(target, t).normalized()
 	else:
 		_aim_direction = target
@@ -443,8 +486,12 @@ func _tick_weapon(delta: float) -> void:
 
 
 func _play_dryfire() -> void:
-	if weapon != null and weapon.data.dryfire_sound != null:
-		AudioPool.play(weapon.data.dryfire_sound, global_position)
+	_play_dryfire_from(weapon)
+
+
+func _play_dryfire_from(w: Weapon) -> void:
+	if w != null and w.data.dryfire_sound != null:
+		AudioPool.play(w.data.dryfire_sound, global_position)
 
 
 func _play_swap_sound() -> void:
@@ -453,7 +500,7 @@ func _play_swap_sound() -> void:
 
 
 func has_ammo(w: Weapon) -> bool:
-	if Weapon.use_weapon_ammo:
+	if w.data.use_weapon_ammo:
 		return w.has_magazine_ammo()
 	return w.ammo_type == null or _ammo.get(w.ammo_type, 0) > 0
 
@@ -468,6 +515,13 @@ func add_ammo(ammo_type: AmmoType, amount: int) -> int:
 		ammo_changed.emit(ammo_type, _ammo[ammo_type])
 	return delta
 
+func take_ammo(ammo_type: AmmoType, amount: int) -> int:
+	var old_count = _ammo[ammo_type]
+	_ammo[ammo_type] = maxi(_ammo.get(ammo_type, 0) - amount, 0)
+	var delta = old_count - _ammo[ammo_type]
+	if ( delta > 0 ):
+		ammo_changed.emit(ammo_type, _ammo[ammo_type])
+	return delta
 
 func _on_hit_stop_ended() -> void:
 	if not Input.is_action_pressed("shoot"):
@@ -486,6 +540,9 @@ func player_movement(_delta: float) -> void:
 		_knockback_velocity = lerp(_knockback_velocity, Vector2.ZERO, 0.2)
 	else:
 		var speed_scale := _cached_active_melee.swing_move_scale() if _cached_active_melee != null else 1.0
+		var _cw := get_charging_weapon()
+		if _cw != null:
+			speed_scale *= _cw.data.charge_move_speed_scale
 		velocity = Input.get_vector("move_left", "move_right", "move_up", "move_down") * SPEED * speed_scale
 	move_and_slide()
 	for i in get_slide_collision_count():
@@ -569,7 +626,10 @@ func _active_melee_slot() -> MeleeWeapon:
 
 
 func _slot_blocking_fire() -> bool:
-	return _cached_active_melee != null
+	for inst: Weapon in _slot_instances:
+		if inst.is_blocking():
+			return true
+	return false
 
 
 func _get_current_muzzle() -> Marker2D:
@@ -657,6 +717,16 @@ func pick_up_weapon(dropped: DroppedWeapon) -> void:
 
 
 # — Room transitions —
+
+## Returns the first weapon (primary or slot) that is currently charging, or null.
+func get_charging_weapon() -> Weapon:
+	if weapon != null and weapon.is_charge_weapon() and weapon.is_charging():
+		return weapon
+	for inst: Weapon in _slot_instances:
+		if inst.is_charge_weapon() and inst.is_charging():
+			return inst
+	return null
+
 
 func enter_room(ysort: Node, spawn_position: Vector2) -> void:
 	reparent(ysort, true)

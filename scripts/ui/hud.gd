@@ -1,44 +1,64 @@
 extends CanvasLayer
 
+@onready var health_text = $HFlowContainer/HFlowContainer2/HealthText
 @onready var weapon_display = $HFlowContainer/WeaponDisplay
 @onready var hbox = $HBoxContainer
 @onready var _interact_prompt: InteractPrompt = get_node_or_null("InteractPrompt")
+@onready var _charge_bar: ChargeBar = get_node_or_null("ChargeBar")
 @export var heart_ui_scene: PackedScene
 
 var _current_weapon: Weapon
 var player: Player
+var _heal_weapon: Weapon
 
 func _ready() -> void:
 	player = get_tree().get_first_node_in_group("player") as Player
 	if player:
+		_heal_weapon = 	player._slot_instances[1]
 		player.weapon_changed.connect(_on_weapon_changed)
 		player.ammo_changed.connect(_on_ammo_changed)
 		player.health_changed.connect(_on_health_changed)
 		player.interactable_focused.connect(_on_interactable_focused)
 		_on_weapon_changed(player.weapon)
 		_update_max_hp(player.max_health)
+		_on_ammo_changed(_heal_weapon.data.ammo_type, player.get_ammo(_heal_weapon.data.ammo_type))
+
+
+func _process(_delta: float) -> void:
+	if _charge_bar == null or player == null:
+		return
+	var cw := player.get_charging_weapon()
+	if cw != null:
+		_charge_bar.show_bar(player)
+		_charge_bar.set_progress(cw.charge_progress())
+	else:
+		_charge_bar.hide_bar()
 
 func _on_health_changed(health:float, maxHealth:float) -> void:
 	_update_max_hp(maxHealth)
 	_update_hp(health)
 
 func _on_weapon_changed(weapon: Weapon) -> void:
+	if (weapon not in player._weapon_instances):
+		return
+	
 	_current_weapon = weapon
 	weapon_display.update_weapon(weapon)
-	if weapon != null && weapon.ammo_type != null:
-		$HFlowContainer/AmmoIcon.texture = weapon.ammo_type.icon 
-	else:
-		$HFlowContainer/AmmoIcon.texture = null
+	
 	if weapon != null:
-		var initial_count: int = weapon.magazine_ammo() if Weapon.use_weapon_ammo else player.get_ammo(weapon.ammo_type)
+		var initial_count: int = weapon.magazine_ammo() if _current_weapon.data.use_weapon_ammo else player.get_ammo(weapon.ammo_type)
 		_on_ammo_changed(weapon.ammo_type, initial_count)
 	else:
 		_on_ammo_changed(null, 0)
 
 func _on_ammo_changed(ammo_type: AmmoType, current_count: int) -> void:
+	if ammo_type == _heal_weapon.data.ammo_type:
+		health_text.text = str(player.get_ammo(ammo_type))
+		return
+		
 	if _current_weapon == null:
 		$HFlowContainer/AmmoText.text = ""
-	elif Weapon.use_weapon_ammo:
+	elif _current_weapon.data.use_weapon_ammo:
 		# current_count is magazine rounds; -1 means infinite — hide the counter
 		$HFlowContainer/AmmoText.text = str(current_count) if current_count >= 0 else ""
 	elif ammo_type != null && _current_weapon.ammo_type == ammo_type:

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PickupData" format=3 uid="uid://c5uvmiuoc7070"]
+
+[ext_resource type="Resource" uid="uid://c2nj3b238b53y" path="res://resources/weapons/ammo/ammo_heals.tres" id="1_5tjqe"]
+[ext_resource type="AudioStream" uid="uid://ci12v40kguvqx" path="res://assets/Sounds/shotgun_rechamber.mp3" id="2_4qbfb"]
+[ext_resource type="Texture2D" uid="uid://bykugp5r0p1si" path="res://assets/Art/weapons/ammo_heal.png" id="3_5tjqe"]
+[ext_resource type="PackedScene" uid="uid://cfekublly24p0" path="res://scenes/pickup.tscn" id="4_gfyui"]
+[ext_resource type="Script" uid="uid://clim6eo0n8c6d" path="res://scripts/pickup_data.gd" id="5_q0hg4"]
+
+[resource]
+script = ExtResource("5_q0hg4")
+scene = ExtResource("4_gfyui")
+ammo_type = ExtResource("1_5tjqe")
+pickup_sound = ExtResource("2_4qbfb")
+pickup_texture = ExtResource("3_5tjqe")
+scale = Vector2(0.025, 0.025)
+metadata/_custom_type_script = "uid://clim6eo0n8c6d"

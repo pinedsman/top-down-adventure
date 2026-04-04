@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AmmoType" format=3 uid="uid://c2nj3b238b53y"]
+
+[ext_resource type="Texture2D" uid="uid://bykugp5r0p1si" path="res://assets/Art/weapons/ammo_heal.png" id="1_e4oo3"]
+[ext_resource type="Script" uid="uid://b3yih4soy3jb7" path="res://scripts/weapons/ammo_type.gd" id="1_l1bpg"]
+
+[resource]
+script = ExtResource("1_l1bpg")
+max_capacity = 3
+icon = ExtResource("1_e4oo3")
+metadata/_custom_type_script = "uid://b3yih4soy3jb7"

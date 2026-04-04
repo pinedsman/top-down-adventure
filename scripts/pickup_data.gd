@@ -3,7 +3,6 @@ class_name PickupData
 
 @export var scene: PackedScene
 @export var ammo_type: AmmoType
-@export var heal_amount: float = 0.0  # > 0 makes this a health pickup; ammo_type ignored
 @export var pickup_sound: AudioStream
 @export var pickup_texture: Texture2D
 @export var offset: Vector2 = Vector2.ZERO

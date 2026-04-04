@@ -37,6 +37,39 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var magazine_size: int = 0          # weapon-ammo mode: rounds per instance; 0 = infinite
 @export var show_laser: bool = true
 @export_flags_2d_physics var bullet_collision_mask: int = 0xFFFFFFFF
+## When true this weapon tracks its own magazine. When false the player's shared ammo pool is used.
+@export var use_weapon_ammo: bool = true
+
+@export_group("Custom Ability")
+## If set, firing runs ability.execute() instead of spawning bullets/grenades.
+@export var ability: WeaponAbility
+
+## While this weapon is active (charging), prevent all other weapons from firing.
+@export var blocks_other_weapons: bool = false
+## While this weapon is active (charging), prevent the player from dashing.
+@export var blocks_dash: bool = false
+
+@export_group("Charge")
+## Seconds to reach full charge. 0 = instant fire (no charge mechanic).
+@export var charge_time: float = 0.0
+## Fire at whatever charge level was reached when the button is released.
+@export var fire_on_partial_charge: bool = false
+enum ChargeMode {
+	HOLD_TO_CHARGE_FIRE_ON_RELEASE, ## Hold button to charge; releasing fires (or cancels if not full).
+	HOLD_TO_CHARGE_AUTOFIRE,        ## Hold button to charge; fires automatically when full.
+	AUTO_CHARGE,                    ## Charges on its own; fires automatically when full. Button ignored.
+}
+@export var charge_mode: ChargeMode = ChargeMode.HOLD_TO_CHARGE_FIRE_ON_RELEASE
+## Spawned as a child of the muzzle while charging; freed on fire or cancel.
+@export var charge_fx_scene: PackedScene
+## Looping sound played while charging; stopped on fire or cancel.
+@export var charge_loop_sound: AudioStream
+## If true, taking damage while charging cancels the charge.
+@export var damage_cancels_charge: bool = false
+## Movement speed multiplier while charging. 1.0 = no slow, 0.0 = fully stopped.
+@export_range(0.0, 1.0) var charge_move_speed_scale: float = 1.0
+## Aim turn speed multiplier while charging. 1.0 = instant/normal, lower = sluggish turning.
+@export_range(0.0, 1.0) var charge_turn_speed_scale: float = 1.0
 
 
 func create_instance() -> Weapon:

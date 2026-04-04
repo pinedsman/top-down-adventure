@@ -57,6 +57,9 @@ func can_fire() -> bool:
 func can_switch() -> bool:
 	return _state == SwingState.IDLE or _state == SwingState.RECOVERY
 
+func is_blocking() -> bool:
+	return is_swinging()
+
 
 func fire(muzzle: Marker2D, direction: Vector2, shooter: Node) -> void:
 	_shooter = shooter

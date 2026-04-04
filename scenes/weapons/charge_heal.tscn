@@ -1,0 +1,109 @@
+[gd_scene format=3 uid="uid://ku1063k8xak6"]
+
+[ext_resource type="Texture2D" uid="uid://dq716vspmcxmq" path="res://assets/Art/hitimpact.png" id="1_lile0"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s686n"]
+atlas = ExtResource("1_lile0")
+region = Rect2(66, 642, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w6dwt"]
+atlas = ExtResource("1_lile0")
+region = Rect2(2, 642, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_83d7w"]
+atlas = ExtResource("1_lile0")
+region = Rect2(66, 706, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8lqgf"]
+atlas = ExtResource("1_lile0")
+region = Rect2(2, 706, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_q1wbp"]
+atlas = ExtResource("1_lile0")
+region = Rect2(450, 642, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a4c0o"]
+atlas = ExtResource("1_lile0")
+region = Rect2(322, 642, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vi2r3"]
+atlas = ExtResource("1_lile0")
+region = Rect2(386, 642, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_26pwo"]
+atlas = ExtResource("1_lile0")
+region = Rect2(386, 642, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bd18p"]
+atlas = ExtResource("1_lile0")
+region = Rect2(450, 642, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4jpan"]
+atlas = ExtResource("1_lile0")
+region = Rect2(2, 706, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v732v"]
+atlas = ExtResource("1_lile0")
+region = Rect2(66, 706, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u5gco"]
+atlas = ExtResource("1_lile0")
+region = Rect2(2, 642, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qaej8"]
+atlas = ExtResource("1_lile0")
+region = Rect2(66, 642, 64, 64)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_k8cnb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s686n")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w6dwt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_83d7w")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8lqgf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_q1wbp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a4c0o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vi2r3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_26pwo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bd18p")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4jpan")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v732v")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u5gco")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qaej8")
+}],
+"loop": true,
+"name": &"flash",
+"speed": 20.0
+}]
+
+[node name="ChargeHeal" type="Node2D" unique_id=2059814652]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1088410902]
+sprite_frames = SubResource("SpriteFrames_k8cnb")
+animation = &"flash"
+autoplay = "flash"

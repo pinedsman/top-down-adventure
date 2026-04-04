@@ -22,9 +22,7 @@ func _on_player_entered(body: Node2D) -> void:
 		return
 	var player := body as Player
 	var consumed := false
-	if data.heal_amount > 0.0:
-		consumed = player.heal(data.heal_amount) > 0.0
-	elif data.ammo_type != null:
+	if data.ammo_type != null:
 		consumed = player.add_ammo(data.ammo_type, amount) > 0
 	if consumed:
 		AudioPool.play(data.pickup_sound, global_position)

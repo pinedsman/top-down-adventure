@@ -4,10 +4,6 @@ class_name Weapon
 # Runtime instance wrapping a WeaponData config resource.
 # One Weapon is created per character per weapon slot — never shared.
 
-# When true, each Weapon instance tracks its own ammo (magazine_size).
-# When false (default), the Player's shared ammo pool (AmmoType) is used instead.
-static var use_weapon_ammo: bool = true
-
 var data: WeaponData
 
 var _cooldown: float = 0.0
@@ -15,6 +11,15 @@ var _shot_counter: int = 0
 var _burst_remaining: int = 0
 # -1 = infinite (magazine_size == 0), >= 0 = current rounds remaining
 var _magazine: int = -1
+
+# Charge state
+var _charge: float = 0.0
+var _is_charging: bool = false
+var _charge_muzzle: Marker2D = null
+var _charge_direction: Vector2 = Vector2.ZERO
+var _charge_shooter: Node = null
+var _charge_fx: Node = null
+var _charge_audio: AudioStreamPlayer2D = null
 
 signal fired(direction: Vector2)
 
@@ -25,35 +30,52 @@ func _init(weapon_data: WeaponData) -> void:
 
 
 # — Data pass-throughs (keeps call sites unchanged) —
-var fire_mode: WeaponData.FireMode:  
+var fire_mode: WeaponData.FireMode:
 	get: return data.fire_mode
-var ammo_type: AmmoType:             
+var ammo_type: AmmoType:
 	get: return data.ammo_type
-var hud_icon: Texture2D:             
+var hud_icon: Texture2D:
 	get: return data.hud_icon
-var show_laser: bool:                
+var show_laser: bool:
 	get: return data.show_laser
-var fire_shake_strength: float:      
+var fire_shake_strength: float:
 	get: return data.fire_shake_strength
-var aim_assist_angle: float:         
+var aim_assist_angle: float:
 	get: return data.aim_assist_angle
-var aim_assist_range: float:         
+var aim_assist_range: float:
 	get: return data.aim_assist_range
-var aim_assist_strength: float:      
+var aim_assist_strength: float:
 	get: return data.aim_assist_strength
-var grenade_data: GrenadeData:       
+var grenade_data: GrenadeData:
 	get: return data.grenade_data
-var burst_count: int:                
-	get: return data.burst_count       
+var burst_count: int:
+	get: return data.burst_count
+
 
 # — Core API —
 
 func tick(delta: float) -> void:
 	_cooldown = maxf(_cooldown - delta, 0.0)
+	if _is_charging and data.charge_time > 0.0:
+		_charge = minf(_charge + delta / data.charge_time, 1.0)
+		if _charge >= 1.0 and data.charge_mode != WeaponData.ChargeMode.HOLD_TO_CHARGE_FIRE_ON_RELEASE:
+			_execute_charge_fire()
 
 
 func can_fire() -> bool:
 	return _cooldown <= 0.0
+
+## Returns false if the weapon's ability blocks firing for this shooter.
+## Always true for non-ability weapons.
+func can_activate(shooter: Node) -> bool:
+	if data.ability == null:
+		return true
+	return data.ability.can_execute(shooter, self)
+
+## Call when can_activate() returned false to let the ability give feedback.
+func notify_fire_prevented(shooter: Node) -> void:
+	if data.ability != null:
+		data.ability.on_fire_prevented(shooter, self)
 
 
 func reset_cooldown() -> void:
@@ -76,6 +98,87 @@ func refill_magazine() -> void:
 	_magazine = data.magazine_size if data.magazine_size > 0 else -1
 
 
+# — Charge API —
+
+func is_charge_weapon() -> bool:
+	return data.charge_time > 0.0
+
+func is_charging() -> bool:
+	return _is_charging
+
+## Returns 0.0–1.0 charge progress. Always 1.0 for non-charge weapons.
+func charge_progress() -> float:
+	return _charge if is_charge_weapon() else 1.0
+
+func start_charge(muzzle: Marker2D, direction: Vector2, shooter: Node) -> void:
+	if _is_charging or not can_fire():
+		return
+	_is_charging = true
+	_charge = 0.0
+	_charge_muzzle = muzzle
+	_charge_direction = direction
+	_charge_shooter = shooter
+	_spawn_charge_fx(muzzle)
+
+## Call on button release. No-op in AUTO_CHARGE mode — tick() handles firing.
+## In hold-to-charge modes: fires or cancels depending on charge level and fire_on_partial_charge.
+func release_charge(direction: Vector2) -> void:
+	if not _is_charging or data.charge_mode == WeaponData.ChargeMode.AUTO_CHARGE:
+		return
+	_charge_direction = direction
+	if data.fire_on_partial_charge or _charge >= 1.0:
+		_execute_charge_fire()
+	else:
+		cancel_charge()
+
+func cancel_charge() -> void:
+	if _is_charging and data.ability != null and _charge_shooter != null:
+		data.ability.on_charge_cancelled(_charge_shooter, self)
+	_is_charging = false
+	_charge = 0.0
+	_charge_muzzle = null
+	_charge_shooter = null
+	_destroy_charge_fx()
+
+func _execute_charge_fire() -> void:
+	if _charge_muzzle == null or _charge_shooter == null:
+		cancel_charge()
+		return
+	if not can_activate(_charge_shooter):
+		cancel_charge()
+		return
+	var charge := _charge
+	var muzzle := _charge_muzzle
+	var direction := _charge_direction
+	var shooter := _charge_shooter
+	cancel_charge()
+	_cooldown = data.fire_rate
+	_shot_counter += 1
+	var shot_id := _shot_counter
+	fired.emit(direction)
+	_play_sound(muzzle)
+	_spawn_muzzle_flash(muzzle, direction)
+	_fire_with_charge(muzzle, direction, shot_id, shooter, charge)
+
+func _spawn_charge_fx(muzzle: Marker2D) -> void:
+	if data.charge_fx_scene != null:
+		_charge_fx = data.charge_fx_scene.instantiate()
+		muzzle.add_child(_charge_fx)
+	if data.charge_loop_sound != null:
+		_charge_audio = AudioStreamPlayer2D.new()
+		_charge_audio.stream = data.charge_loop_sound
+		_charge_audio.autoplay = true
+		muzzle.add_child(_charge_audio)
+
+func _destroy_charge_fx() -> void:
+	if is_instance_valid(_charge_fx):
+		_charge_fx.queue_free()
+	_charge_fx = null
+	if is_instance_valid(_charge_audio):
+		_charge_audio.queue_free()
+	_charge_audio = null
+
+
 func cancel_burst() -> void:
 	_burst_remaining = 0
 
@@ -87,9 +190,15 @@ func interrupt() -> void:
 func can_switch() -> bool:
 	return true  # overridden by MeleeWeapon
 
+func is_blocking() -> bool:
+	return data.blocks_other_weapons and _is_charging
+
+func is_blocking_dash() -> bool:
+	return data.blocks_dash and _is_charging
+
 
 func fire(muzzle: Marker2D, direction: Vector2, shooter: Node) -> void:
-	if not can_fire():
+	if not can_fire() or not can_activate(shooter):
 		return
 	_cooldown = data.fire_rate
 	_fire_single(muzzle, direction, shooter)
@@ -104,11 +213,18 @@ func _fire_single(muzzle: Marker2D, direction: Vector2, shooter: Node) -> void:
 	fired.emit(direction)
 	_play_sound(muzzle)
 	_spawn_muzzle_flash(muzzle, direction)
-	if data.grenade_data:
+	_fire_with_charge(muzzle, direction, shot_id, shooter, 1.0)
+
+
+## Routes to ability, grenade, or bullet. charge scales bullet damage.
+func _fire_with_charge(muzzle: Marker2D, direction: Vector2, shot_id: int, shooter: Node, charge: float) -> void:
+	if data.ability != null:
+		data.ability.execute(shooter, self, charge)
+	elif data.grenade_data:
 		_spawn_grenade(muzzle, direction, shot_id, shooter)
 	else:
 		for pellet_dir in _get_spread_directions(direction):
-			_spawn_bullet(muzzle, pellet_dir, shot_id, shooter)
+			_spawn_bullet(muzzle, pellet_dir, shot_id, shooter, charge)
 		if data.rechamber_sound:
 			_play_rechamber_sound(muzzle)
 
@@ -163,7 +279,7 @@ func _get_spread_directions(base_dir: Vector2) -> Array[Vector2]:
 	return dirs
 
 
-func _spawn_bullet(muzzle: Marker2D, direction: Vector2, shot_id: int, shooter: Node) -> void:
+func _spawn_bullet(muzzle: Marker2D, direction: Vector2, shot_id: int, shooter: Node, charge: float = 1.0) -> void:
 	if data.bullet_scene == null:
 		return
 	var bullet := data.bullet_scene.instantiate()
@@ -171,7 +287,7 @@ func _spawn_bullet(muzzle: Marker2D, direction: Vector2, shot_id: int, shooter: 
 	_get_ysort(muzzle).add_child(bullet)
 	bullet.global_position = muzzle.global_position
 	bullet.direction = direction
-	bullet.damage = data.damage
+	bullet.damage = data.damage * charge
 	bullet.speed = data.bullet_speed
 	bullet.knockback_force = data.knockback_force
 	bullet.travel_range = data.bullet_range
