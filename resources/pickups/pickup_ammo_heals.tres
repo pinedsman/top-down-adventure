@@ -9,6 +9,7 @@
 [resource]
 script = ExtResource("5_q0hg4")
 scene = ExtResource("4_gfyui")
+display_name = "Health Pack"
 ammo_type = ExtResource("1_5tjqe")
 pickup_sound = ExtResource("2_4qbfb")
 pickup_texture = ExtResource("3_5tjqe")

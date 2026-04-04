@@ -78,7 +78,7 @@ func _on_interactable_focused(target: Interactable) -> void:
 	if target == null:
 		_interact_prompt.hide_prompt()
 	else:
-		_interact_prompt.show_prompt(target.get_prompt_text(), target)
+		_interact_prompt.show_prompt(target.get_prompt_text(player), target)
 
 
 func _update_max_hp(max_hp: int) -> void:

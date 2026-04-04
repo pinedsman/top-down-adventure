@@ -2,6 +2,7 @@ extends Resource
 class_name PickupData
 
 @export var scene: PackedScene
+@export var display_name: String = ""
 @export var ammo_type: AmmoType
 @export var pickup_sound: AudioStream
 @export var pickup_texture: Texture2D

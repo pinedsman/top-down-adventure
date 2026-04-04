@@ -4,12 +4,12 @@
 [ext_resource type="Texture2D" uid="uid://deib2tqcg5df0" path="res://addons/input_prompts/icons/xbox/x.png" id="2_qtwpv"]
 [ext_resource type="Script" uid="uid://f6i84c0x2tum" path="res://addons/input_prompts/action_prompt/action_prompt.gd" id="3_hmf7c"]
 
-[sub_resource type="InputEventKey" id="InputEventKey_fao1n"]
+[sub_resource type="InputEventKey" id="InputEventKey_1q4kj"]
 device = -1
 physical_keycode = 70
 unicode = 102
 
-[sub_resource type="InputEventJoypadButton" id="InputEventJoypadButton_optxc"]
+[sub_resource type="InputEventJoypadButton" id="InputEventJoypadButton_qtwpv"]
 device = -1
 button_index = 2
 pressed = true
@@ -28,9 +28,10 @@ stretch_mode = 5
 script = ExtResource("3_hmf7c")
 action = "interact"
 icon = 0
-events = Array[InputEvent]([SubResource("InputEventKey_fao1n"), SubResource("InputEventJoypadButton_optxc")])
+events = Array[InputEvent]([SubResource("InputEventKey_1q4kj"), SubResource("InputEventJoypadButton_qtwpv")])
 metadata/_custom_type_script = "uid://f6i84c0x2tum"
 
 [node name="Label" type="Label" parent="Container" unique_id=1530961076]
 layout_mode = 2
+theme_override_font_sizes/font_size = 10
 text = "test"

@@ -6,13 +6,13 @@
 [sub_resource type="CircleShape2D" id="CircleShape2D_7cqbe"]
 
 [node name="Pickup" type="Area2D" unique_id=908505312]
-collision_layer = 8
-collision_mask = 4
+collision_layer = 0
+collision_mask = 0
 script = ExtResource("1_7cqbe")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1092919313]
-shape = SubResource("CircleShape2D_7cqbe")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1301572191]
 scale = Vector2(0.1, 0.1)
 texture = ExtResource("1_pg2rt")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1092919313]
+shape = SubResource("CircleShape2D_7cqbe")

@@ -17,5 +17,5 @@ func interact(player: Player) -> void:
 
 
 # Text shown next to the input glyph in the interact prompt.
-func get_prompt_text() -> String:
+func get_prompt_text(player: Player) -> String:
 	return ""

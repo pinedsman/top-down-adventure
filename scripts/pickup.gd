@@ -1,4 +1,4 @@
-extends Area2D
+extends Interactable
 class_name Pickup
 
 @export var preset_pickup_data: PickupData
@@ -6,24 +6,35 @@ class_name Pickup
 
 var data: PickupData
 
+
 func _ready() -> void:
-	body_entered.connect(_on_player_entered)
-	if (preset_pickup_data != null):
+	super._ready()
+	if preset_pickup_data != null:
 		set_pickup_data(preset_pickup_data)
 
-func set_pickup_data(newData:PickupData):
-	data = newData
-	$Sprite2D.texture = newData.pickup_texture
-	$Sprite2D.scale = newData.scale
-	$Sprite2D.position = newData.offset
 
-func _on_player_entered(body: Node2D) -> void:
-	if not body is Player:
+func set_pickup_data(new_data: PickupData) -> void:
+	data = new_data
+	$Sprite2D.texture = new_data.pickup_texture
+	$Sprite2D.scale = new_data.scale
+	$Sprite2D.position = new_data.offset
+
+
+func interact(player: Player) -> void:
+	if data == null:
 		return
-	var player := body as Player
 	var consumed := false
 	if data.ammo_type != null:
 		consumed = player.add_ammo(data.ammo_type, amount) > 0
 	if consumed:
-		AudioPool.play(data.pickup_sound, global_position)
+		if data.pickup_sound != null:
+			AudioPool.play(data.pickup_sound, global_position)
 		queue_free()
+
+
+func get_prompt_text(player: Player) -> String:
+	if data == null:
+		return ""
+	var label := data.display_name
+	var amountText := "x%d" % [amount] if player.get_ammo(data.ammo_type) < data.ammo_type.max_capacity else "Full"
+	return "%s %s" % [label, amountText]

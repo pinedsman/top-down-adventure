@@ -38,7 +38,7 @@ func interact(player: Player) -> void:
 	player.pick_up_weapon(self)
 
 
-func get_prompt_text() -> String:
+func get_prompt_text(player: Player) -> String:
 	if weapon_data == null:
 		return ""
 	return weapon_data.weapon_name
