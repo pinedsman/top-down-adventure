@@ -2,6 +2,8 @@
 
 [ext_resource type="TileSet" uid="uid://cbwn1hgf1iapo" path="res://resources/tilesets/grassy.tres" id="1_gki2t"]
 [ext_resource type="Texture2D" uid="uid://bnmxmp05l7eon" path="res://assets/Art/Tileset/TX Tileset Stone Ground.png" id="2_li6oi"]
+[ext_resource type="PackedScene" uid="uid://c433noonfnc38" path="res://scenes/dropped_weapon.tscn" id="3_0j4cp"]
+[ext_resource type="Resource" uid="uid://c0h63vebtpiqg" path="res://resources/weapons/weapon_smg.tres" id="4_qdqsw"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_tbgi4"]
 vertices = PackedVector2Array(790, 470, 10, 470, 10, 74, 790, 74, 790, 46, 10, 46, 10, 18, 790, 18)
@@ -296,3 +298,7 @@ collision_mask = 0
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=2076647570]
 position = Vector2(404, 244)
 shape = SubResource("RectangleShape2D_alonr")
+
+[node name="DroppedWeapon" parent="." unique_id=109347102 instance=ExtResource("3_0j4cp")]
+position = Vector2(368, 320)
+weapon_data = ExtResource("4_qdqsw")

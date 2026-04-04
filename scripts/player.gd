@@ -48,6 +48,7 @@ var _saved_collision_layer: int = 0
 var _slot_instances: Array[Weapon] = []
 var _cached_active_melee: MeleeWeapon = null
 var _focused_interactable: Interactable = null
+var _had_focused_interactable: bool = false
 var _aim_assist_area: Area2D
 var _aim_assist_shape: CircleShape2D
 var _aim_assist_enemies: Array[Node2D] = []
@@ -128,6 +129,11 @@ func _unhandled_input(event: InputEvent) -> void:
 						weapon.fire(_get_current_muzzle(), _aim_direction, self)
 					else:
 						_fire_buffer = fire_buffer_window
+				else:
+					_play_dryfire()
+			elif weapon and weapon.fire_mode == WeaponData.FireMode.AUTO:
+				if not has_ammo(weapon):
+					_play_dryfire()
 		elif pressed and _is_dashing and not _is_hit:
 			if weapon and weapon.fire_mode in [WeaponData.FireMode.SINGLE, WeaponData.FireMode.BURST]:
 				if _dash_timer <= fire_buffer_window:
@@ -145,6 +151,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_fire_buffer = 0.0
 			_connect_weapon(weapon)
 			_update_aim_assist_collider()
+			_play_swap_sound()
 			weapon_changed.emit(weapon)
 	elif event.is_action_pressed("weapon_prev"):
 		if weapon != null and weapon.can_switch() and _weapon_instances.size() > 1:
@@ -154,6 +161,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_fire_buffer = 0.0
 			_connect_weapon(weapon)
 			_update_aim_assist_collider()
+			_play_swap_sound()
 			weapon_changed.emit(weapon)
 	else:
 		for i in _slot_instances.size():
@@ -434,6 +442,16 @@ func _tick_weapon(delta: float) -> void:
 		weapon.fire(_get_current_muzzle(), _aim_direction, self)
 
 
+func _play_dryfire() -> void:
+	if weapon != null and weapon.data.dryfire_sound != null:
+		AudioPool.play(weapon.data.dryfire_sound, global_position)
+
+
+func _play_swap_sound() -> void:
+	if weapon != null and weapon.data.swap_sound != null:
+		AudioPool.play(weapon.data.swap_sound, global_position)
+
+
 func has_ammo(w: Weapon) -> bool:
 	if Weapon.use_weapon_ammo:
 		return w.has_magazine_ammo()
@@ -568,7 +586,7 @@ func _update_interactable() -> void:
 	var space := get_world_2d().direct_space_state
 
 	for node in get_tree().get_nodes_in_group("interactable"):
-		if not node is Interactable:
+		if not node is Interactable or node.is_queued_for_deletion():
 			continue
 		var target := node as Interactable
 		var to_target := target.global_position - global_position
@@ -587,8 +605,9 @@ func _update_interactable() -> void:
 		best = target
 		best_dist = dist_sq
 
-	if best != _focused_interactable:
+	if best != _focused_interactable or (_had_focused_interactable and _focused_interactable == null):
 		_focused_interactable = best
+		_had_focused_interactable = best != null
 		interactable_focused.emit(_focused_interactable)
 
 
@@ -613,6 +632,7 @@ func pick_up_weapon(dropped: DroppedWeapon) -> void:
 		else:
 			weapons.append(dropped.weapon_data)
 			_weapon_instances.append(new_instance)
+		_weapon_index = empty_index
 		_connect_weapon(new_instance)
 		weapon_changed.emit(weapon)
 	else:
@@ -628,7 +648,8 @@ func pick_up_weapon(dropped: DroppedWeapon) -> void:
 		_connect_weapon(new_instance)
 		weapon_changed.emit(weapon)
 
-		DroppedWeapon.spawn(old_data, old_magazine, global_position, drop_pos)
+		if old_magazine != 0:
+			DroppedWeapon.spawn(old_data, old_magazine, global_position, drop_pos)
 
 	dropped.queue_free()
 	_focused_interactable = null

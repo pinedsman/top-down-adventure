@@ -13,7 +13,6 @@
 [ext_resource type="Resource" uid="uid://jheygwiu804r" path="res://resources/weapons/weapon_handgun.tres" id="5_8ydkj"]
 [ext_resource type="AudioStream" uid="uid://bi1px5q0h0fkw" path="res://assets/Sounds/hurt.mp3" id="6_je7p5"]
 [ext_resource type="AudioStream" uid="uid://jbmf8l3laeu7" path="res://assets/Sounds/death.mp3" id="7_fm80t"]
-[ext_resource type="Resource" uid="uid://d3wgakbrx0nfv" path="res://resources/weapons/weapon_shotgun.tres" id="7_yj68g"]
 [ext_resource type="Shader" uid="uid://cto4s1uiaaekg" path="res://assets/laser_sight.gdshader" id="8_pn6s4"]
 [ext_resource type="Texture2D" uid="uid://u1dfsf8qt0la" path="res://assets/Art/laser.png" id="8_v42im"]
 [ext_resource type="Resource" uid="uid://dngp84241gpk" path="res://resources/impacts/player_hit_impact.tres" id="10_myrg7"]
@@ -27,8 +26,8 @@ point_count = 3
 [sub_resource type="Resource" id="Resource_8ydkj"]
 script = ExtResource("2_lgqa7")
 dash_sound = ExtResource("2_3j4b4")
-dash_speed = 500.0
-dash_duration = 0.3
+dash_speed = 400.0
+dash_duration = 0.25
 dash_cooldown = 1.0
 invincible_during_dash = false
 lateral_control = 1.0
@@ -1609,7 +1608,7 @@ dash_data = SubResource("Resource_8ydkj")
 weapon_slots = Array[ExtResource("4_yj68g")]([SubResource("Resource_ioxgp")])
 fire_buffer_window = 0.4
 anim_data = ExtResource("2_npwbq")
-weapons = Array[ExtResource("3_uf5tr")]([ExtResource("5_8ydkj"), ExtResource("7_yj68g")])
+weapons = Array[ExtResource("3_uf5tr")]([ExtResource("5_8ydkj")])
 max_health = 3.0
 hurt_sound = ExtResource("6_je7p5")
 death_sound = ExtResource("7_fm80t")

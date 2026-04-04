@@ -32,6 +32,7 @@ var hit_mask: int = 0xFFFFFFFF:
 
 var _distance_travelled: float = 0.0
 var _trail: BulletTrail = null
+var _entered_screen: bool = false
 var _shape: CircleShape2D
 var _cast_query: PhysicsShapeQueryParameters2D
 var _rest_query: PhysicsShapeQueryParameters2D
@@ -151,6 +152,11 @@ func _get_impact_data(body: Node, impact_pos: Vector2, impact_normal: Vector2) -
 	return null
 
 
+func _on_visible_on_screen_notifier_2d_screen_entered() -> void:
+	_entered_screen = true
+
+
 func _on_visible_on_screen_notifier_2d_screen_exited() -> void:
-	_detach_trail()
-	queue_free()
+	if _entered_screen:
+		_detach_trail()
+		queue_free()

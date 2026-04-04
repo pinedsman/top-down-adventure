@@ -6,7 +6,10 @@
 [ext_resource type="PackedScene" uid="uid://cnsro8f0k7ab1" path="res://scenes/weapons/bulletTrail.tscn" id="2_yhqlu"]
 [ext_resource type="Texture2D" uid="uid://t1c2ywi6w6sj" path="res://assets/Art/weapons/weapons.png" id="3_uprv3"]
 [ext_resource type="PackedScene" uid="uid://bpxmf2n0kjgd2" path="res://scenes/weapons/muzzleflash.tscn" id="4_bm6bk"]
+[ext_resource type="AudioStream" uid="uid://d04eq4bvy3om3" path="res://assets/Sounds/dryfire.mp3" id="5_bm6bk"]
 [ext_resource type="AudioStream" uid="uid://chong44bh2h5" path="res://assets/Sounds/handgun_shoot.mp3" id="6_hsix4"]
+[ext_resource type="AudioStream" uid="uid://ci12v40kguvqx" path="res://assets/Sounds/shotgun_rechamber.mp3" id="6_uprv3"]
+[ext_resource type="AudioStream" uid="uid://cttoy8lpdgnij" path="res://assets/Sounds/weapon_deploy.mp3" id="10_i2l0j"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_twwlm"]
 atlas = ExtResource("3_uprv3")
@@ -24,6 +27,9 @@ hud_icon = SubResource("AtlasTexture_twwlm")
 bullet_scene = ExtResource("1_twwlm")
 bullet_trail_scene = ExtResource("2_yhqlu")
 shoot_sound = ExtResource("6_hsix4")
+pickup_sound = ExtResource("6_uprv3")
+dryfire_sound = ExtResource("5_bm6bk")
+swap_sound = ExtResource("10_i2l0j")
 muzzle_flash_scene = ExtResource("4_bm6bk")
 burst_delay = 0.075
 fire_shake_strength = 2.0

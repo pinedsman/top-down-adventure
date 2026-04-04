@@ -14,6 +14,9 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var bullet_scene: PackedScene
 @export var bullet_trail_scene: PackedScene
 @export var shoot_sound: AudioStream
+@export var pickup_sound: AudioStream
+@export var dryfire_sound: AudioStream
+@export var swap_sound: AudioStream
 @export var muzzle_flash_scene: PackedScene
 @export var pellet_count: int = 1
 @export var spread_angle: float = 0.0       # total cone width in degrees

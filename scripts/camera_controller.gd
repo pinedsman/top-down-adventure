@@ -9,8 +9,22 @@ class_name CameraController
 @export var zoom_in_duration: float = 0.05
 @export var zoom_out_duration: float = 0.25
 
+## Fraction of the player→aim-target vector the camera moves at look_scalar = 1.
+## 0.5 = halfway point, 1.0 = full aim-target position.
+const LOOKAHEAD_FRACTION: float = 0.25
+
+@export_group("Look-ahead")
+## Max world-unit look-ahead for gamepad at full stick deflection.
+## Also used as the fallback when the current weapon has infinite bullet range.
+@export var gamepad_lookahead_max: float = 120.0
+## 0 = camera stays on player, 1 = camera moves to halfway point between player and aim target.
+## Designed to be driven by a settings menu at runtime.
+@export_range(0.0, 1.0) var look_scalar: float = 1.0
+@export var gamepad_look_smooth_speed: float = 6.0
+
 var _shake_tween: Tween
 var _zoom_tween: Tween
+var _current_offset: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
@@ -50,6 +64,29 @@ func zoom_punch() -> void:
 	_zoom_tween = create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	_zoom_tween.tween_property(self, "zoom", Vector2.ONE * zoom_amount, zoom_in_duration).set_trans(Tween.TRANS_SINE)
 	_zoom_tween.tween_property(self, "zoom", Vector2.ONE, zoom_out_duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func _process(delta: float) -> void:
+	var player := get_parent() as Player
+	if player == null:
+		return
+
+	if InputManager.is_gamepad:
+		var target_offset := Vector2.ZERO
+		var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+		var stick_len := stick.length()
+		if stick_len > 0.01:
+			var w := player.weapon
+			var bullet_range := w.data.bullet_range if w != null and w.data.bullet_range > 0.0 else gamepad_lookahead_max
+			var look_dist := minf(bullet_range, gamepad_lookahead_max)
+			target_offset = stick.normalized() * (look_dist * LOOKAHEAD_FRACTION) * stick_len
+		_current_offset = _current_offset.lerp(target_offset, 1.0 - exp(-gamepad_look_smooth_speed * delta))
+	else:
+		var mouse_world := get_viewport().get_canvas_transform().affine_inverse() \
+				* get_viewport().get_mouse_position()
+		_current_offset = (mouse_world - player.global_position) * LOOKAHEAD_FRACTION
+
+	position = _current_offset * look_scalar
 
 
 func _setup_limits(room_root: Node = null) -> void:

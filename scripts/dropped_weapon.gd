@@ -33,6 +33,8 @@ func _process(delta: float) -> void:
 func interact(player: Player) -> void:
 	if _pickup_debounce > 0.0:
 		return
+	if weapon_data != null and weapon_data.pickup_sound != null:
+		AudioPool.play(weapon_data.pickup_sound, global_position)
 	player.pick_up_weapon(self)
 
 
