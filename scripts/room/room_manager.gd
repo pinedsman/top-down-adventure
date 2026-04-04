@@ -1,6 +1,8 @@
 extends Node
 class_name RoomManager
 
+const SPAWNER_CLEAR_RADIUS: float = 24.0
+
 signal wave_cleared
 
 var _room_data: RoomData
@@ -75,7 +77,8 @@ func _spawn_wave(wave: WaveData) -> void:
 	var list := _build_spawn_list(wave)
 	var total := list.size()
 	for i in total:
-		_spawn_enemy(list[i])
+		if not await _spawn_enemy(list[i]):
+			return  # wave was cancelled while waiting for a free spawner
 		var progress := float(i) / float(maxi(total - 1, 1))
 		var delay := wave.escalation_curve.sample(progress) if wave.escalation_curve \
 				else lerpf(2.0, 0.3, progress)
@@ -83,27 +86,50 @@ func _spawn_wave(wave: WaveData) -> void:
 			return
 
 
-func _spawn_enemy(scene: PackedScene) -> void:
-	var spawn_points: Array[Node] = []
+# Returns false if the wave was cancelled before a spawner became free.
+func _spawn_enemy(scene: PackedScene) -> bool:
+	var spawn_points: Array[Node2D] = []
 	for node in get_tree().get_nodes_in_group("spawn_points"):
 		if _room_root.is_ancestor_of(node):
-			spawn_points.append(node)
+			spawn_points.append(node as Node2D)
 
 	if spawn_points.is_empty():
 		push_warning("RoomManager: no spawn_points found in room")
-		return
+		return true  # nothing to wait on, continue wave
 
-	var spawn_point := spawn_points[randi() % spawn_points.size()]
+	# Wait until at least one spawner has no enemy standing on it.
+	var guard_version := _guard.snapshot()
+	var spawn_point: Node2D = null
+	while spawn_point == null:
+		if not _guard.is_valid(guard_version):
+			return false
+		_living_enemies = _living_enemies.filter(func(e): return is_instance_valid(e))
+		var free_points := spawn_points.filter(func(p: Node2D) -> bool:
+			return _is_spawner_free(p))
+		if not free_points.is_empty():
+			spawn_point = free_points[randi() % free_points.size()]
+		else:
+			await get_tree().physics_frame
 
 	var enemy: Node2D = scene.instantiate()
 	var ysort_nodes := get_tree().get_nodes_in_group("ysort")
 	var ysort: Node = ysort_nodes[0] if ysort_nodes.size() > 0 else _room_root
 	ysort.add_child(enemy)
-	enemy.global_position = (spawn_point as Node2D).global_position
+	enemy.global_position = spawn_point.global_position
 
 	enemy.add_to_group("enemies")
 	_living_enemies.append(enemy)
 	enemy.tree_exited.connect(_on_enemy_removed)
+	return true
+
+
+func _is_spawner_free(point: Node2D) -> bool:
+	for enemy in _living_enemies:
+		if not is_instance_valid(enemy):
+			continue
+		if (enemy as Node2D).global_position.distance_to(point.global_position) < SPAWNER_CLEAR_RADIUS:
+			return false
+	return true
 
 
 func _on_enemy_removed() -> void:

@@ -5,12 +5,24 @@
 [ext_resource type="PackedScene" uid="uid://cn4bjmxispeip" path="res://scenes/ui/heart.tscn" id="2_8qguk"]
 [ext_resource type="PackedScene" uid="uid://cirdt7ede0hqi" path="res://scenes/ui/weaponDisplay.tscn" id="3_bo48s"]
 [ext_resource type="Texture2D" uid="uid://bykugp5r0p1si" path="res://assets/Art/weapons/ammo_heal.png" id="5_gss2c"]
+[ext_resource type="Texture2D" uid="uid://dv0r0pf7dwijj" path="res://addons/input_prompts/icons/xbox/b.png" id="6_4jqwt"]
 [ext_resource type="PackedScene" uid="uid://bedu6nmn46upr" path="res://scenes/ui/interact_prompt.tscn" id="6_gss2c"]
 [ext_resource type="PackedScene" uid="uid://eisq7sd5r4gm" path="res://scenes/ui/charge_bar.tscn" id="7_h022r"]
+[ext_resource type="Script" uid="uid://f6i84c0x2tum" path="res://addons/input_prompts/action_prompt/action_prompt.gd" id="7_kicr4"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_8qguk"]
 outline_size = 2
 outline_color = Color(0, 0, 0, 1)
+
+[sub_resource type="InputEventKey" id="InputEventKey_mj13f"]
+device = -1
+physical_keycode = 81
+unicode = 113
+
+[sub_resource type="InputEventJoypadButton" id="InputEventJoypadButton_0h1do"]
+device = -1
+button_index = 1
+pressed = true
 
 [node name="HUD" type="CanvasLayer" unique_id=2071458643 groups=["hud"]]
 script = ExtResource("1_hqnrr")
@@ -23,19 +35,19 @@ position = Vector2(2, -7)
 scale = Vector2(0.05, 0.05)
 texture = ExtResource("1_0mwgc")
 
-[node name="HFlowContainer" type="HFlowContainer" parent="." unique_id=986657817]
-anchors_preset = 12
+[node name="BottomContainer" type="HBoxContainer" parent="." unique_id=1928665035]
+anchors_preset = 2
 anchor_top = 1.0
-anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
+offset_top = -48.0
+offset_right = 359.0
 grow_vertical = 0
 
-[node name="WeaponDisplay" parent="HFlowContainer" unique_id=16408162 instance=ExtResource("3_bo48s")]
+[node name="WeaponDisplay" parent="BottomContainer" unique_id=16408162 instance=ExtResource("3_bo48s")]
 custom_minimum_size = Vector2(128, 48)
 layout_mode = 2
 
-[node name="AmmoText" type="Label" parent="HFlowContainer" unique_id=1265043849]
+[node name="AmmoText" type="Label" parent="BottomContainer" unique_id=1265043849]
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -44,28 +56,50 @@ label_settings = SubResource("LabelSettings_8qguk")
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="HFlowContainer2" type="HFlowContainer" parent="HFlowContainer" unique_id=1227332557]
+[node name="HealthBottomContainer" type="HBoxContainer" parent="BottomContainer" unique_id=709424742]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 4
 
-[node name="TextureRect" type="TextureRect" parent="HFlowContainer/HFlowContainer2" unique_id=1876899699]
+[node name="TextureRect" type="TextureRect" parent="BottomContainer/HealthBottomContainer" unique_id=1876899699]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 
-[node name="HealthText" type="Label" parent="HFlowContainer/HFlowContainer2" unique_id=1253109545]
+[node name="VBoxContainer" type="VBoxContainer" parent="BottomContainer/HealthBottomContainer" unique_id=515667889]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="HealthMainContainer" type="HFlowContainer" parent="BottomContainer/HealthBottomContainer/VBoxContainer" unique_id=1374681495]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="HealthIconContainer" type="PanelContainer" parent="BottomContainer/HealthBottomContainer/VBoxContainer/HealthMainContainer" unique_id=1466831796]
+layout_mode = 2
+
+[node name="HealthIcon" type="TextureRect" parent="BottomContainer/HealthBottomContainer/VBoxContainer/HealthMainContainer/HealthIconContainer" unique_id=1533985787]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("5_gss2c")
+expand_mode = 3
+
+[node name="ActionPrompt" type="TextureRect" parent="BottomContainer/HealthBottomContainer/VBoxContainer/HealthMainContainer/HealthIconContainer" unique_id=1282898645]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 8
+texture = ExtResource("6_4jqwt")
+stretch_mode = 5
+script = ExtResource("7_kicr4")
+action = "heal"
+icon = 0
+events = Array[InputEvent]([SubResource("InputEventKey_mj13f"), SubResource("InputEventJoypadButton_0h1do")])
+metadata/_custom_type_script = "uid://f6i84c0x2tum"
+
+[node name="HealthText" type="Label" parent="BottomContainer/HealthBottomContainer/VBoxContainer/HealthMainContainer" unique_id=1253109545]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 text = "24"
 label_settings = SubResource("LabelSettings_8qguk")
 horizontal_alignment = 2
 vertical_alignment = 1
-
-[node name="HealthIcon" type="TextureRect" parent="HFlowContainer/HFlowContainer2" unique_id=1533985787]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-texture = ExtResource("5_gss2c")
-expand_mode = 3
 
 [node name="HBoxContainer" type="HFlowContainer" parent="." unique_id=102675290]
 anchors_preset = 10

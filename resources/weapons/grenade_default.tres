@@ -8,6 +8,8 @@
 [resource]
 script = ExtResource("1_apoam")
 grenade_scene = ExtResource("3_o07sb")
+explosion_inner_radius = 80.0
+explosion_outer_radius = 200.0
 inner_damage = 200.0
 outer_damage = 75.0
 self_damage_override = 1.0

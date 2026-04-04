@@ -1,7 +1,8 @@
 extends CanvasLayer
 
-@onready var health_text = $HFlowContainer/HFlowContainer2/HealthText
-@onready var weapon_display = $HFlowContainer/WeaponDisplay
+@onready var ammo_text = $BottomContainer/AmmoText
+@onready var health_text = $BottomContainer/HealthBottomContainer/VBoxContainer/HealthMainContainer/HealthText
+@onready var weapon_display = $BottomContainer/WeaponDisplay
 @onready var hbox = $HBoxContainer
 @onready var _interact_prompt: InteractPrompt = get_node_or_null("InteractPrompt")
 @onready var _charge_bar: ChargeBar = get_node_or_null("ChargeBar")
@@ -57,14 +58,14 @@ func _on_ammo_changed(ammo_type: AmmoType, current_count: int) -> void:
 		return
 		
 	if _current_weapon == null:
-		$HFlowContainer/AmmoText.text = ""
+		ammo_text.text = ""
 	elif _current_weapon.data.use_weapon_ammo:
 		# current_count is magazine rounds; -1 means infinite — hide the counter
-		$HFlowContainer/AmmoText.text = str(current_count) if current_count >= 0 else ""
+		ammo_text.text = str(current_count) if current_count >= 0 else ""
 	elif ammo_type != null && _current_weapon.ammo_type == ammo_type:
-		$HFlowContainer/AmmoText.text = str(current_count)
+		ammo_text.text = str(current_count)
 	else:
-		$HFlowContainer/AmmoText.text = ""
+		ammo_text.text = ""
 
 func _update_hp(health:int):
 	var i=0
