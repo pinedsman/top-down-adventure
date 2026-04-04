@@ -74,7 +74,7 @@ func _ready() -> void:
 		var instance := slot.weapon_data.create_instance()
 		_slot_instances.append(instance)
 		if not slot.weapon_data.use_weapon_ammo and slot.weapon_data.ammo_type != null and not _ammo.has(slot.weapon_data.ammo_type):
-			_ammo[slot.weapon_data.ammo_type] = slot.weapon_data.ammo_type.max_capacity
+			_ammo[slot.weapon_data.ammo_type] = slot.weapon_data.ammo_type.initial_amount
 		instance.fired.connect(func(dir: Vector2) -> void:
 			if instance.fire_shake_strength > 0.0:
 				_camera.shake(-dir, instance.fire_shake_strength)

@@ -11,14 +11,15 @@ class_name PickupData
 
 var _ysort: Node      # cached on first use
 
-func spawn(position: Vector2, amount:int) -> void:
+func spawn(position: Vector2, amount: int) -> Pickup:
 	assert(scene != null, "{PickupData}: scene is not set on resource '%s'" % resource_path)
-	var pickup: Node2D = scene.instantiate()
+	var pickup: Pickup = scene.instantiate()
 	_get_ysort().add_child(pickup)
-	pickup.set_pickup_data( self )
+	pickup.set_pickup_data(self)
 	pickup.amount = amount
 	pickup.global_position = position
-	pickup.rotation_degrees = randf_range(0,360)
+	pickup.rotation_degrees = randf_range(0, 360)
+	return pickup
 
 func _get_ysort() -> Node:
 	if not is_instance_valid(_ysort):

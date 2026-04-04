@@ -12,6 +12,13 @@
 [ext_resource type="PackedScene" uid="uid://c55pbs8b28i2l" path="res://scenes/ui/hud.tscn" id="8_1fn3f"]
 [ext_resource type="PackedScene" uid="uid://cqmapeibj6fa4" path="res://scenes/rooms/room1.tscn" id="9_6pgut"]
 [ext_resource type="PackedScene" uid="uid://qc5e2dol24nr" path="res://scenes/enemies/slime_spit.tscn" id="10_wsiya"]
+[ext_resource type="Resource" uid="uid://c5uvmiuoc7070" path="res://resources/pickups/pickup_ammo_heals.tres" id="12_f6xi8"]
+[ext_resource type="Script" uid="uid://2wc7slhe27dr" path="res://scripts/weapons/weapon_data.gd" id="13_xiq3u"]
+[ext_resource type="Resource" uid="uid://c0h63vebtpiqg" path="res://resources/weapons/weapon_smg.tres" id="14_oi5av"]
+[ext_resource type="Resource" uid="uid://cuetixx0bifap" path="res://resources/weapons/weapon_burst.tres" id="15_yx2gv"]
+[ext_resource type="Resource" uid="uid://d3wgakbrx0nfv" path="res://resources/weapons/weapon_shotgun.tres" id="16_t8l1u"]
+[ext_resource type="Resource" uid="uid://bam6vkjb46yeg" path="res://resources/weapons/weapon_grenade.tres" id="17_73aca"]
+[ext_resource type="Resource" uid="uid://jheygwiu804r" path="res://resources/weapons/weapon_handgun.tres" id="18_bihpf"]
 [ext_resource type="PackedScene" uid="uid://cyh51ay5pd7qa" path="res://scenes/player/player.tscn" id="19_fr7yn"]
 [ext_resource type="PackedScene" uid="uid://8wdbj7fy3qf" path="res://scenes/ui/wave_overlay.tscn" id="19_gokfg"]
 
@@ -55,6 +62,9 @@ script = ExtResource("1_6ub6g")
 rooms = Array[ExtResource("2_1fn3f")]([SubResource("Resource_7v6n1"), SubResource("Resource_xn44v")])
 wave_sets = Array[ExtResource("7_j3475")]([SubResource("Resource_ail11")])
 overlay = NodePath("WaveOverlay")
+reward_health_pickup = ExtResource("12_f6xi8")
+reward_health_amount = 1
+reward_weapon_pool = Array[ExtResource("13_xiq3u")]([ExtResource("14_oi5av"), ExtResource("15_yx2gv"), ExtResource("16_t8l1u"), ExtResource("17_73aca"), ExtResource("18_bihpf")])
 
 [node name="RoomContainer" type="Node2D" parent="." unique_id=2122102425]
 

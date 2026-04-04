@@ -296,3 +296,14 @@ collision_mask = 0
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1686678690]
 position = Vector2(496, 328)
 shape = SubResource("RectangleShape2D_6bky5")
+
+[node name="Node2D" type="Node2D" parent="." unique_id=1603729760]
+position = Vector2(496, 424)
+
+[node name="Marker2D" type="Marker2D" parent="Node2D" unique_id=1806484747 groups=["reward_spawn"]]
+
+[node name="Marker2D3" type="Marker2D" parent="Node2D" unique_id=63644406 groups=["reward_spawn"]]
+position = Vector2(-48, 0)
+
+[node name="Marker2D2" type="Marker2D" parent="Node2D" unique_id=1390770619 groups=["reward_spawn"]]
+position = Vector2(48, 0)

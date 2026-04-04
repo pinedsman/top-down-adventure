@@ -6,5 +6,6 @@
 [resource]
 script = ExtResource("1_l1bpg")
 max_capacity = 3
+initial_amount = 1
 icon = ExtResource("1_e4oo3")
 metadata/_custom_type_script = "uid://b3yih4soy3jb7"

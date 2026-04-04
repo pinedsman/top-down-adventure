@@ -41,14 +41,14 @@ func interact(player: Player) -> void:
 func get_prompt_text(player: Player) -> String:
 	if weapon_data == null:
 		return ""
-	return weapon_data.weapon_name
+	return "%s x%d" % [weapon_data.weapon_name, saved_magazine]
 
 
 # — Static factory —
 
 # Spawns a DroppedWeapon at player_position and tweens it to rest_position.
 # magazine: current ammo on the weapon being dropped (-1 = infinite).
-static func spawn(data: WeaponData, magazine: int, player_position: Vector2, rest_position: Vector2) -> void:
+static func spawn(data: WeaponData, magazine: int, player_position: Vector2, rest_position: Vector2) -> DroppedWeapon:
 	var scene: PackedScene = load(DROP_SCENE)
 	assert(scene != null, "DroppedWeapon: could not load scene at " + DROP_SCENE)
 
@@ -66,3 +66,4 @@ static func spawn(data: WeaponData, magazine: int, player_position: Vector2, res
 	var tween := instance.create_tween()
 	tween.tween_property(instance, "global_position", rest_position, 0.3) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	return instance
