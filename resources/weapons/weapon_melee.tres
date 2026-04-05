@@ -26,6 +26,5 @@ swipe_fx_scene = ExtResource("4_v5npp")
 script = ExtResource("1_kwbjt")
 swings = Array[ExtResource("2_swing")]([SubResource("SwingData_1")])
 hud_icon = SubResource("AtlasTexture_v5npp")
-show_laser = false
 use_weapon_ammo = false
 blocks_other_weapons = true

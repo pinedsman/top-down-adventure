@@ -27,7 +27,7 @@ script = ExtResource("2_1fn3f")
 scene = ExtResource("5_7v6n1")
 metadata/_custom_type_script = "uid://b2vg2h2djitpv"
 
-[sub_resource type="Resource" id="Resource_xn44v"]
+[sub_resource type="Resource" id="Resource_oi5av"]
 script = ExtResource("2_1fn3f")
 scene = ExtResource("9_6pgut")
 metadata/_custom_type_script = "uid://b2vg2h2djitpv"
@@ -74,7 +74,7 @@ waves = Array[ExtResource("5_wo1e6")]([SubResource("Resource_75gqj"), SubResourc
 
 [node name="WaveMode" type="Node2D" unique_id=1739105418 node_paths=PackedStringArray("overlay")]
 script = ExtResource("1_6ub6g")
-rooms = Array[ExtResource("2_1fn3f")]([SubResource("Resource_7v6n1"), SubResource("Resource_xn44v")])
+rooms = Array[ExtResource("2_1fn3f")]([SubResource("Resource_7v6n1"), SubResource("Resource_oi5av")])
 wave_sets = Array[ExtResource("7_j3475")]([SubResource("Resource_ail11")])
 overlay = NodePath("WaveOverlay")
 reward_health_pickup = ExtResource("12_f6xi8")

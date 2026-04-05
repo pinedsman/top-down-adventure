@@ -10,10 +10,10 @@
 [ext_resource type="Resource" uid="uid://c80q0fllawtsf" path="res://resources/weapons/weapon_melee.tres" id="4_lgqa7"]
 [ext_resource type="Texture2D" uid="uid://dfjggm4jqbonb" path="res://assets/Characters/Temp/Walk/walk.png" id="4_npwbq"]
 [ext_resource type="Script" uid="uid://tlqya2t3eaay" path="res://scripts/weapons/weapon_slot_data.gd" id="4_yj68g"]
-[ext_resource type="Resource" uid="uid://jheygwiu804r" path="res://resources/weapons/weapon_handgun.tres" id="5_8ydkj"]
 [ext_resource type="AudioStream" uid="uid://bi1px5q0h0fkw" path="res://assets/Sounds/hurt.mp3" id="6_je7p5"]
 [ext_resource type="Resource" uid="uid://fblcgsdbxvev" path="res://resources/weapons/ability_heal.tres" id="6_lgqa7"]
 [ext_resource type="AudioStream" uid="uid://jbmf8l3laeu7" path="res://assets/Sounds/death.mp3" id="7_fm80t"]
+[ext_resource type="Resource" uid="uid://d3wgakbrx0nfv" path="res://resources/weapons/weapon_shotgun.tres" id="9_kvlxm"]
 [ext_resource type="Resource" uid="uid://dngp84241gpk" path="res://resources/impacts/player_hit_impact.tres" id="10_myrg7"]
 [ext_resource type="Texture2D" uid="uid://c00kmd3rvm2ii" path="res://assets/Characters/Temp/Dash/Dash.png" id="14_8ydkj"]
 [ext_resource type="Script" uid="uid://dcol5whqb0c85" path="res://scripts/camera_controller.gd" id="14_ugbui"]
@@ -25,7 +25,7 @@ point_count = 3
 [sub_resource type="Resource" id="Resource_8ydkj"]
 script = ExtResource("2_lgqa7")
 dash_sound = ExtResource("2_3j4b4")
-dash_speed = 400.0
+dash_speed = 300.0
 dash_duration = 0.25
 dash_cooldown = 1.0
 invincible_during_dash = false
@@ -1600,6 +1600,7 @@ radius = 6.0
 collision_layer = 4
 collision_mask = 3
 script = ExtResource("1_524rm")
+SPEED = 150.0
 invulnerability_duration = 0.5
 hit_duration = 0.2
 aim_assist_mask = 2
@@ -1607,7 +1608,7 @@ dash_data = SubResource("Resource_8ydkj")
 weapon_slots = Array[ExtResource("4_yj68g")]([SubResource("Resource_ioxgp"), SubResource("Resource_3j4b4")])
 fire_buffer_window = 0.4
 anim_data = ExtResource("2_npwbq")
-weapons = Array[ExtResource("3_uf5tr")]([ExtResource("5_8ydkj")])
+weapons = Array[ExtResource("3_uf5tr")]([ExtResource("9_kvlxm")])
 max_health = 3.0
 hurt_sound = ExtResource("6_je7p5")
 death_sound = ExtResource("7_fm80t")

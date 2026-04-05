@@ -41,16 +41,15 @@ func take_damage(amount: float, knockback_direction: Vector2 = Vector2.ZERO, imp
 	if same_shot:
 		_knockback_velocity += knockback_direction * scale
 		_on_take_damage(true, knockback_direction, impact_position)
-		return
-
-	if hurt_sound:
-		AudioPool.play(hurt_sound, global_position)
-	_knockback_velocity = knockback_direction * scale
-	_apply_hit_flash()
-	_spawn_hit_impact(impact_position)
-	if hit_stop_duration > 0.0:
-		HitStop.request(hit_stop_duration)
-	_on_take_damage(false, knockback_direction, impact_position)
+	else:
+		if hurt_sound:
+			AudioPool.play(hurt_sound, global_position)
+		_knockback_velocity = knockback_direction * scale
+		_apply_hit_flash()
+		_spawn_hit_impact(impact_position)
+		if hit_stop_duration > 0.0:
+			HitStop.request(hit_stop_duration)
+		_on_take_damage(false, knockback_direction, impact_position)
 
 	if _health <= 0.0:
 		die()

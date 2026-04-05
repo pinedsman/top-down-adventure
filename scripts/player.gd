@@ -1,7 +1,7 @@
 extends CharacterBase
 class_name Player
 
-const SPEED = 100.0
+@export var SPEED: float = 100.0
 const MAX_PRIMARY_SLOTS: int = 2
 const DROP_OFFSET: float = 24.0   # world units in front of player where weapon lands
 const SPREAD_ARC_SCENE := preload("res://scenes/weapons/spread_arc.tscn")

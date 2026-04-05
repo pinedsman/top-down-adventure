@@ -17,7 +17,6 @@ region = Rect2(508.64, 334.19, 128, 64)
 
 [resource]
 script = ExtResource("1_2h7iq")
-fire_rate = 0.3
 damage = 25.0
 bullet_speed = 800.0
 knockback_force = 50.0
@@ -33,8 +32,10 @@ muzzle_flash_scene = ExtResource("5_jt3xv")
 fire_shake_strength = 3.0
 bullet_spread = 5.0
 movement_spread_max = 5.0
-kick_per_shot = 2.0
-kick_spread_cap = 10.0
+kick_per_shot = 3.0
+kick_spread_cap = 5.0
+kick_recovery_delay = 0.25
+kick_recovery_rate = 20.0
 aim_assist_angle = 20.0
 aim_assist_range = 350.0
 aim_assist_strength = 0.5

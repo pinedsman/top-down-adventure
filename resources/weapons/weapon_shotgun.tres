@@ -17,7 +17,7 @@ region = Rect2(122.04, 156.065, 128, 64)
 [resource]
 script = ExtResource("1_ysvph")
 fire_rate = 0.5
-damage = 20.0
+damage = 15.0
 knockback_force = 100.0
 bullet_range = 100.0
 hud_icon = SubResource("AtlasTexture_uehe1")
