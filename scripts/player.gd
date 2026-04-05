@@ -19,6 +19,7 @@ const SPREAD_ARC_SCENE := preload("res://scenes/weapons/spread_arc.tscn")
 @export_flags_2d_physics var interact_los_mask: int = 1
 
 signal weapon_changed(weapon: Weapon)
+signal weapon_magazine_changed(weapon:Weapon, current: int)
 signal ammo_changed(ammo_type: AmmoType, current: int)
 signal interactable_focused(target: Interactable)
 
@@ -120,15 +121,6 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if OS.is_debug_build() and event.is_action_pressed("ui_end"):  # End key
-		take_damage(1.0, Vector2.from_angle(randf() * TAU))
-		return
-	if OS.is_debug_build() and event.is_action_pressed("ui_home"):  # Home key
-		for enemy in get_tree().get_nodes_in_group("enemies"):
-			if enemy.has_method("die"):
-				enemy.die()
-		return
-
 	if event.is_action_pressed("interact"):
 		if _focused_interactable != null:
 			_focused_interactable.interact(self)
@@ -274,7 +266,7 @@ func _on_weapon_fired(direction: Vector2) -> void:
 func _spend_ammo(w: Weapon) -> void:
 	if w.data.use_weapon_ammo:
 		w.spend_magazine_ammo()
-		ammo_changed.emit(w.ammo_type, w.magazine_ammo())
+		weapon_magazine_changed.emit(w, w.magazine_ammo())
 	elif w.ammo_type != null:
 		_ammo[w.ammo_type] = maxi(_ammo.get(w.ammo_type, 0) - 1, 0)
 		ammo_changed.emit(w.ammo_type, _ammo[w.ammo_type])
@@ -304,7 +296,7 @@ func _tick_hit_state(delta: float) -> void:
 func _update_aim(delta: float) -> void:
 	var target: Vector2 = Vector2.ZERO
 	if InputManager.is_gamepad:
-		var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+		var stick := InputManager.get_aim_vector()
 		if stick.length() > 0.0:
 			target = stick.normalized()
 	else:
@@ -404,7 +396,7 @@ func _apply_aim_assist(delta: float) -> void:
 # — Dash —
 
 func _start_dash() -> void:
-	var move_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var move_input := InputManager.get_move_vector()
 	var dash_dir := move_input.normalized() if move_input.length() > 0.01 else _aim_direction
 	_is_dashing = true
 	_dash_direction = dash_dir
@@ -450,7 +442,7 @@ func _apply_dash_steering() -> void:
 	var control_scale := dash_data.control_curve.sample(progress) \
 			if dash_data.control_curve else progress
 
-	var move_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var move_input := InputManager.get_move_vector()
 	var fwd := _dash_direction
 	var lat := fwd.orthogonal()
 
@@ -471,7 +463,7 @@ func _end_dash() -> void:
 	if dash_data.invincible_during_dash:
 		set_deferred("collision_layer", _saved_collision_layer)
 	_on_input_mode_changed(InputManager.is_gamepad)
-	if Input.is_action_pressed("shoot"):
+	if InputManager.is_action_pressed("shoot"):
 		_fire_held = true
 
 
@@ -493,7 +485,7 @@ func _update_spread_arc_visibility() -> void:
 # — Spread arc —
 
 func _update_weapon_movement_ratio() -> void:
-	var ratio := Input.get_vector("move_left", "move_right", "move_up", "move_down").length()
+	var ratio := InputManager.get_move_vector().length()
 	for inst: Weapon in _weapon_instances:
 		inst.set_movement_ratio(ratio)
 	for inst: Weapon in _slot_instances:
@@ -562,7 +554,7 @@ func take_ammo(ammo_type: AmmoType, amount: int) -> int:
 	return delta
 
 func _on_hit_stop_ended() -> void:
-	if not Input.is_action_pressed("shoot"):
+	if not InputManager.is_action_pressed("shoot"):
 		_fire_held = false
 
 
@@ -581,7 +573,7 @@ func player_movement(_delta: float) -> void:
 		var _cw := get_charging_weapon()
 		if _cw != null:
 			speed_scale *= _cw.data.charge_move_speed_scale
-		velocity = Input.get_vector("move_left", "move_right", "move_up", "move_down") * SPEED * speed_scale
+		velocity = InputManager.get_move_vector() * SPEED * speed_scale
 	move_and_slide()
 	for i in get_slide_collision_count():
 		var collision = get_slide_collision(i)
@@ -751,6 +743,36 @@ func pick_up_weapon(dropped: DroppedWeapon) -> void:
 	dropped.queue_free()
 	_focused_interactable = null
 	interactable_focused.emit(null)
+
+
+func give_weapon(data: WeaponData) -> void:
+	var new_instance := data.create_instance()
+	if not data.use_weapon_ammo and data.ammo_type != null and not _ammo.has(data.ammo_type):
+		_ammo[data.ammo_type] = data.ammo_type.max_capacity
+		ammo_changed.emit(data.ammo_type, _ammo[data.ammo_type])
+
+	var empty_index := -1
+	for i in mini(weapons.size(), MAX_PRIMARY_SLOTS):
+		if weapons[i] == null:
+			empty_index = i
+			break
+	if empty_index == -1 and weapons.size() < MAX_PRIMARY_SLOTS:
+		empty_index = weapons.size()
+
+	if empty_index >= 0:
+		if empty_index < weapons.size():
+			weapons[empty_index] = data
+			_weapon_instances[empty_index] = new_instance
+		else:
+			weapons.append(data)
+			_weapon_instances.append(new_instance)
+		_weapon_index = empty_index
+	else:
+		weapons[_weapon_index] = data
+		_weapon_instances[_weapon_index] = new_instance
+
+	_connect_weapon(new_instance)
+	weapon_changed.emit(weapon)
 
 
 # — Room transitions —

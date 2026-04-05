@@ -25,3 +25,21 @@ func _input(event: InputEvent) -> void:
 		is_gamepad = true
 	elif event is InputEventKey or event is InputEventMouseButton or event is InputEventMouseMotion:
 		is_gamepad = false
+
+
+func get_move_vector() -> Vector2:
+	if Console.is_visible():
+		return Vector2.ZERO
+	return Input.get_vector("move_left", "move_right", "move_up", "move_down")
+
+
+func get_aim_vector() -> Vector2:
+	if Console.is_visible():
+		return Vector2.ZERO
+	return Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+
+
+func is_action_pressed(action: StringName) -> bool:
+	if Console.is_visible():
+		return false
+	return Input.is_action_pressed(action)

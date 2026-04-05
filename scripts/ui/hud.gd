@@ -18,6 +18,7 @@ func _ready() -> void:
 		_heal_weapon = player.get_slot_weapon("heal")
 		player.weapon_changed.connect(_on_weapon_changed)
 		player.ammo_changed.connect(_on_ammo_changed)
+		player.weapon_magazine_changed.connect(_on_magazine_changed)
 		player.health_changed.connect(_on_health_changed)
 		player.interactable_focused.connect(_on_interactable_focused)
 		_on_weapon_changed(player.weapon)
@@ -52,6 +53,10 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 	else:
 		_on_ammo_changed(null, 0)
 
+func _on_magazine_changed(weapon: Weapon, current_count: int) -> void:
+	if weapon == _current_weapon and not _current_weapon == null: 
+		ammo_text.text = str(current_count)
+
 func _on_ammo_changed(ammo_type: AmmoType, current_count: int) -> void:
 	if ammo_type == _heal_weapon.data.ammo_type:
 		health_text.text = str(player.get_ammo(ammo_type))
@@ -60,8 +65,7 @@ func _on_ammo_changed(ammo_type: AmmoType, current_count: int) -> void:
 	if _current_weapon == null:
 		ammo_text.text = ""
 	elif _current_weapon.data.use_weapon_ammo:
-		# current_count is magazine rounds; -1 means infinite — hide the counter
-		ammo_text.text = str(current_count) if current_count >= 0 else ""
+		return
 	elif ammo_type != null && _current_weapon.ammo_type == ammo_type:
 		ammo_text.text = str(current_count)
 	else:

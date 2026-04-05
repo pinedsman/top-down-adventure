@@ -13,7 +13,7 @@
 [ext_resource type="AudioStream" uid="uid://bi1px5q0h0fkw" path="res://assets/Sounds/hurt.mp3" id="6_je7p5"]
 [ext_resource type="Resource" uid="uid://fblcgsdbxvev" path="res://resources/weapons/ability_heal.tres" id="6_lgqa7"]
 [ext_resource type="AudioStream" uid="uid://jbmf8l3laeu7" path="res://assets/Sounds/death.mp3" id="7_fm80t"]
-[ext_resource type="Resource" uid="uid://d3wgakbrx0nfv" path="res://resources/weapons/weapon_shotgun.tres" id="9_kvlxm"]
+[ext_resource type="Resource" uid="uid://jheygwiu804r" path="res://resources/weapons/weapon_handgun.tres" id="9_kvlxm"]
 [ext_resource type="Resource" uid="uid://dngp84241gpk" path="res://resources/impacts/player_hit_impact.tres" id="10_myrg7"]
 [ext_resource type="Texture2D" uid="uid://c00kmd3rvm2ii" path="res://assets/Characters/Temp/Dash/Dash.png" id="14_8ydkj"]
 [ext_resource type="Script" uid="uid://dcol5whqb0c85" path="res://scripts/camera_controller.gd" id="14_ugbui"]
