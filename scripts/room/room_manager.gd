@@ -115,6 +115,8 @@ func _spawn_enemy(scene: PackedScene) -> bool:
 	var ysort: Node = ysort_nodes[0] if ysort_nodes.size() > 0 else _room_root
 	ysort.add_child(enemy)
 	enemy.global_position = spawn_point.global_position
+	if enemy is EnemyBase:
+		enemy.begin_spawn()
 
 	enemy.add_to_group("enemies")
 	_living_enemies.append(enemy)

@@ -11,6 +11,7 @@ var _active_behavior: EnemyBehavior
 var _player_cache: CharacterBase
 var _muzzle: Marker2D
 var _nav_agent: NavigationAgent2D
+var _is_spawning: bool = false
 
 
 func _ready() -> void:
@@ -25,6 +26,8 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _is_spawning:
+		return
 	if _knockback_velocity != Vector2.ZERO:
 		velocity = _knockback_velocity
 		_knockback_velocity = lerp(_knockback_velocity, Vector2.ZERO, 0.2)
@@ -38,6 +41,10 @@ func _physics_process(delta: float) -> void:
 
 
 # — CharacterBase overrides —
+
+func _can_take_damage() -> bool:
+	return not _is_spawning
+
 
 func _get_knockback_scale() -> float:
 	return knockback_scale
@@ -92,6 +99,8 @@ func face(direction: Vector2) -> void:
 
 
 func shoot_weapon(index: int, target_pos: Vector2) -> void:
+	if _is_spawning:
+		return
 	assert(index >= 0 and index < _weapon_instances.size(),
 		"EnemyBase: weapon index %d out of range (have %d weapons)" % [index, _weapon_instances.size()])
 	assert(_muzzle != null,
@@ -126,8 +135,24 @@ func _tick_all_weapons(delta: float) -> void:
 		w.tick(delta)
 
 
+func begin_spawn() -> void:
+	_is_spawning = true
+	$CollisionShape2D.set_deferred("disabled", true)
+	var sprite := $AnimatedSprite2D as AnimatedSprite2D
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation("spawn"):
+		sprite.play("spawn")
+		sprite.animation_finished.connect(_end_spawn, CONNECT_ONE_SHOT)
+	else:
+		_end_spawn()
+
+
+func _end_spawn() -> void:
+	_is_spawning = false
+	$CollisionShape2D.set_deferred("disabled", false)
+
+
 func _update_facing_animation() -> void:
-	if anim_data == null or _is_dead:
+	if anim_data == null or _is_dead or _is_spawning:
 		return
 	var state := "walk" if (velocity.length_squared() > 1.0 && velocity.normalized().dot(_facing) > 0.0 ) else "idle"
 	if not anim_data.has_state(state):
