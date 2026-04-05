@@ -14,12 +14,12 @@
 outline_size = 2
 outline_color = Color(0, 0, 0, 1)
 
-[sub_resource type="InputEventKey" id="InputEventKey_mj13f"]
+[sub_resource type="InputEventKey" id="InputEventKey_4jqwt"]
 device = -1
 physical_keycode = 81
 unicode = 113
 
-[sub_resource type="InputEventJoypadButton" id="InputEventJoypadButton_0h1do"]
+[sub_resource type="InputEventJoypadButton" id="InputEventJoypadButton_kicr4"]
 device = -1
 button_index = 1
 pressed = true
@@ -90,7 +90,7 @@ stretch_mode = 5
 script = ExtResource("7_kicr4")
 action = "heal"
 icon = 0
-events = Array[InputEvent]([SubResource("InputEventKey_mj13f"), SubResource("InputEventJoypadButton_0h1do")])
+events = Array[InputEvent]([SubResource("InputEventKey_4jqwt"), SubResource("InputEventJoypadButton_kicr4")])
 metadata/_custom_type_script = "uid://f6i84c0x2tum"
 
 [node name="HealthText" type="Label" parent="BottomContainer/HealthBottomContainer/VBoxContainer/HealthMainContainer" unique_id=1253109545]

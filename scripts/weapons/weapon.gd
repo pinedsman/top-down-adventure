@@ -4,6 +4,8 @@ class_name Weapon
 # Runtime instance wrapping a WeaponData config resource.
 # One Weapon is created per character per weapon slot — never shared.
 
+static var _ysort_cache: Node = null
+
 var data: WeaponData
 
 var _cooldown: float = 0.0
@@ -284,7 +286,7 @@ func _spawn_bullet(muzzle: Marker2D, direction: Vector2, shot_id: int, shooter: 
 		return
 	var bullet := data.bullet_scene.instantiate()
 	bullet.trail_scene = data.bullet_trail_scene
-	_get_ysort(muzzle).add_child(bullet)
+	_get_ysort().add_child(bullet)
 	bullet.global_position = muzzle.global_position
 	bullet.direction = direction
 	bullet.damage = data.damage * charge
@@ -302,11 +304,12 @@ func _spawn_grenade(muzzle: Marker2D, direction: Vector2, shot_id: int, shooter:
 	assert(data.grenade_data.grenade_scene != null, "Weapon: grenade_data.grenade_scene not set")
 	var grenade := data.grenade_data.grenade_scene.instantiate()
 	grenade.init(data.grenade_data, direction, data.bullet_speed, shooter, shot_id)
-	_get_ysort(muzzle).add_child(grenade)
+	_get_ysort().add_child(grenade)
 	grenade.global_position = muzzle.global_position
 
 
-func _get_ysort(muzzle: Marker2D) -> Node:
-	var ysort := muzzle.get_tree().get_first_node_in_group("ysort")
-	assert(ysort != null, "Weapon: no node in group 'ysort'")
-	return ysort
+func _get_ysort() -> Node:
+	if not is_instance_valid(_ysort_cache):
+		_ysort_cache = (Engine.get_main_loop() as SceneTree).get_first_node_in_group("ysort")
+		assert(_ysort_cache != null, "Weapon: no node in group 'ysort'")
+	return _ysort_cache

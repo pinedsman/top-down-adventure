@@ -357,11 +357,50 @@ Extends `Camera2D`. **Bounds** are read from an `Area2D` node in the `"camera_bo
 
 ### 12. Pickup System
 
-**`PickupData`** (`Resource`): `scene`, `ammo_type`, `pickup_sound`, `pickup_texture`, `offset`, `scale`. `spawn(position, amount)` instances into `ysort` group.
+**`PickupData`** (`Resource`): `scene`, `ammo_type`, `display_name`, `pickup_sound`, `pickup_texture`, `offset`, `scale`. `spawn(position, amount) -> Pickup` instances into `ysort` group.
 
-**`Pickup`** (Area2D): `body_entered` → `player.add_ammo(data.ammo_type, amount)`, plays sound, `queue_free`.
+**`Pickup`** (extends `Interactable`): Player-initiated via `interact(player)`. Calls `player.add_ammo`, plays sound, frees itself. `get_prompt_text(player)` returns `"<name> x<amount>"` or `"<name> Full"` based on current ammo.
 
-### 13. Wave/Room System
+### 13. Weapon Ability System
+
+**`WeaponAbility`** (`Resource`) — base class for custom weapon behaviour. Virtual hooks:
+
+| Hook | When called |
+|---|---|
+| `can_execute(shooter, weapon) -> bool` | Before firing/charging starts. Return `false` to block. |
+| `on_fire_prevented(shooter, weapon)` | When `can_execute` returned `false`. |
+| `on_charge_cancelled(shooter, weapon)` | When charge is cancelled before firing. |
+| `execute(shooter, weapon, charge)` | On fire; `charge` is 0–1. |
+
+**`HealAbility`** extends `WeaponAbility`. `can_execute` blocks when shooter is at full health. `execute` calls `character.heal(heal_amount)`. `on_fire_prevented` plays a denial sound. `on_charge_cancelled` refunds one ammo.
+
+If `WeaponData.ability` is set, `_fire_with_charge` routes to `ability.execute()` instead of spawning bullets/grenades.
+
+---
+
+### 14. Charge Weapon System
+
+Enabled when `WeaponData.charge_time > 0.0`. Three modes via `ChargeMode` enum:
+
+| Mode | Behaviour |
+|---|---|
+| `HOLD_TO_CHARGE_FIRE_ON_RELEASE` | Release button fires (or cancels if not full and `fire_on_partial_charge` is false). |
+| `HOLD_TO_CHARGE_AUTOFIRE` | Fires automatically when full; hold is optional. |
+| `AUTO_CHARGE` | Charges on its own; fires automatically when full. Button input ignored. |
+
+**Charge state on `Weapon`:** `_is_charging`, `_charge` (0–1), `_charge_muzzle`, `_charge_direction`, `_charge_shooter`. `start_charge` / `release_charge` / `cancel_charge` / `_execute_charge_fire`.
+
+**Charge FX:** `WeaponData.charge_fx_scene` spawned as a child of the muzzle while charging; `WeaponData.charge_loop_sound` played via `AudioStreamPlayer2D` on the muzzle.
+
+**Charge bar UI:** `ChargeBar` (CanvasLayer in HUD) follows the player via `get_viewport().get_canvas_transform()`. Polled every frame by `hud.gd` via `player.get_charging_weapon()`.
+
+**Movement/aim slow:** `WeaponData.charge_move_speed_scale` and `charge_turn_speed_scale` (both 0–1) applied in `player.gd` while charging.
+
+**Blocking:** `WeaponData.blocks_other_weapons` / `blocks_dash` — while charging, `is_blocking()` / `is_blocking_dash()` return `true`. `Player._slot_blocking_fire()` checks all slot instances; primary fire and dash are gated behind it.
+
+---
+
+### 15. Wave/Room System
 
 The game runs an infinite loop of rooms with enemy waves. A persistent outer scene (`game.tscn`) contains `WaveModeManager`; room scenes are loaded into `RoomContainer` and freed on completion.
 
@@ -370,13 +409,15 @@ The game runs an infinite loop of rooms with enemy waves. A persistent outer sce
 | Group | Who uses it |
 |---|---|
 | `"player"` | WaveModeManager (find persistent player to reparent) |
-| `"ysort"` | WaveModeManager (reparent destination), RoomManager (spawn target) |
+| `"ysort"` | WaveModeManager (reparent destination), RoomManager (spawn target), Weapon (bullet/grenade parent) |
 | `"player_spawn"` | WaveModeManager (position player on room load) |
 | `"camera"` | WaveModeManager (call `refresh_limits`) |
 | `"camera_bounds"` | CameraController (read room rect) |
-| `"spawn_points"` | RoomManager (random enemy spawn positions) |
+| `"spawn_points"` | RoomManager (random enemy spawn positions; occupancy-checked before use) |
+| `"reward_spawn"` | WaveModeManager (wave reward pickup positions; `Node2D` markers placed by designers) |
 | `"enemies"` | Added to spawned enemies; debug kill-all uses this |
 | `"exit_door_blocker"` | RoomManager.unlock_exit() — freed on room clear |
+| `"interactable"` | Player (scans for nearby interactables each frame) |
 
 #### Resources
 
@@ -401,7 +442,9 @@ Regular Node child of `game.tscn`. Owns `rooms: Array[RoomData]` and `wave_sets:
 4. Reparent persistent player into new room's `ysort` node; position at `player_spawn`
 5. Call `camera.refresh_limits(room_scene)`
 6. Create `RoomManager`, call `room_manager.init(room_data, wave_set.waves, room_scene)`
-7. Run `_run_wave_sequence`: fade in → "Wave N" splash → per-wave spawn+clear loop → "Wave Complete" → fade out → unlock exit → advance index → repeat
+7. Run `_run_wave_sequence`: fade in → "Wave N" splash → per-wave spawn+clear loop → "Wave Complete" → spawn rewards → wait for pickup → fade out → unlock exit → advance index → repeat
+
+**Wave rewards:** After the last wave completes, `_spawn_wave_rewards()` finds all `Node2D` nodes in the `"reward_spawn"` group that are descendants of the current room scene. They are sorted left-to-right; up to 3 are used. Assignment: 1 marker = health only; 2 markers = health + weapon; 3+ markers = weapon | health | weapon. `_wait_for_one_reward_pickup(rewards)` connects to `tree_exiting` on each reward; whichever is picked up first triggers cleanup of the rest and unblocks the coroutine. Exports: `reward_health_pickup: PickupData`, `reward_health_amount: int`, `reward_weapon_pool: Array[WeaponData]`.
 
 #### `RoomManager` (`scripts/room/room_manager.gd`)
 
@@ -413,7 +456,7 @@ Added as a child of the room scene root at runtime. Public API:
 
 **Flag application:** For each `RoomFlag`, finds nodes in group `flag.flag_id` that are descendants of `_room_root`, sets `visible` and `process_mode`.
 
-**Enemy spawning:** `_build_spawn_list` fills guaranteed spawns then budget-weighted random picks. `_spawn_enemy` picks a random `spawn_points` marker, instantiates into `ysort`, adds to `"enemies"` group, connects `tree_exited` → `_on_enemy_removed`.
+**Enemy spawning:** `_build_spawn_list` fills guaranteed spawns then budget-weighted random picks. `_spawn_enemy(scene) -> bool` (async) waits until a spawn point has no living enemy within `SPAWNER_CLEAR_RADIUS = 24.0` pixels, then instantiates into `ysort`, adds to `"enemies"` group, connects `tree_exited` → `_on_enemy_removed`. Returns `false` if the `CoroutineGuard` version changed (wave cancelled) while waiting for a free spawner.
 
 **Escalation delay:** `wave.escalation_curve.sample(progress)` if set; else `lerpf(2.0, 0.3, progress)` — faster spawning as wave fills.
 
@@ -423,11 +466,18 @@ Added as a child of the room scene root at runtime. Public API:
 
 #### `CoroutineGuard` (`scripts/room/coroutine_guard.gd`)
 
-`RefCounted`. Version counter incremented on `start()` / `cancel()`. `wait(duration) -> bool` awaits a timer then returns `true` only if the version hasn't changed — prevents stale coroutine continuations after room reload.
+`RefCounted`. Version counter incremented on `start()` / `cancel()`.
+- `wait(duration) -> bool` — awaits a timer, returns `true` only if version unchanged
+- `snapshot() -> int` — captures current version without waiting
+- `is_valid(version) -> bool` — checks whether a snapshot is still current; used by `_spawn_enemy` to bail out of frame-by-frame spawner waits without a timer
 
-### 14. HUD
+### 16. HUD
 
-Connects to `player.health_changed`, `player.weapon_changed`, `player.ammo_changed` via `"player"` group. Lives in `game.tscn` (persistent — not recreated per room).
+Connects to `player.health_changed`, `player.weapon_changed`, `player.ammo_changed`, `player.interactable_focused` via the `"player"` group. Lives in `game.tscn` (persistent — not recreated per room).
+
+**InteractPrompt** (`scripts/ui/interact_prompt.gd`, CanvasLayer child of HUD): shown/hidden by `_on_interactable_focused`. Follows the interactable's world position each frame via `get_viewport().get_canvas_transform()`.
+
+**ChargeBar** (`scripts/ui/charge_bar.gd`, CanvasLayer child of HUD): polled every frame — visible when `player.get_charging_weapon()` is non-null. Follows the player's world position via canvas transform. Offset `ABOVE_OFFSET = Vector2(0, -28)` positions it above the player.
 
 ---
 
@@ -490,8 +540,18 @@ Slot `input_action` strings are set per `WeaponSlotData` resource — no hardcod
 | Room flags (conditional scene elements) | Complete |
 | Wave overlay (fade/splash screens) | Complete |
 | Player state persistence across rooms | Complete |
-| HUD (health, weapon icon) | Basic |
-| Ammo HUD | Implemented, needs wiring |
+| Camera look-ahead (mouse + gamepad) | Complete |
+| Weapon pickup sound, dryfire sound, swap sound | Complete |
+| Interact prompt UI (follows interactable world pos) | Complete |
+| Weapon ability system (`WeaponAbility` resource) | Complete |
+| Heal ability (`HealAbility`) | Complete |
+| Charge weapon system (hold/auto/fire-on-release) | Complete |
+| Charge bar UI | Complete |
+| Blocking system (`is_blocking`, `is_blocking_dash`) | Complete |
+| Ammo pickups as interactables | Complete |
+| Wave reward spawning (3 pickups, designer-placed markers) | Complete |
+| Spawner occupancy check (no enemy on top) | Complete |
+| HUD (health, weapon icon, ammo, interact prompt) | Complete |
 | Enemy weapons (non-grunt) | Implemented, not configured |
 | Game states (menu, pause, game over) | Not implemented |
 | Audio bus / mixing | Not implemented |

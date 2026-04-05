@@ -7,6 +7,7 @@ class_name Interactable
 
 func _ready() -> void:
 	add_to_group("interactable")
+	collision_layer = 8  # layer 4 "interactable"
 	monitoring = false
 	monitorable = true
 

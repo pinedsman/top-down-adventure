@@ -10,6 +10,7 @@ var _waves: Array[WaveData]
 var _room_root: Node
 var _living_enemies: Array[Node] = []
 var _guard: CoroutineGuard
+var _spawn_points: Array[Node2D] = []
 
 
 func init(room_data: RoomData, waves: Array[WaveData], room_root: Node) -> void:
@@ -17,6 +18,9 @@ func init(room_data: RoomData, waves: Array[WaveData], room_root: Node) -> void:
 	_waves = waves
 	_room_root = room_root
 	_guard = CoroutineGuard.new()
+	for node in get_tree().get_nodes_in_group("spawn_points"):
+		if _room_root.is_ancestor_of(node):
+			_spawn_points.append(node as Node2D)
 	_apply_flags()
 
 
@@ -88,12 +92,7 @@ func _spawn_wave(wave: WaveData) -> void:
 
 # Returns false if the wave was cancelled before a spawner became free.
 func _spawn_enemy(scene: PackedScene) -> bool:
-	var spawn_points: Array[Node2D] = []
-	for node in get_tree().get_nodes_in_group("spawn_points"):
-		if _room_root.is_ancestor_of(node):
-			spawn_points.append(node as Node2D)
-
-	if spawn_points.is_empty():
+	if _spawn_points.is_empty():
 		push_warning("RoomManager: no spawn_points found in room")
 		return true  # nothing to wait on, continue wave
 
@@ -104,7 +103,7 @@ func _spawn_enemy(scene: PackedScene) -> bool:
 		if not _guard.is_valid(guard_version):
 			return false
 		_living_enemies = _living_enemies.filter(func(e): return is_instance_valid(e))
-		var free_points := spawn_points.filter(func(p: Node2D) -> bool:
+		var free_points := _spawn_points.filter(func(p: Node2D) -> bool:
 			return _is_spawner_free(p))
 		if not free_points.is_empty():
 			spawn_point = free_points[randi() % free_points.size()]

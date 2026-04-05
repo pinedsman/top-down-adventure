@@ -15,7 +15,7 @@ var _heal_weapon: Weapon
 func _ready() -> void:
 	player = get_tree().get_first_node_in_group("player") as Player
 	if player:
-		_heal_weapon = 	player._slot_instances[1]
+		_heal_weapon = player.get_slot_weapon("heal")
 		player.weapon_changed.connect(_on_weapon_changed)
 		player.ammo_changed.connect(_on_ammo_changed)
 		player.health_changed.connect(_on_health_changed)

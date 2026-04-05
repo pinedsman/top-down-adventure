@@ -52,8 +52,14 @@ var _had_focused_interactable: bool = false
 var _aim_assist_area: Area2D
 var _aim_assist_shape: CircleShape2D
 var _aim_assist_enemies: Array[Node2D] = []
+var _interact_area: Area2D
+var _interact_shape: CircleShape2D
+var _interact_candidates: Array[Interactable] = []
+var _last_nearest_candidate: Interactable = null
+var _last_nearest_has_los: bool = false
 
 @onready var dash_particle = $DashParticle
+@onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 
 func _ready() -> void:
 	super._ready()
@@ -80,6 +86,7 @@ func _ready() -> void:
 				_camera.shake(-dir, instance.fire_shake_strength)
 			_spend_ammo(instance))
 	_setup_aim_assist_area()
+	_setup_interact_area()
 	_connect_weapon(weapon)
 	weapon_changed.emit(weapon)
 	health_changed.emit(_health, max_health)
@@ -87,6 +94,12 @@ func _ready() -> void:
 func _connect_weapon(w: Weapon) -> void:
 	super(w)
 	_on_input_mode_changed(InputManager.is_gamepad)
+
+func get_slot_weapon(action: String) -> Weapon:
+	for i in weapon_slots.size():
+		if weapon_slots[i].input_action == action:
+			return _slot_instances[i]
+	return null
 
 func _physics_process(delta: float) -> void:
 	_cached_active_melee = _active_melee_slot()
@@ -217,13 +230,12 @@ func _can_take_damage() -> bool:
 func _on_take_damage(same_shot: bool, knockback_direction: Vector2, _impact_position: Vector2) -> void:
 	if weapon:
 		weapon.interrupt()
+	if weapon and weapon.is_charging() and weapon.data.damage_cancels_charge:
+		weapon.cancel_charge()
 	for inst: Weapon in _slot_instances:
 		if inst.is_charging() and inst.data.damage_cancels_charge:
 			inst.cancel_charge()
-	if weapon and weapon.is_charging() and weapon.data.damage_cancels_charge:
-		weapon.cancel_charge()
-	for instance in _slot_instances:
-		instance.interrupt()
+		inst.interrupt()
 	if same_shot:
 		return
 	if _is_dashing:
@@ -238,9 +250,8 @@ func _on_take_damage(same_shot: bool, knockback_direction: Vector2, _impact_posi
 
 func _on_die() -> void:
 	_invulnerable = false
-	var sprite := $AnimatedSprite2D
-	sprite.visible = true
-	sprite.modulate = Color.WHITE
+	_sprite.visible = true
+	_sprite.modulate = Color.WHITE
 	set_process_unhandled_input(false)
 	$WallCollision.set_deferred("disabled", true)
 	_laser.hide()
@@ -248,8 +259,8 @@ func _on_die() -> void:
 	if anim_data.has_state("death"):
 		var entry := anim_data.get_entry("death", DirectionalAnimData.direction_to_index(_facing, anim_data.direction_count))
 		if entry:
-			sprite.flip_h = entry.flip
-			sprite.play(entry.animationIndex)
+			_sprite.flip_h = entry.flip
+			_sprite.play(entry.animationIndex)
 
 
 func _on_weapon_fired(direction: Vector2) -> void:
@@ -281,11 +292,10 @@ func _tick_hit_state(delta: float) -> void:
 				return
 	if _invulnerable:
 		_invulnerable_timer -= delta
-		var sprite := $AnimatedSprite2D
-		sprite.visible = fmod(_invulnerable_timer * 10.0, 1.0) >= 0.5
+		_sprite.visible = fmod(_invulnerable_timer * 10.0, 1.0) >= 0.5
 		if _invulnerable_timer <= 0.0:
 			_invulnerable = false
-			sprite.visible = true
+			_sprite.visible = true
 
 
 # — Aim —
@@ -302,7 +312,7 @@ func _update_aim(delta: float) -> void:
 			target = mouse.normalized()
 	if target == Vector2.ZERO:
 		return
-	var _swinging_melee := _active_melee_slot()
+	var _swinging_melee := _cached_active_melee
 	var _charging := get_charging_weapon()
 	if _swinging_melee != null:
 		var t := 1.0 - pow(1.0 - _swinging_melee.swing_rotation_scale(), delta * 60.0)
@@ -345,6 +355,33 @@ func _on_aim_assist_body_entered(body: Node2D) -> void:
 
 func _on_aim_assist_body_exited(body: Node2D) -> void:
 	_aim_assist_enemies.erase(body)
+
+
+func _setup_interact_area() -> void:
+	_interact_shape = CircleShape2D.new()
+	_interact_shape.radius = interact_radius
+	var col := CollisionShape2D.new()
+	col.shape = _interact_shape
+	_interact_area = Area2D.new()
+	_interact_area.collision_layer = 0
+	_interact_area.collision_mask = 8  # layer 4 "interactable"
+	_interact_area.add_child(col)
+	add_child(_interact_area)
+	_interact_area.area_entered.connect(_on_interact_area_entered)
+	_interact_area.area_exited.connect(_on_interact_area_exited)
+
+
+func _on_interact_area_entered(area: Area2D) -> void:
+	if area is Interactable:
+		_interact_candidates.append(area as Interactable)
+
+
+func _on_interact_area_exited(area: Area2D) -> void:
+	if area is Interactable:
+		_interact_candidates.erase(area as Interactable)
+		if _last_nearest_candidate == area:
+			_last_nearest_candidate = null
+			_last_nearest_has_los = false
 
 
 func _apply_aim_assist(delta: float) -> void:
@@ -559,7 +596,7 @@ func player_movement(_delta: float) -> void:
 func player_animation(_delta: float) -> void:
 	if _is_dead:
 		return
-	var anim := $AnimatedSprite2D
+	var anim := _sprite
 	var state: String
 	if _is_dashing and anim_data.has_state("dash"):
 		state = "dash"
@@ -640,15 +677,13 @@ func _get_current_muzzle() -> Marker2D:
 # — Interaction —
 
 func _update_interactable() -> void:
-	var best: Interactable = null
+	var nearest: Interactable = null
 	var best_dist := interact_radius * interact_radius
 	var half_cone := deg_to_rad(interact_cone_angle * 0.5)
-	var space := get_world_2d().direct_space_state
 
-	for node in get_tree().get_nodes_in_group("interactable"):
-		if not node is Interactable or node.is_queued_for_deletion():
+	for target: Interactable in _interact_candidates:
+		if target.is_queued_for_deletion():
 			continue
-		var target := node as Interactable
 		var to_target := target.global_position - global_position
 		var dist_sq := to_target.length_squared()
 		if dist_sq > best_dist:
@@ -656,15 +691,20 @@ func _update_interactable() -> void:
 		if interact_cone_angle > 0.0:
 			if _aim_direction.angle_to(to_target.normalized()) > half_cone:
 				continue
-		# LOS check
-		var ray := PhysicsRayQueryParameters2D.create(global_position, target.global_position)
-		ray.collision_mask = interact_los_mask
-		ray.exclude = [self]
-		if not space.intersect_ray(ray).is_empty():
-			continue
-		best = target
+		nearest = target
 		best_dist = dist_sq
 
+	if nearest != _last_nearest_candidate:
+		_last_nearest_candidate = nearest
+		if nearest != null:
+			var ray := PhysicsRayQueryParameters2D.create(global_position, nearest.global_position)
+			ray.collision_mask = interact_los_mask
+			ray.exclude = [self]
+			_last_nearest_has_los = get_world_2d().direct_space_state.intersect_ray(ray).is_empty()
+		else:
+			_last_nearest_has_los = false
+
+	var best := nearest if _last_nearest_has_los else null
 	if best != _focused_interactable or (_had_focused_interactable and _focused_interactable == null):
 		_focused_interactable = best
 		_had_focused_interactable = best != null

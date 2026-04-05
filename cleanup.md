@@ -2,155 +2,183 @@
 
 ---
 
-## 1. `scripts/room/room_config.gd` — Dead code [Architecture]
-
-`RoomConfig` was replaced by the `RoomData` + `WaveSetData` separation. `WaveModeManager` no longer references it. The file still exists and the class is registered, causing confusion about which pairing mechanism to use.
-
-**Fix:** Delete `room_config.gd`.
-
----
-
-## 2. `scripts/enemy/types/enemy_grunt.gd:47` — Direct access to internal Weapon field [Architecture]
+## 1. `scripts/ui/hud.gd:18` — HUD directly reads private player field by hardcoded slot index [Architecture]
 
 ```gdscript
-_weapon_instances[0]._cooldown = 0.0
+_heal_weapon = player._slot_instances[1]
 ```
 
-`_cooldown` is a private implementation detail of `Weapon`. Direct mutation bypasses any future logic added to `Weapon.fire()` / `Weapon.tick()`. If `_weapon_instances` is empty (grunt configured without a weapon) this also crashes.
+`_slot_instances` is a private implementation detail of `Player`. Accessing it from HUD by index 1 couples the UI to a specific weapon loadout — if the heal weapon moves to slot 0, or the player starts without a slot weapon, this silently breaks or crashes. `_on_ammo_changed` (line 56) then branches on `_heal_weapon.data.ammo_type` to decide which UI element to update, spreading this assumption further.
 
-**Fix:** Add `func reset_cooldown() -> void: _cooldown = 0.0` to `weapon.gd`. Guard with a bounds/null check before calling it. Call `_weapon_instances[0].reset_cooldown()`.
-
----
-
-## 3. `scripts/room/wave_mode_manager.gd:46-59` — WaveModeManager directly reparents and positions the player [Architecture]
-
-The manager reaches into the scene tree, finds the player by group, reparents it, and sets its `global_position`. This is a cross-cutting responsibility. If the player scene changes structure (or there are multiple players), this silently breaks.
-
-**Fix:** Add `func enter_room(ysort: Node, spawn_position: Vector2) -> void` to `player.gd`. WaveModeManager calls that method instead of performing the reparent/position inline. The player owns its own scene transitions.
+**Fix:** Emit a dedicated signal from Player when heal ammo changes, or add a public `get_slot_weapon(index) -> Weapon` accessor. The HUD should never reach into `_slot_instances` directly.
 
 ---
 
-## 4. `scripts/enemy/types/enemy_grunt.gd:43-55` — `_navigate_to_shoot_range` duplicates `_navigate_interruptible` [Architecture]
+## 2. `scripts/player.gd:161–180` — `weapon_next` and `weapon_prev` are identical 9-line blocks [Architecture]
 
-Both methods are frame-by-frame nav loops with the same structure (await physics_frame, update nav target, set velocity). The only difference is the stop condition. This will diverge over time.
+The only difference is `+1` vs `-1` in the index arithmetic. Every future change (e.g. adding a wrap-around sound, cancelling charge on switch) must be made twice.
 
-**Fix:** Add a `stop_condition: Callable` parameter to `_navigate_interruptible` in `EnemyPatrolBase`, defaulting to `Callable()` (no extra condition). `_navigate_to_shoot_range` becomes a one-liner calling `_navigate_interruptible` with a distance check callable. Delete the duplicate loop in `EnemyGrunt`.
+**Fix:** Extract to `_switch_weapon(delta: int) -> void`. Both event handlers call `_switch_weapon(1)` / `_switch_weapon(-1)`.
 
 ---
 
-## 5. `scripts/player.gd:50-53` — `_slot_instances` can contain null, propagating null checks throughout [Architecture]
+## 3. `scripts/weapons/heal_ability.gd:27` — `on_charge_cancelled` casts to `Player`, breaking the `WeaponAbility` abstraction [Architecture]
 
 ```gdscript
-if slot.weapon_data == null:
-    _slot_instances.append(null)
-    continue
+func on_charge_cancelled(_shooter: Node, _weapon: Weapon) -> void:
+    var character := _shooter as Player
 ```
 
-This pads `_slot_instances` with nulls to keep indices aligned with `weapon_slots`. Every subsequent iteration (`_tick_weapon`, `_on_take_damage`, `_unhandled_input`) needs a null guard. The alignment isn't actually used anywhere — slots are looked up by index only in `_unhandled_input`, which reads `weapon_slots[i]` directly.
+Every other hook in `WeaponAbility` casts to `CharacterBase`. This one casts to `Player`, so the ability silently does nothing if attached to an enemy weapon. The `take_ammo` call should go through `CharacterBase` or the ability should not refund ammo at all (let the caller handle it).
 
-**Fix:** Skip null-data slots entirely at construction:
-```gdscript
-if slot.weapon_data == null:
-    continue
-```
-Store `(slot, instance)` pairs instead of a parallel array, or attach the slot data reference to the instance. Remove all `if instance != null` guards.
+**Fix:** Cast to `CharacterBase` and call a method defined there, or move the refund logic to the caller.
 
 ---
 
-## 6. `scripts/player.gd:418-419,442,478,488` — `_active_melee_slot()` called multiple times per physics frame [Performance]
-
-`_active_melee_slot()` iterates `_slot_instances` on each call. It is called up to 5 times in a single physics frame (`_physics_process`, `_update_aim`, `player_movement`, `player_animation`, `_draw`). With more slots this becomes noticeable.
-
-**Fix:** Call it once at the top of `_physics_process`, store the result in a local, pass it to the methods that need it — or cache it as `_cached_active_melee` that is refreshed once per frame.
-
----
-
-## 7. `scripts/room/room_manager.gd:102-103` — `.filter()` allocation on every enemy death [Performance]
+## 4. `scripts/player.gd:217–226` — `_on_take_damage` iterates `_slot_instances` twice [Architecture]
 
 ```gdscript
-func _on_enemy_removed() -> void:
-    _living_enemies = _living_enemies.filter(func(e): return is_instance_valid(e))
+for inst: Weapon in _slot_instances:
+    if inst.is_charging() and inst.data.damage_cancels_charge:
+        inst.cancel_charge()
+for instance in _slot_instances:
+    instance.interrupt()
 ```
 
-Creates a new Array on every enemy removal. With `tree_exited`, the dead node is still technically the caller — it can be identified. More importantly, `_wait_for_wave_clear` (line 106-111) also calls `.filter()` inside its polling loop, causing per-frame allocation until the wave ends.
+Two separate loops over the same array in the same function; can be a single pass.
 
-**Fix:** In `_spawn_enemy`, store a reference alongside the lambda so `_on_enemy_removed` can call `_living_enemies.erase(enemy)` directly (capturing `enemy` in the closure). Remove the redundant `.filter()` from `_wait_for_wave_clear` — if `_on_enemy_removed` is reliable, just check `.is_empty()`.
-
----
-
-## 8. `scripts/enemy/enemy_patrol_base.gd:147-158` — `_can_see_player()` fires a physics raycast every frame, unthrottled [Performance]
-
-Called in `_physics_process` (line 42) and inside `_navigate_interruptible`'s per-frame loop. With 10+ enemies in a wave, this is 10+ raycasts per frame purely for visibility checks, plus the same number from the `_run_behavior` coroutine loop.
-
-**Fix:** Throttle the LOS check to every N physics frames (e.g. 3–5) using a frame counter. Cache the last result between checks. The sight range distance check (cheap) can still run every frame to early-out before the raycast.
+**Fix:** Merge into one loop: check charge-cancel and call `interrupt()` in the same iteration.
 
 ---
 
-## 9. `scripts/room/wave_mode_manager.gd:70-73` — Room/wave selection strategy is hardcoded [Data-Driven]
+## 5. `scripts/weapons/weapon.gd:309–311` — `_get_ysort()` does a full group scan on every shot, every pellet [Performance]
 
 ```gdscript
-func _pick_room() -> RoomData:
-    return rooms[_run_index % rooms.size()]
-
-func _pick_wave_set() -> WaveSetData:
-    return wave_sets[_run_index % wave_sets.size()]
+func _get_ysort(muzzle: Marker2D) -> Node:
+    var ysort := muzzle.get_tree().get_first_node_in_group("ysort")
 ```
 
-Cycling by modulo is baked in. Weighted random, curated sequences, and difficulty scaling can't be configured without subclassing.
+Called once per pellet per shot (shotguns: once per pellet). The ysort node never changes between shots. This is a tree-wide O(n) scan repeated unnecessarily.
 
-**Fix:** Make these `func _pick_room() -> RoomData` and `func _pick_wave_set() -> WaveSetData` virtual (document as overridable). Alternatively, expose a `selection_mode: SelectionMode` enum (`SEQUENTIAL`, `RANDOM`, `WEIGHTED`) with the logic in a `match` block so a designer can switch modes from the Inspector without writing code.
+**Fix:** Cache the result on the first call: `if _ysort_cache == null: _ysort_cache = ...`. Or pass it as a parameter from the `Player`/`EnemyBase` level where it's already known.
 
 ---
 
-## 10. `scripts/enemy/types/enemy_grunt.gd:33` — Magic number `500.0` for shoot direction target [Data-Driven]
+## 6. `scripts/room/room_manager.gd:90–95` — Spawn points array rebuilt on every `_spawn_enemy` call [Performance]
 
 ```gdscript
-shoot_weapon(0, global_position + dir * 500.0)
+func _spawn_enemy(scene: PackedScene) -> bool:
+    var spawn_points: Array[Node2D] = []
+    for node in get_tree().get_nodes_in_group("spawn_points"):
+        if _room_root.is_ancestor_of(node):
+            spawn_points.append(node as Node2D)
 ```
 
-`500.0` is a hardcoded large offset to approximate "fire infinitely in this direction." It is semantically a shoot distance, affects nothing gameplay-wise beyond approximating a direction, but is invisible to designers.
+Spawn points don't change during a wave. This performs a full group scan (+ ancestor check) for every enemy spawned.
 
-**Fix:** Add `@export var shoot_target_distance: float = 500.0` to `EnemyGrunt`, or replace the entire pattern with a `shoot_weapon_direction(index, dir)` helper on `EnemyBase` that takes a direction vector directly and avoids the `target_pos` arithmetic at the call site.
+**Fix:** Build and store `_spawn_points: Array[Node2D]` once in `init()`.
 
 ---
 
-## 11. `scripts/enemy/types/enemy_grunt.gd:62` — Hardcoded reposition navigation timeout [Data-Driven]
+## 7. `scripts/player.gd:648–665` — `_update_interactable` does a full group scan + LOS raycast every physics frame [Performance]
 
-```gdscript
-await _navigate_interruptible(target, 2.0)
-```
+`get_nodes_in_group("interactable")` is an O(n) tree traversal. With many interactables in the room, this runs 60× per second with a raycast per candidate.
 
-The 2-second timeout is invisible to designers. If a room is large, repositioning cuts off early.
-
-**Fix:** Add `@export var reposition_timeout: float = 2.0` to `EnemyGrunt`.
+**Fix:** Use an `Area2D` (radius = `interact_radius`) on the player with `body_entered`/`body_exited` to maintain a small candidate list. `_update_interactable` then only iterates that local list and fires the raycast only when the nearest candidate changes.
 
 ---
 
-## 12. `scripts/player.gd:419` — Cryptic local variable name `_sm` [Naming]
-
-```gdscript
-var _sm := _active_melee_slot()
-```
-
-`_sm` is a private-field naming convention applied to a local variable. The name itself is an unexplained abbreviation.
-
-**Fix:** Rename to `active_melee`.
-
----
-
-## 13. `scripts/player.gd:213` — Local variable `_swinging_melee` uses field naming convention [Naming]
+## 8. `scripts/player.gd:305` — `_update_aim` calls `_active_melee_slot()` again after it was already cached [Performance]
 
 ```gdscript
 var _swinging_melee := _active_melee_slot()
 ```
 
-The `_` prefix signals "private field" in GDScript convention. This is a local variable.
+`_cached_active_melee` is set at the top of `_physics_process` (line 92) for exactly this purpose. `_update_aim` ignores it and calls the slot-iteration again.
 
-**Fix:** Rename to `swinging_melee`.
+**Fix:** Replace `_active_melee_slot()` on line 305 with `_cached_active_melee`.
 
 ---
 
-## 14. `scripts/weapons/melee_weapon.gd:145,146` — Cryptic single-letter variable names `fd`, `sd` [Naming]
+## 9. `scripts/enemy/enemy_base.gd:132` — `velocity.length()` uses sqrt for a threshold comparison [Performance]
+
+```gdscript
+var state := "walk" if (velocity.length() > 1 && ...) else "idle"
+```
+
+**Fix:** `velocity.length_squared() > 1.0` — identical semantics, no sqrt.
+
+---
+
+## 10. `scripts/player.gd:283` — `$AnimatedSprite2D` fetched by path every frame in `_tick_hit_state` [Performance]
+
+```gdscript
+var sprite := $AnimatedSprite2D
+sprite.visible = fmod(...)
+```
+
+Called every frame while the player is invulnerable. Node-path lookup should be cached.
+
+**Fix:** Cache as `@onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D` and reuse in all methods that access it (`_tick_hit_state`, `_on_die`, `player_animation`).
+
+---
+
+## 11. `scripts/ui/hud.gd:55–68` — `_on_ammo_changed` contains layered branching that encodes weapon-slot semantics in the UI [Data-Driven]
+
+The handler separately identifies "is this the heal weapon's ammo type?" vs "is this the current weapon's ammo type?" using ammo-type identity comparisons. The HUD is reconstructing slot logic that Player already tracks.
+
+**Fix:** Instead of one generic `ammo_changed` signal, emit separate signals or include an enum tag indicating which UI slot to update (`PRIMARY`, `SECONDARY`, etc.). The HUD does a direct lookup rather than reverse-engineering which weapon an ammo type belongs to.
+
+---
+
+## 12. `scripts/player.gd:450` — `update_laser_visibility` is public when it should be private [Naming]
+
+Called only from `_on_input_mode_changed` within the same class.
+
+**Fix:** Rename to `_update_laser_visibility`.
+
+---
+
+## 13. `scripts/player.gd:533,559` — `player_movement` and `player_animation` use a redundant prefix [Naming]
+
+The `player_` prefix is noise inside the `Player` class. The names also lack the `_` prefix that conventionally marks private/internal GDScript methods.
+
+**Fix:** Rename to `_process_movement` and `_process_animation` (or `_tick_movement` / `_tick_animation` to match the `_tick_*` pattern already used in this file).
+
+---
+
+## 14. `scripts/ui/hud.gd:3–6` — `@onready` vars are untyped; `hbox` is especially unclear [Naming]
+
+```gdscript
+@onready var ammo_text = $BottomContainer/AmmoText
+@onready var hbox = $HBoxContainer
+```
+
+No type annotations; `hbox` gives no indication of what it holds or why.
+
+**Fix:** Add explicit types (`Label`, `HBoxContainer`, etc.). Rename `hbox` to `_heart_container`.
+
+---
+
+## 15. `scripts/player.gd:56` — `dash_particle` is untyped [Naming]
+
+```gdscript
+@onready var dash_particle = $DashParticle
+```
+
+**Fix:** Add the concrete particle node type (e.g. `GPUParticles2D` or `CPUParticles2D`).
+
+---
+
+## 16. `scripts/weapons/weapon.gd:210` — `_fire_single` is misleading — it's also called inside burst fire [Naming]
+
+"Single" implies `FireMode.SINGLE`, but this method fires one shot regardless of mode and is the shared implementation used by both single and burst.
+
+**Fix:** Rename to `_fire_shot`.
+
+---
+
+## 17. `scripts/weapons/melee_weapon.gd:163–165` — `fd`, `sd` are unexplained abbreviations [Naming]
 
 ```gdscript
 var fd := to_body.dot(fwd)
@@ -161,28 +189,36 @@ var sd := to_body.dot(side)
 
 ---
 
-## 15. `scripts/enemy/types/enemy_grunt.gd:43` — Method name says "navigate to" when it means "approach until within" [Naming]
-
-`_navigate_to_shoot_range` sounds like it navigates to the edge of shoot range. It actually approaches the player and stops when within `shoot_range` — a subtle but meaningful distinction.
-
-**Fix:** Rename to `_approach_to_shoot_range`. (Moot if fixed under issue #4.)
-
----
-
-## 16. `scripts/weapons/bullet.gd:67` — Generic variable name `result` [Naming]
+## 18. `scripts/weapons/bullet.gd:83` — `result` for `cast_motion` return is a generic name [Naming]
 
 ```gdscript
 var result = space.cast_motion(_cast_query)
 ```
 
-`result` says nothing about what was returned.
+`cast_motion` returns a `[safe_fraction, unsafe_fraction]` array. The name `result` hides this.
 
-**Fix:** Rename to `cast_result` or `motion_fraction`.
+**Fix:** Rename to `motion_fractions` or `cast_result`.
 
 ---
 
-## 17. `scripts/character_base.gd` — `weapons` export is ambiguous between data and instances [Naming]
+## 19. `scripts/ui/hud.gd:70` — `_update_hp` parameter typed as `int` but the signal sends `float` [Naming / Correctness]
 
-The class exports `weapons: Array[WeaponData]` (config resources) and maintains `_weapon_instances: Array[Weapon]` (runtime). Calling the data array `weapons` implies it contains live weapon objects.
+```gdscript
+func _update_hp(health:int):
+```
 
-**Fix:** Rename the export to `weapon_data_slots: Array[WeaponData]` (or `equipped_weapon_data`). Update all references in `player.gd`, `enemy_base.gd`, and `character_base.gd`.
+`health_changed` emits `float`. GDScript will silently truncate.
+
+**Fix:** Change the parameter type to `float`.
+
+---
+
+## 20. `scripts/weapons/dropped_weapon.gd:44` — `get_prompt_text` shows `x-1` when magazine is infinite [Correctness]
+
+```gdscript
+return "%s x%d" % [weapon_data.weapon_name, saved_magazine]
+```
+
+If `saved_magazine == -1` (infinite-ammo weapon), the prompt reads e.g. `"Pistol x-1"`.
+
+**Fix:** Check `saved_magazine < 0` and display `"∞"` or omit the count.
