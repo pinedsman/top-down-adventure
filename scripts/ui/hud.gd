@@ -48,8 +48,10 @@ func _on_weapon_changed(weapon: Weapon) -> void:
 	weapon_display.update_weapon(weapon)
 	
 	if weapon != null:
-		var initial_count: int = weapon.magazine_ammo() if _current_weapon.data.use_weapon_ammo else player.get_ammo(weapon.ammo_type)
-		_on_ammo_changed(weapon.ammo_type, initial_count)
+		if _current_weapon.data.use_weapon_ammo:
+			_on_magazine_changed(weapon, weapon.magazine_ammo())
+		else: 
+			_on_ammo_changed(weapon.ammo_type, player.get_ammo(weapon.ammo_type))
 	else:
 		_on_ammo_changed(null, 0)
 
