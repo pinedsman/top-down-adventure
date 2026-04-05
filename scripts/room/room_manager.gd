@@ -84,7 +84,7 @@ func _spawn_wave(wave: WaveData) -> void:
 		if not await _spawn_enemy(list[i]):
 			return  # wave was cancelled while waiting for a free spawner
 		var progress := float(i) / float(maxi(total - 1, 1))
-		var delay := wave.escalation_curve.sample(progress) if wave.escalation_curve \
+		var delay := wave.spawn_rate_curve.sample(progress) if wave.spawn_rate_curve \
 				else lerpf(2.0, 0.3, progress)
 		if not await _guard.wait(delay):
 			return

@@ -55,8 +55,6 @@ var _aim_assist_enemies: Array[Node2D] = []
 var _interact_area: Area2D
 var _interact_shape: CircleShape2D
 var _interact_candidates: Array[Interactable] = []
-var _last_nearest_candidate: Interactable = null
-var _last_nearest_has_los: bool = false
 
 @onready var dash_particle = $DashParticle
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
@@ -364,7 +362,7 @@ func _setup_interact_area() -> void:
 	col.shape = _interact_shape
 	_interact_area = Area2D.new()
 	_interact_area.collision_layer = 0
-	_interact_area.collision_mask = 8  # layer 4 "interactable"
+	_interact_area.collision_mask = Interactable.PHYSICS_LAYER
 	_interact_area.add_child(col)
 	add_child(_interact_area)
 	_interact_area.area_entered.connect(_on_interact_area_entered)
@@ -373,15 +371,12 @@ func _setup_interact_area() -> void:
 
 func _on_interact_area_entered(area: Area2D) -> void:
 	if area is Interactable:
-		_interact_candidates.append(area as Interactable)
+		_interact_candidates.append(area)
 
 
 func _on_interact_area_exited(area: Area2D) -> void:
 	if area is Interactable:
-		_interact_candidates.erase(area as Interactable)
-		if _last_nearest_candidate == area:
-			_last_nearest_candidate = null
-			_last_nearest_has_los = false
+		_interact_candidates.erase(area)
 
 
 func _apply_aim_assist(delta: float) -> void:
@@ -694,17 +689,13 @@ func _update_interactable() -> void:
 		nearest = target
 		best_dist = dist_sq
 
-	if nearest != _last_nearest_candidate:
-		_last_nearest_candidate = nearest
-		if nearest != null:
-			var ray := PhysicsRayQueryParameters2D.create(global_position, nearest.global_position)
-			ray.collision_mask = interact_los_mask
-			ray.exclude = [self]
-			_last_nearest_has_los = get_world_2d().direct_space_state.intersect_ray(ray).is_empty()
-		else:
-			_last_nearest_has_los = false
-
-	var best := nearest if _last_nearest_has_los else null
+	var best: Interactable = null
+	if nearest != null:
+		var ray := PhysicsRayQueryParameters2D.create(global_position, nearest.global_position)
+		ray.collision_mask = interact_los_mask
+		ray.exclude = [self]
+		if get_world_2d().direct_space_state.intersect_ray(ray).is_empty():
+			best = nearest
 	if best != _focused_interactable or (_had_focused_interactable and _focused_interactable == null):
 		_focused_interactable = best
 		_had_focused_interactable = best != null

@@ -5,9 +5,11 @@ class_name Interactable
 # Subclasses override interact() and get_prompt_text().
 # The player scans this group each frame; this node does NOT need monitoring enabled.
 
+const PHYSICS_LAYER := 8  # project physics layer 4 "interactable"
+
 func _ready() -> void:
 	add_to_group("interactable")
-	collision_layer = 8  # layer 4 "interactable"
+	collision_layer = PHYSICS_LAYER
 	monitoring = false
 	monitorable = true
 
