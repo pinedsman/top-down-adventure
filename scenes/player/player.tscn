@@ -14,8 +14,6 @@
 [ext_resource type="AudioStream" uid="uid://bi1px5q0h0fkw" path="res://assets/Sounds/hurt.mp3" id="6_je7p5"]
 [ext_resource type="Resource" uid="uid://fblcgsdbxvev" path="res://resources/weapons/ability_heal.tres" id="6_lgqa7"]
 [ext_resource type="AudioStream" uid="uid://jbmf8l3laeu7" path="res://assets/Sounds/death.mp3" id="7_fm80t"]
-[ext_resource type="Shader" uid="uid://cto4s1uiaaekg" path="res://assets/laser_sight.gdshader" id="8_pn6s4"]
-[ext_resource type="Texture2D" uid="uid://u1dfsf8qt0la" path="res://assets/Art/laser.png" id="8_v42im"]
 [ext_resource type="Resource" uid="uid://dngp84241gpk" path="res://resources/impacts/player_hit_impact.tres" id="10_myrg7"]
 [ext_resource type="Texture2D" uid="uid://c00kmd3rvm2ii" path="res://assets/Characters/Temp/Dash/Dash.png" id="14_8ydkj"]
 [ext_resource type="Script" uid="uid://dcol5whqb0c85" path="res://scripts/camera_controller.gd" id="14_ugbui"]
@@ -1598,12 +1596,6 @@ animations = [{
 [sub_resource type="CircleShape2D" id="CircleShape2D_px040"]
 radius = 6.0
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_pn6s4"]
-shader = ExtResource("8_pn6s4")
-shader_parameter/fade_start = 0.5
-shader_parameter/laser_length = 100.0
-shader_parameter/texture_width = 32.0
-
 [node name="Player" type="CharacterBody2D" unique_id=425293825]
 collision_layer = 4
 collision_mask = 3
@@ -1647,14 +1639,6 @@ shape = SubResource("CircleShape2D_px040")
 [node name="Muzzle" type="Marker2D" parent="." unique_id=2131727827]
 position = Vector2(-2.5, -12)
 gizmo_extents = 22.8
-
-[node name="LaserSight" type="Line2D" parent="." unique_id=1485961410]
-material = SubResource("ShaderMaterial_pn6s4")
-points = PackedVector2Array(2, -6, -79.99968, 51.2368)
-width = 5.0
-default_color = Color(1, 1, 1, 0.5882353)
-texture = ExtResource("8_v42im")
-texture_mode = 2
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=954518763]
 script = ExtResource("14_ugbui")

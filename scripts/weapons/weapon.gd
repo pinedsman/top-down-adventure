@@ -23,6 +23,12 @@ var _charge_shooter: Node = null
 var _charge_fx: Node = null
 var _charge_audio: AudioStreamPlayer2D = null
 
+# Dynamic spread state
+var _kick_spread: float = 0.0
+var _kick_recovery_timer: float = 0.0
+var _movement_ratio: float = 0.0
+var _movement_spread_current: float = 0.0
+
 signal fired(direction: Vector2)
 
 
@@ -38,8 +44,6 @@ var ammo_type: AmmoType:
 	get: return data.ammo_type
 var hud_icon: Texture2D:
 	get: return data.hud_icon
-var show_laser: bool:
-	get: return data.show_laser
 var fire_shake_strength: float:
 	get: return data.fire_shake_strength
 var aim_assist_angle: float:
@@ -54,6 +58,33 @@ var burst_count: int:
 	get: return data.burst_count
 
 
+# — Spread API —
+
+## Call each frame with the player's normalised movement speed (0 = still, 1 = full speed).
+func set_movement_ratio(ratio: float) -> void:
+	_movement_ratio = clampf(ratio, 0.0, 1.0)
+
+## Total spread angle the arc should display, accounting for all live modifiers.
+func effective_arc_spread() -> float:
+	var deviation := _total_bullet_deviation()
+	return (data.spread_angle + deviation) if data.pellet_count > 1 else deviation
+
+func _total_bullet_deviation() -> float:
+	return data.bullet_spread + _movement_spread_current + _kick_spread
+
+func _apply_kick() -> void:
+	if data.kick_per_shot <= 0.0:
+		return
+	_kick_spread = minf(_kick_spread + data.kick_per_shot, data.kick_spread_cap)
+	_kick_recovery_timer = data.kick_recovery_delay
+
+func apply_dash_kick() -> void:
+	if not data.kick_on_dash or data.kick_spread_cap <= 0.0:
+		return
+	_kick_spread = data.kick_spread_cap
+	_kick_recovery_timer = data.kick_recovery_delay
+
+
 # — Core API —
 
 func tick(delta: float) -> void:
@@ -62,6 +93,13 @@ func tick(delta: float) -> void:
 		_charge = minf(_charge + delta / data.charge_time, 1.0)
 		if _charge >= 1.0 and data.charge_mode != WeaponData.ChargeMode.HOLD_TO_CHARGE_FIRE_ON_RELEASE:
 			_execute_charge_fire()
+	if _kick_spread > 0.0:
+		if _kick_recovery_timer > 0.0:
+			_kick_recovery_timer = maxf(_kick_recovery_timer - delta, 0.0)
+		else:
+			_kick_spread = maxf(_kick_spread - data.kick_recovery_rate * delta, 0.0)
+	var movement_spread_target := _movement_ratio * data.movement_spread_max
+	_movement_spread_current = move_toward(_movement_spread_current, movement_spread_target, data.movement_spread_speed * delta)
 
 
 func can_fire() -> bool:
@@ -161,6 +199,7 @@ func _execute_charge_fire() -> void:
 	_play_sound(muzzle)
 	_spawn_muzzle_flash(muzzle, direction)
 	_fire_with_charge(muzzle, direction, shot_id, shooter, charge)
+	_apply_kick()
 
 func _spawn_charge_fx(muzzle: Marker2D) -> void:
 	if data.charge_fx_scene != null:
@@ -216,6 +255,7 @@ func _fire_single(muzzle: Marker2D, direction: Vector2, shooter: Node) -> void:
 	_play_sound(muzzle)
 	_spawn_muzzle_flash(muzzle, direction)
 	_fire_with_charge(muzzle, direction, shot_id, shooter, 1.0)
+	_apply_kick()
 
 
 ## Routes to ability, grenade, or bullet. charge scales bullet damage.
@@ -268,16 +308,24 @@ func _play_rechamber_sound(muzzle: Marker2D) -> void:
 
 
 func _get_spread_directions(base_dir: Vector2) -> Array[Vector2]:
-	if data.pellet_count <= 1:
-		return [base_dir]
 	var dirs: Array[Vector2] = []
-	var half_spread := deg_to_rad(data.spread_angle * 0.5)
-	var slot_width := deg_to_rad(data.spread_angle) / data.pellet_count
-	for i in data.pellet_count:
-		var t := float(i) / float(data.pellet_count - 1)
-		var even_angle := lerpf(-half_spread, half_spread, t)
-		var jitter := randf_range(-slot_width * 0.5, slot_width * 0.5) * data.spread_randomness
-		dirs.append(Vector2.from_angle(base_dir.angle() + even_angle + jitter))
+	if data.pellet_count <= 1:
+		dirs = [base_dir]
+	else:
+		var half_spread := deg_to_rad(data.spread_angle * 0.5)
+		var slot_width := deg_to_rad(data.spread_angle) / data.pellet_count
+		for i in data.pellet_count:
+			var t := float(i) / float(data.pellet_count - 1)
+			var even_angle := lerpf(-half_spread, half_spread, t)
+			var jitter := randf_range(-slot_width * 0.5, slot_width * 0.5) * data.spread_randomness
+			dirs.append(Vector2.from_angle(base_dir.angle() + even_angle + jitter))
+	var deviation := _total_bullet_deviation()
+	if deviation > 0.0:
+		var half_dev := deg_to_rad(deviation * 0.5)
+		var result: Array[Vector2] = []
+		for d in dirs:
+			result.append(Vector2.from_angle(d.angle() + randf_range(-half_dev, half_dev)))
+		return result
 	return dirs
 
 

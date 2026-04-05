@@ -4,8 +4,8 @@ class_name Player
 const SPEED = 100.0
 const MAX_PRIMARY_SLOTS: int = 2
 const DROP_OFFSET: float = 24.0   # world units in front of player where weapon lands
+const SPREAD_ARC_SCENE := preload("res://scenes/weapons/spread_arc.tscn")
 
-@export var laser_length: float = 100
 @export var invulnerability_duration: float = 1.0
 @export var hit_duration: float = 0.3
 @export var knockback_force: float = 200.0
@@ -27,7 +27,7 @@ var weapon: Weapon:
 
 var _weapon_index: int = 0
 var _aim_direction: Vector2 = Vector2.RIGHT
-var _laser: Line2D
+var _spread_arc: SpreadArc
 var _camera: CameraController
 @export var fire_buffer_window: float = 0.15
 
@@ -63,8 +63,10 @@ func _ready() -> void:
 	super._ready()
 	crosshair = get_tree().get_first_node_in_group("crosshair")
 	assert(crosshair != null, "Player requires a node in the 'crosshair' group")
-	_laser = $LaserSight
-	_laser.hide()
+	_spread_arc = SPREAD_ARC_SCENE.instantiate()
+	$Muzzle.add_child(_spread_arc)
+	_spread_arc.position = Vector2.ZERO
+	_spread_arc.hide()
 	_camera = $Camera2D
 	InputManager.input_mode_changed.connect(_on_input_mode_changed)
 	_on_input_mode_changed(InputManager.is_gamepad)
@@ -104,11 +106,12 @@ func _physics_process(delta: float) -> void:
 	_update_interactable()
 	_tick_hit_state(delta)
 	_tick_dash(delta)
+	_update_weapon_movement_ratio()
 	if not _is_dashing:
 		_update_aim(delta)
 		_apply_aim_assist(delta)
 		_update_crosshair()
-		_update_laser()
+		_update_spread_arc()
 	player_movement(delta)
 	player_animation(delta)
 	_tick_weapon(delta)
@@ -252,7 +255,7 @@ func _on_die() -> void:
 	_sprite.modulate = Color.WHITE
 	set_process_unhandled_input(false)
 	$WallCollision.set_deferred("disabled", true)
-	_laser.hide()
+	_spread_arc.hide()
 	crosshair.hide()
 	if anim_data.has_state("death"):
 		var entry := anim_data.get_entry("death", DirectionalAnimData.direction_to_index(_facing, anim_data.direction_count))
@@ -292,7 +295,7 @@ func _tick_hit_state(delta: float) -> void:
 		_invulnerable_timer -= delta
 		_sprite.visible = fmod(_invulnerable_timer * 10.0, 1.0) >= 0.5
 		if _invulnerable_timer <= 0.0:
-			_invulnerable = false
+			_invulnerable = false 
 			_sprite.visible = true
 
 
@@ -422,7 +425,11 @@ func _start_dash() -> void:
 	if dash_data.invincible_during_dash:
 		_saved_collision_layer = collision_layer
 		collision_layer = 0
-	_laser.hide()
+	for inst: Weapon in _weapon_instances:
+		inst.apply_dash_kick()
+	for inst: Weapon in _slot_instances:
+		inst.apply_dash_kick()
+	_spread_arc.hide()
 	if InputManager.is_gamepad:
 		crosshair.hide()
 
@@ -471,32 +478,31 @@ func _end_dash() -> void:
 func _on_input_mode_changed(is_gamepad: bool) -> void:
 	if _is_dead:
 		return
-		
 	if is_gamepad:
 		crosshair.hide()
-		update_laser_visibility()
 	else:
 		crosshair.show()
-		_laser.hide()
+	_update_spread_arc_visibility()
 
-func update_laser_visibility() -> void:
-	if (weapon != null && weapon.show_laser):
-		_laser.show()
+func _update_spread_arc_visibility() -> void:
+	if weapon != null:
+		_spread_arc.show()
 	else:
-		_laser.hide()
+		_spread_arc.hide()
 
-# — Laser —
+# — Spread arc —
 
-func _update_laser() -> void:
-	var laser = _laser
-	laser.clear_points()
-	var parent := laser.get_parent() as Node2D
-	var muzzle_pos: Vector2 = parent.global_position
-	laser.add_point(parent.to_local(muzzle_pos))
-	laser.add_point(parent.to_local(muzzle_pos + _aim_direction * laser_length))
-	var mat = laser.material as ShaderMaterial
-	if mat:
-		mat.set_shader_parameter("laser_length", laser_length)
+func _update_weapon_movement_ratio() -> void:
+	var ratio := Input.get_vector("move_left", "move_right", "move_up", "move_down").length()
+	for inst: Weapon in _weapon_instances:
+		inst.set_movement_ratio(ratio)
+	for inst: Weapon in _slot_instances:
+		inst.set_movement_ratio(ratio)
+
+func _update_spread_arc() -> void:
+	if weapon == null:
+		return
+	_spread_arc.update(_aim_direction, weapon.effective_arc_spread())
 
 
 # — Weapon —
@@ -611,10 +617,10 @@ func player_animation(_delta: float) -> void:
 		anim.play(_current_anim_entry.animationIndex, anim_speed)
 		$Muzzle.position = _current_anim_entry.muzzle_offset
 		$MuzzleBehind.position = _current_anim_entry.muzzle_offset
-		var target_muzzle = _get_current_muzzle()
-		if _laser.get_parent() != target_muzzle:
-			_laser.reparent(target_muzzle)
-			_laser.position = Vector2.ZERO
+		var target_muzzle := _get_current_muzzle()
+		if _spread_arc.get_parent() != target_muzzle:
+			_spread_arc.reparent(target_muzzle)
+			_spread_arc.position = Vector2.ZERO
 
 
 func _update_crosshair() -> void:

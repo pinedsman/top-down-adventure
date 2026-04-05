@@ -26,6 +26,14 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var burst_count: int = 3            # shots per burst (BURST mode only)
 @export var burst_delay: float = 0.08       # seconds between burst shots
 @export var fire_shake_strength: float = 0.0
+@export var bullet_spread: float = 0.0          # random deviation per bullet; total cone in degrees, 0 = no spread
+@export var movement_spread_max: float = 0.0    # extra spread added at full speed, degrees
+@export var movement_spread_speed: float = 30.0 # degrees per second the spread rises/falls with movement
+@export var kick_per_shot: float = 0.0          # spread added per shot fired, degrees
+@export var kick_spread_cap: float = 0.0        # upper limit on kick spread, degrees
+@export var kick_recovery_delay: float = 0.3    # seconds after last shot before recovery starts
+@export var kick_recovery_rate: float = 10.0    # degrees per second that kick reduces
+@export var kick_on_dash: bool = true           # dashing instantly maxes kick and resets recovery delay
 @export var suppress_wall_impacts: bool = false
 @export var aim_assist_angle: float = 0.0   # degrees half-cone; 0 = disabled
 @export var aim_assist_range: float = 150.0
@@ -35,7 +43,6 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var drop_sprite: Texture2D
 @export var ammo_type: AmmoType             # null = infinite ammo (shared-pool mode)
 @export var magazine_size: int = 0          # weapon-ammo mode: rounds per instance; 0 = infinite
-@export var show_laser: bool = true
 @export_flags_2d_physics var bullet_collision_mask: int = 0xFFFFFFFF
 ## When true this weapon tracks its own magazine. When false the player's shared ammo pool is used.
 @export var use_weapon_ammo: bool = true

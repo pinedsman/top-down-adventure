@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://u4bfqgdu5wqp"]
+
+[ext_resource type="Script" uid="uid://4llksi2cql7a" path="res://scripts/weapons/spread_arc.gd" id="1"]
+[ext_resource type="Shader" uid="uid://b0u0eyt47dtd5" path="res://assets/spread_arc.gdshader" id="1_a4sly"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_m5t6q"]
+shader = ExtResource("1_a4sly")
+shader_parameter/fill_color = Color(1, 1, 1, 0.35000002)
+shader_parameter/arc_radius = 40.0
+shader_parameter/peak_position = 1.0
+shader_parameter/peak_width = 0.40000001830148
+
+[node name="SpreadArc" type="Node2D" unique_id=1498405387]
+material = SubResource("ShaderMaterial_m5t6q")
+script = ExtResource("1")
