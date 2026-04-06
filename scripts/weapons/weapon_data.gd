@@ -35,6 +35,8 @@ enum FireMode { SINGLE, AUTO, BURST }
 @export var kick_recovery_rate: float = 10.0    # degrees per second that kick reduces
 @export var kick_on_dash: bool = true           # dashing instantly maxes kick and resets recovery delay
 @export var suppress_wall_impacts: bool = false
+## When true, firing this weapon emits no noise — enemies will not investigate.
+@export var silent: bool = false
 @export var aim_assist_angle: float = 0.0   # degrees half-cone; 0 = disabled
 @export var aim_assist_range: float = 150.0
 @export var aim_assist_strength: float = 0.15

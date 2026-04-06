@@ -11,6 +11,7 @@ func _ready() -> void:
 	Console.add_command("give_ammo", give_ammo, 0, 0, "Refill all ammo and magazines for the player.")
 	Console.add_command("damage_player", damage_player, 0, 0, "Deal 1 point of damage to the player.")
 	Console.add_command("kill_enemies", kill_enemies, 0, 0, "Kill all enemies in the current scene.")
+	Console.add_command("toggle_enemy_debug", toggle_enemy_debug, 0, 0, "Toggle debug overlays on all enemies.")
 	Console.add_command("give_weapon", give_weapon, ["weapon_name"], 1, "Give the player a weapon by resource name (e.g. weapon_shotgun).")
 	Console.console_opened.connect(_on_console_opened)
 	Console.console_closed.connect(_on_console_closed)
@@ -124,3 +125,25 @@ func kill_enemies() -> void:
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if enemy.has_method("die"):
 			enemy.die()
+
+
+func toggle_enemy_debug() -> void:
+	var enemies := get_tree().get_nodes_in_group("enemies")
+	if enemies.is_empty():
+		Console.print_line("No enemies in scene.")
+		return
+	# Derive current state from the first enemy.
+	var currently_on := enemies[0].get_children().any(func(c: Node) -> bool: return c is EnemyDebugOverlay)
+	if currently_on:
+		for enemy in enemies:
+			for child in enemy.get_children():
+				if child is EnemyDebugOverlay:
+					child.queue_free()
+		Console.print_line("Enemy debug: OFF")
+	else:
+		for enemy: EnemyBase in enemies:
+			if not enemy.get_children().any(func(c: Node) -> bool: return c is EnemyDebugOverlay):
+				var overlay := EnemyDebugOverlay.new()
+				enemy.add_child(overlay)
+				overlay.setup(enemy)
+		Console.print_line("Enemy debug: ON")

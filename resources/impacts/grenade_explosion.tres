@@ -2,12 +2,10 @@
 
 [ext_resource type="PackedScene" uid="uid://b0lk6w3qq5avs" path="res://scenes/impacts/grenade_explosion.tscn" id="1_p0bf2"]
 [ext_resource type="Script" uid="uid://dun2vs8xtoxos" path="res://scripts/impact_fx_data.gd" id="2_n60v5"]
-[ext_resource type="AudioStream" uid="uid://dnc2b8ai7k24a" path="res://assets/Sounds/grenade_explosion.mp3" id="3_n60v5"]
 
 [resource]
 script = ExtResource("2_n60v5")
 scene = ExtResource("1_p0bf2")
 animation_name = "explode"
-sound = ExtResource("3_n60v5")
 scale = Vector2(1.5, 1.5)
 metadata/_custom_type_script = "uid://dun2vs8xtoxos"

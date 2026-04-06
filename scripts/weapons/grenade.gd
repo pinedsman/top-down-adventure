@@ -162,7 +162,7 @@ func _explode() -> void:
 	_sprite.visible = true
 
 	if data.explosion_sound:
-		AudioPool.play(data.explosion_sound, global_position)
+		AudioPool.play_priority(data.explosion_sound, global_position)
 	if data.explosion_fx:
 		data.explosion_fx.spawn(global_position)
 	_camera.shake(Vector2.UP, data.explosion_shake_strength, 1.0, 0.8)

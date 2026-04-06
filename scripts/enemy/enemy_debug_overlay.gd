@@ -35,7 +35,9 @@ func _draw() -> void:
 				HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color.WHITE)
 
 	if _enemy is EnemyPatrolBase:
-		_draw_patrol_info(_enemy as EnemyPatrolBase, font, font_size)
+		var patrol := _enemy as EnemyPatrolBase
+		_draw_patrol_info(patrol, font, font_size)
+		_draw_investigate_info(patrol, font, font_size)
 
 
 func _draw_patrol_info(enemy: EnemyPatrolBase, font: Font, font_size: int) -> void:
@@ -86,6 +88,45 @@ func _draw_patrol_info(enemy: EnemyPatrolBase, font: Font, font_size: int) -> vo
 	if is_instance_valid(cur_wp):
 		draw_dashed_line(Vector2.ZERO, cur_wp.global_position - global_position,
 				Color.CYAN, 1.0, 6.0)
+
+
+func _draw_investigate_info(enemy: EnemyPatrolBase, font: Font, font_size: int) -> void:
+	if enemy._dbg_investigate_pos == Vector2.ZERO:
+		return
+	var target_local := enemy._dbg_investigate_pos - global_position
+
+	# LOS check to noise target: green = can see it, red = blocked.
+	var can_see := enemy._can_see_point(enemy._dbg_investigate_pos)
+	var los_color := Color(0.2, 1.0, 0.2, 0.8) if can_see else Color(1.0, 0.2, 0.2, 0.8)
+	draw_dashed_line(Vector2.ZERO, target_local, los_color, 1.0, 6.0)
+
+	# Noise origin dot (where the shot came from).
+	draw_circle(target_local, 5.0, Color(1.0, 0.4, 1.0, 0.9))
+	var los_label := "LOS:yes" if can_see else "LOS:no"
+	draw_string(font, target_local + Vector2(7.0, 4.0), "NOISE  " + los_label,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(1.0, 0.4, 1.0, 0.9))
+
+	# Nav target dot (snapped navmesh point — may differ from noise origin).
+	if enemy._dbg_investigate_nav_target != Vector2.ZERO:
+		var nav_local := enemy._dbg_investigate_nav_target - global_position
+		draw_circle(nav_local, 4.0, Color(1.0, 0.8, 0.0, 0.9))
+		draw_line(target_local, nav_local, Color(1.0, 0.8, 0.0, 0.5), 1.0)
+		draw_string(font, nav_local + Vector2(7.0, 4.0), "NAV_TARGET",
+				HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(1.0, 0.8, 0.0, 0.9))
+
+	# Nav agent path.
+	if enemy._nav_agent != null:
+		var path := enemy._nav_agent.get_current_navigation_path()
+		for i in range(1, path.size()):
+			var a := path[i - 1] - global_position
+			var b := path[i] - global_position
+			draw_line(a, b, Color(1.0, 0.4, 1.0, 0.4), 1.0)
+		# Nav finished indicator — bright if finished, dim if still navigating.
+		var nav_done := enemy._nav_agent.is_navigation_finished()
+		var nav_col := Color(1.0, 0.1, 0.1, 0.9) if nav_done else Color(0.2, 1.0, 0.2, 0.5)
+		var nav_label := "NAV:done" if nav_done else "NAV:active"
+		draw_string(font, target_local + Vector2(7.0, 14.0), nav_label,
+				HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, nav_col)
 
 
 func _next_waypoint_index(enemy: EnemyPatrolBase, i: int) -> int:

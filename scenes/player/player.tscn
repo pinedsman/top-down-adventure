@@ -45,6 +45,17 @@ weapon_data = ExtResource("6_lgqa7")
 input_action = "heal"
 metadata/_custom_type_script = "uid://tlqya2t3eaay"
 
+[sub_resource type="Gradient" id="Gradient_kvlxm"]
+offsets = PackedFloat32Array(0, 0.60568386)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_uf5tr"]
+gradient = SubResource("Gradient_kvlxm")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+
 [sub_resource type="Shader" id="Shader_yj68g"]
 code = "shader_type canvas_item;
 render_mode blend_mix;
@@ -1601,6 +1612,7 @@ collision_layer = 4
 collision_mask = 3
 script = ExtResource("1_524rm")
 SPEED = 150.0
+gunshot_noise_radius = 800.0
 invulnerability_duration = 0.5
 hit_duration = 0.2
 aim_assist_mask = 2
@@ -1614,6 +1626,21 @@ hurt_sound = ExtResource("6_je7p5")
 death_sound = ExtResource("7_fm80t")
 hit_stop_duration = 0.2
 hit_impact_fx = ExtResource("10_myrg7")
+
+[node name="PointLight2D" type="PointLight2D" parent="." unique_id=1951728612]
+energy = 0.25
+shadow_enabled = true
+shadow_color = Color(0, 0, 0, 0.64500004)
+texture = SubResource("GradientTexture2D_uf5tr")
+offset = Vector2(0, -12)
+texture_scale = 2.0
+
+[node name="PointLight2D2" type="PointLight2D" parent="." unique_id=1840744851]
+energy = 0.25
+shadow_color = Color(0, 0, 0, 0.64500004)
+texture = SubResource("GradientTexture2D_uf5tr")
+offset = Vector2(0, -12)
+texture_scale = 2.0
 
 [node name="MuzzleBehind" type="Marker2D" parent="." unique_id=983779752]
 

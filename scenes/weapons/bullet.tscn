@@ -3,12 +3,30 @@
 [ext_resource type="Script" uid="uid://dmge2s1mgvp0y" path="res://scripts/weapons/bullet.gd" id="1_mkf8s"]
 [ext_resource type="Texture2D" uid="uid://iilfci7nliqt" path="res://assets/Art/weapons/bullet.png" id="4_oklhc"]
 
+[sub_resource type="Gradient" id="Gradient_kvlxm"]
+offsets = PackedFloat32Array(0, 0.60568386)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_dnt7v"]
+gradient = SubResource("Gradient_kvlxm")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+
 [sub_resource type="CircleShape2D" id="CircleShape2D_mkf8s"]
 radius = 6.3245554
 
 [node name="Bullet" type="Area2D" unique_id=815070411]
 script = ExtResource("1_mkf8s")
 speed = 800.0
+
+[node name="PointLight2D" type="PointLight2D" parent="." unique_id=778980215]
+color = Color(0.79653454, 0.23137486, 0, 1)
+energy = 0.5
+shadow_enabled = true
+shadow_color = Color(0, 0, 0, 0.64500004)
+texture = SubResource("GradientTexture2D_dnt7v")
 
 [node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="." unique_id=1113279675]
 y_sort_enabled = true

@@ -311,3 +311,6 @@ position = Vector2(-64, 0)
 
 [node name="Marker2D2" type="Marker2D" parent="Node2D" unique_id=1224998588 groups=["reward_spawn"]]
 position = Vector2(64, 0)
+
+[node name="CanvasModulate" type="CanvasModulate" parent="." unique_id=142489452]
+color = Color(0.80049086, 0.8004908, 0.8004906, 1)

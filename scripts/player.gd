@@ -2,6 +2,7 @@ extends CharacterBase
 class_name Player
 
 @export var SPEED: float = 100.0
+@export var gunshot_noise_radius: float = 350.0
 const MAX_PRIMARY_SLOTS: int = 2
 const DROP_OFFSET: float = 24.0   # world units in front of player where weapon lands
 const SPREAD_ARC_SCENE := preload("res://scenes/weapons/spread_arc.tscn")
@@ -85,7 +86,9 @@ func _ready() -> void:
 		instance.fired.connect(func(dir: Vector2) -> void:
 			if instance.fire_shake_strength > 0.0:
 				_camera.shake(-dir, instance.fire_shake_strength)
-			_spend_ammo(instance))
+			_spend_ammo(instance)
+			if not instance.data.silent:
+				NoiseManager.emit_noise(global_position, gunshot_noise_radius))
 	_setup_aim_assist_area()
 	_setup_interact_area()
 	_connect_weapon(weapon)
@@ -261,6 +264,8 @@ func _on_weapon_fired(direction: Vector2) -> void:
 		_camera.shake(-direction, weapon.fire_shake_strength)
 	if weapon:
 		_spend_ammo(weapon)
+	if weapon and not weapon.data.silent:
+		NoiseManager.emit_noise(global_position, gunshot_noise_radius)
 
 
 func _spend_ammo(w: Weapon) -> void:

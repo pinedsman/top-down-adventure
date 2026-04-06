@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://ch2cqqfybe7sn" path="res://scripts/weapons/grenade_data.gd" id="1_apoam"]
 [ext_resource type="AudioStream" uid="uid://deubqr3jx2bsv" path="res://assets/Sounds/grenade_bounce.mp3" id="1_jdpy4"]
 [ext_resource type="Resource" uid="uid://dcvb7ncah27s3" path="res://resources/impacts/grenade_explosion.tres" id="2_jdpy4"]
+[ext_resource type="AudioStream" uid="uid://dnc2b8ai7k24a" path="res://assets/Sounds/grenade_explosion.mp3" id="3_8vpu2"]
 [ext_resource type="PackedScene" uid="uid://c7s7ukefly7bn" path="res://scenes/weapons/grenade.tscn" id="3_o07sb"]
 
 [resource]
@@ -14,6 +15,7 @@ inner_damage = 200.0
 outer_damage = 75.0
 self_damage_override = 1.0
 explosion_fx = ExtResource("2_jdpy4")
+explosion_sound = ExtResource("3_8vpu2")
 explosion_shake_strength = 8.0
 velocity_decay = 6.0
 spin_rate = 0.1

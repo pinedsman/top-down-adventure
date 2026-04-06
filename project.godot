@@ -24,6 +24,7 @@ InputManager="*res://scripts/input_manager.gd"
 DebugDraw="*uid://bg842op37hx7x"
 Console="*uid://ouiu5xh1cs8n"
 DevConsoleManager="*uid://bckvegt2kmqc0"
+NoiseManager="*res://scripts/noise_manager.gd"
 
 [display]
 
